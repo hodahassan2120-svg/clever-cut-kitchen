@@ -352,7 +352,7 @@ function DesignEditor() {
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <span className="text-2xl">{pendingBlock?.icon}</span>
+              {pendingBlock && <BlockIcon type={pendingBlock.type} className="size-8 text-primary" />}
               {pendingBlock?.name}
             </DialogTitle>
           </DialogHeader>

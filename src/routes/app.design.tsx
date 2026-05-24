@@ -262,7 +262,7 @@ function DesignEditor() {
               onClick={() => openAddDialog(b)}
               className="shrink-0 flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg border border-border/60 bg-card hover:border-primary text-[10px] min-w-[64px]"
             >
-              <span className="text-lg leading-none">{b.icon}</span>
+              <BlockIcon type={b.type} className="size-7 text-primary" />
               <span className="truncate max-w-[60px]">{b.name}</span>
             </button>
           ))}

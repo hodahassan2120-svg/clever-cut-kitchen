@@ -224,8 +224,8 @@ function DesignEditor() {
           {/* Mobile sheets */}
           <Sheet>
             <SheetTrigger asChild>
-              <Button size="icon" variant="outline" className="md:hidden size-9">
-                <LayoutGrid className="size-4" />
+              <Button size="sm" variant="default" className="md:hidden h-9 gap-1 bg-gradient-primary shadow-glow">
+                <LayoutGrid className="size-4" /> الوحدات
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-80 overflow-auto">
@@ -245,13 +245,28 @@ function DesignEditor() {
             </SheetContent>
           </Sheet>
 
-          <Input className="max-w-[140px] md:max-w-xs h-9 text-sm" value={name} onChange={(e) => setName(e.target.value)} />
+          <Input className="max-w-[120px] md:max-w-xs h-9 text-sm" value={name} onChange={(e) => setName(e.target.value)} />
           <div className="flex items-center gap-1">
             <Button size="sm" variant={unit === "cm" ? "default" : "outline"} onClick={() => setUnit("cm")}>سم</Button>
             <Button size="sm" variant={unit === "m" ? "default" : "outline"} onClick={() => setUnit("m")}>م</Button>
           </div>
           <Button onClick={save} size="sm" className="mr-auto bg-gradient-primary shadow-glow"><Save className="size-4" /> حفظ</Button>
         </div>
+
+        {/* Quick-add strip for mobile */}
+        <div className="md:hidden flex gap-1.5 overflow-x-auto p-2 border-b border-border/60 bg-card/30 shrink-0">
+          {KITCHEN_BLOCKS.slice(0, 8).map((b) => (
+            <button
+              key={b.type}
+              onClick={() => openAddDialog(b)}
+              className="shrink-0 flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg border border-border/60 bg-card hover:border-primary text-[10px] min-w-[64px]"
+            >
+              <span className="text-lg leading-none">{b.icon}</span>
+              <span className="truncate max-w-[60px]">{b.name}</span>
+            </button>
+          ))}
+        </div>
+
 
         <Tabs defaultValue="2d" className="flex-1 flex flex-col overflow-hidden min-h-0">
           <TabsList className="mx-2 mt-2 self-start shrink-0">

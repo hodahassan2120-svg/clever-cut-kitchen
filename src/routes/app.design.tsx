@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Stage, Layer, Rect, Line, Text as KText, Group } from "react-konva";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Grid, Environment, ContactShadows } from "@react-three/drei";
+import { OrbitControls, Grid } from "@react-three/drei";
 import { KITCHEN_BLOCKS, CATEGORY_LABELS, DEFAULT_DESIGN, type DesignDoc, type KitchenBlock, type PlacedBlock } from "@/lib/blocks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -224,8 +224,8 @@ function DesignEditor() {
           {/* Mobile sheets */}
           <Sheet>
             <SheetTrigger asChild>
-              <Button size="icon" variant="outline" className="md:hidden size-9">
-                <LayoutGrid className="size-4" />
+              <Button size="sm" variant="default" className="md:hidden h-9 gap-1 bg-gradient-primary shadow-glow">
+                <LayoutGrid className="size-4" /> الوحدات
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-80 overflow-auto">
@@ -245,13 +245,28 @@ function DesignEditor() {
             </SheetContent>
           </Sheet>
 
-          <Input className="max-w-[140px] md:max-w-xs h-9 text-sm" value={name} onChange={(e) => setName(e.target.value)} />
+          <Input className="max-w-[120px] md:max-w-xs h-9 text-sm" value={name} onChange={(e) => setName(e.target.value)} />
           <div className="flex items-center gap-1">
             <Button size="sm" variant={unit === "cm" ? "default" : "outline"} onClick={() => setUnit("cm")}>سم</Button>
             <Button size="sm" variant={unit === "m" ? "default" : "outline"} onClick={() => setUnit("m")}>م</Button>
           </div>
           <Button onClick={save} size="sm" className="mr-auto bg-gradient-primary shadow-glow"><Save className="size-4" /> حفظ</Button>
         </div>
+
+        {/* Quick-add strip for mobile */}
+        <div className="md:hidden flex gap-1.5 overflow-x-auto p-2 border-b border-border/60 bg-card/30 shrink-0">
+          {KITCHEN_BLOCKS.slice(0, 8).map((b) => (
+            <button
+              key={b.type}
+              onClick={() => openAddDialog(b)}
+              className="shrink-0 flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg border border-border/60 bg-card hover:border-primary text-[10px] min-w-[64px]"
+            >
+              <span className="text-lg leading-none">{b.icon}</span>
+              <span className="truncate max-w-[60px]">{b.name}</span>
+            </button>
+          ))}
+        </div>
+
 
         <Tabs defaultValue="2d" className="flex-1 flex flex-col overflow-hidden min-h-0">
           <TabsList className="mx-2 mt-2 self-start shrink-0">
@@ -290,35 +305,39 @@ function DesignEditor() {
             </div>
           </TabsContent>
           <TabsContent value="3d" className="flex-1 m-0 bg-gradient-to-b from-zinc-900 to-black min-h-0">
-            <Canvas shadows camera={{ position: [doc.roomWidth, doc.roomDepth * 1.2, doc.roomDepth * 1.4], fov: 45 }}>
-              <ambientLight intensity={0.35} />
-              <hemisphereLight args={["#fff5e1", "#1a1208", 0.4]} />
-              <directionalLight position={[doc.roomWidth, 600, doc.roomDepth]} intensity={1.1} castShadow />
-              <pointLight position={[doc.roomWidth / 2, 220, doc.roomDepth / 2]} intensity={0.6} color="#ffd28a" />
-              <Environment preset="apartment" />
+            <Canvas
+              camera={{ position: [doc.roomWidth, doc.roomDepth * 1.2, doc.roomDepth * 1.4], fov: 45 }}
+              dpr={[1, 1.5]}
+              gl={{ antialias: false, powerPreference: "default" }}
+            >
+              <color attach="background" args={["#1a1208"]} />
+              <ambientLight intensity={0.6} />
+              <hemisphereLight args={["#fff5e1", "#1a1208", 0.5]} />
+              <directionalLight position={[doc.roomWidth, 600, doc.roomDepth]} intensity={1} />
+              <pointLight position={[doc.roomWidth / 2, 220, doc.roomDepth / 2]} intensity={0.5} color="#ffd28a" />
               <Grid args={[2000, 2000]} cellColor="#333" sectionColor="#555" infiniteGrid fadeDistance={1500} />
-              <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[doc.roomWidth / 2, 0, doc.roomDepth / 2]}>
+              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[doc.roomWidth / 2, 0, doc.roomDepth / 2]}>
                 <planeGeometry args={[doc.roomWidth, doc.roomDepth]} />
-                <meshStandardMaterial color="#3a2a1c" roughness={0.6} metalness={0.05} />
+                <meshStandardMaterial color="#3a2a1c" roughness={0.8} />
               </mesh>
-              <mesh receiveShadow position={[doc.roomWidth / 2, 130, -2.5]}>
+              <mesh position={[doc.roomWidth / 2, 130, -2.5]}>
                 <boxGeometry args={[doc.roomWidth, 260, 5]} />
                 <meshStandardMaterial color="#e8dcc8" roughness={0.9} />
               </mesh>
-              <mesh receiveShadow position={[-2.5, 130, doc.roomDepth / 2]}>
+              <mesh position={[-2.5, 130, doc.roomDepth / 2]}>
                 <boxGeometry args={[5, 260, doc.roomDepth]} />
                 <meshStandardMaterial color="#e8dcc8" roughness={0.9} />
               </mesh>
-              <ContactShadows position={[doc.roomWidth / 2, 0.1, doc.roomDepth / 2]} opacity={0.5} scale={Math.max(doc.roomWidth, doc.roomDepth) * 1.5} blur={2} far={50} />
               {doc.blocks.map((b) => (
-                <mesh key={b.id} castShadow receiveShadow position={[b.x + b.width / 2, b.height / 2, b.y + b.depth / 2]} rotation={[0, (-b.rotation * Math.PI) / 180, 0]}>
+                <mesh key={b.id} position={[b.x + b.width / 2, b.height / 2, b.y + b.depth / 2]} rotation={[0, (-b.rotation * Math.PI) / 180, 0]}>
                   <boxGeometry args={[b.width, b.height, b.depth]} />
-                  <meshStandardMaterial color={b.color} roughness={0.45} metalness={0.1} />
+                  <meshStandardMaterial color={b.color} roughness={0.55} />
                 </mesh>
               ))}
               <OrbitControls target={[doc.roomWidth / 2, 80, doc.roomDepth / 2]} maxPolarAngle={Math.PI / 2.05} />
             </Canvas>
           </TabsContent>
+
         </Tabs>
       </div>
 

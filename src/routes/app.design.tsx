@@ -305,35 +305,39 @@ function DesignEditor() {
             </div>
           </TabsContent>
           <TabsContent value="3d" className="flex-1 m-0 bg-gradient-to-b from-zinc-900 to-black min-h-0">
-            <Canvas shadows camera={{ position: [doc.roomWidth, doc.roomDepth * 1.2, doc.roomDepth * 1.4], fov: 45 }}>
-              <ambientLight intensity={0.35} />
-              <hemisphereLight args={["#fff5e1", "#1a1208", 0.4]} />
-              <directionalLight position={[doc.roomWidth, 600, doc.roomDepth]} intensity={1.1} castShadow />
-              <pointLight position={[doc.roomWidth / 2, 220, doc.roomDepth / 2]} intensity={0.6} color="#ffd28a" />
-              <Environment preset="apartment" />
+            <Canvas
+              camera={{ position: [doc.roomWidth, doc.roomDepth * 1.2, doc.roomDepth * 1.4], fov: 45 }}
+              dpr={[1, 1.5]}
+              gl={{ antialias: false, powerPreference: "default" }}
+            >
+              <color attach="background" args={["#1a1208"]} />
+              <ambientLight intensity={0.6} />
+              <hemisphereLight args={["#fff5e1", "#1a1208", 0.5]} />
+              <directionalLight position={[doc.roomWidth, 600, doc.roomDepth]} intensity={1} />
+              <pointLight position={[doc.roomWidth / 2, 220, doc.roomDepth / 2]} intensity={0.5} color="#ffd28a" />
               <Grid args={[2000, 2000]} cellColor="#333" sectionColor="#555" infiniteGrid fadeDistance={1500} />
-              <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[doc.roomWidth / 2, 0, doc.roomDepth / 2]}>
+              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[doc.roomWidth / 2, 0, doc.roomDepth / 2]}>
                 <planeGeometry args={[doc.roomWidth, doc.roomDepth]} />
-                <meshStandardMaterial color="#3a2a1c" roughness={0.6} metalness={0.05} />
+                <meshStandardMaterial color="#3a2a1c" roughness={0.8} />
               </mesh>
-              <mesh receiveShadow position={[doc.roomWidth / 2, 130, -2.5]}>
+              <mesh position={[doc.roomWidth / 2, 130, -2.5]}>
                 <boxGeometry args={[doc.roomWidth, 260, 5]} />
                 <meshStandardMaterial color="#e8dcc8" roughness={0.9} />
               </mesh>
-              <mesh receiveShadow position={[-2.5, 130, doc.roomDepth / 2]}>
+              <mesh position={[-2.5, 130, doc.roomDepth / 2]}>
                 <boxGeometry args={[5, 260, doc.roomDepth]} />
                 <meshStandardMaterial color="#e8dcc8" roughness={0.9} />
               </mesh>
-              <ContactShadows position={[doc.roomWidth / 2, 0.1, doc.roomDepth / 2]} opacity={0.5} scale={Math.max(doc.roomWidth, doc.roomDepth) * 1.5} blur={2} far={50} />
               {doc.blocks.map((b) => (
-                <mesh key={b.id} castShadow receiveShadow position={[b.x + b.width / 2, b.height / 2, b.y + b.depth / 2]} rotation={[0, (-b.rotation * Math.PI) / 180, 0]}>
+                <mesh key={b.id} position={[b.x + b.width / 2, b.height / 2, b.y + b.depth / 2]} rotation={[0, (-b.rotation * Math.PI) / 180, 0]}>
                   <boxGeometry args={[b.width, b.height, b.depth]} />
-                  <meshStandardMaterial color={b.color} roughness={0.45} metalness={0.1} />
+                  <meshStandardMaterial color={b.color} roughness={0.55} />
                 </mesh>
               ))}
               <OrbitControls target={[doc.roomWidth / 2, 80, doc.roomDepth / 2]} maxPolarAngle={Math.PI / 2.05} />
             </Canvas>
           </TabsContent>
+
         </Tabs>
       </div>
 

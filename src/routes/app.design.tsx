@@ -160,9 +160,8 @@ function DesignEditor() {
             <Canvas shadows camera={{ position: [doc.roomWidth, doc.roomDepth * 1.2, doc.roomDepth * 1.4], fov: 45 }}>
               <ambientLight intensity={0.35} />
               <hemisphereLight args={["#fff5e1", "#1a1208", 0.4]} />
-              <directionalLight position={[doc.roomWidth, 600, doc.roomDepth]} intensity={1.1} castShadow shadow-mapSize-width={2048} shadow-mapSize-height={2048}>
-                <orthographicCamera attach="shadow-camera" args={[-600, 600, 600, -600, 0.1, 2000]} />
-              </directionalLight>
+              <directionalLight position={[doc.roomWidth, 600, doc.roomDepth]} intensity={1.1} castShadow />
+
               <pointLight position={[doc.roomWidth / 2, 220, doc.roomDepth / 2]} intensity={0.6} color="#ffd28a" />
               <Environment preset="apartment" />
               <Grid args={[2000, 2000]} cellColor="#333" sectionColor="#555" infiniteGrid fadeDistance={1500} />

@@ -190,7 +190,6 @@ function DesignEditor() {
               ))}
               <OrbitControls target={[doc.roomWidth / 2, 80, doc.roomDepth / 2]} maxPolarAngle={Math.PI / 2.05} />
             </Canvas>
-            </Canvas>
           </TabsContent>
         </Tabs>
       </div>

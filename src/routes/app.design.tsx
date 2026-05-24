@@ -4,6 +4,7 @@ import { Stage, Layer, Rect, Line, Text as KText, Group } from "react-konva";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Grid } from "@react-three/drei";
 import { KITCHEN_BLOCKS, CATEGORY_LABELS, DEFAULT_DESIGN, type DesignDoc, type KitchenBlock, type PlacedBlock } from "@/lib/blocks";
+import { BlockIcon } from "@/components/BlockIcon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -144,7 +145,7 @@ function DesignEditor() {
                 onClick={() => openAddDialog(b)}
                 className="w-full flex items-center gap-2 p-2 rounded-lg border border-border/60 hover:border-primary/60 hover:bg-primary/5 text-xs transition text-right"
               >
-                <span className="text-lg">{b.icon}</span>
+                <BlockIcon type={b.type} className="size-8 text-primary shrink-0" />
                 <div className="flex-1 text-right min-w-0">
                   <div className="font-medium truncate">{b.name}</div>
                   {b.description && <div className="text-[10px] text-muted-foreground truncate">{b.description}</div>}
@@ -261,7 +262,7 @@ function DesignEditor() {
               onClick={() => openAddDialog(b)}
               className="shrink-0 flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg border border-border/60 bg-card hover:border-primary text-[10px] min-w-[64px]"
             >
-              <span className="text-lg leading-none">{b.icon}</span>
+              <BlockIcon type={b.type} className="size-7 text-primary" />
               <span className="truncate max-w-[60px]">{b.name}</span>
             </button>
           ))}
@@ -351,7 +352,7 @@ function DesignEditor() {
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <span className="text-2xl">{pendingBlock?.icon}</span>
+              {pendingBlock && <BlockIcon type={pendingBlock.type} className="size-8 text-primary" />}
               {pendingBlock?.name}
             </DialogTitle>
           </DialogHeader>

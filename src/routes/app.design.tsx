@@ -145,7 +145,7 @@ function DesignEditor() {
                 onClick={() => openAddDialog(b)}
                 className="w-full flex items-center gap-2 p-2 rounded-lg border border-border/60 hover:border-primary/60 hover:bg-primary/5 text-xs transition text-right"
               >
-                <span className="text-lg">{b.icon}</span>
+                <BlockIcon type={b.type} className="size-8 text-primary shrink-0" />
                 <div className="flex-1 text-right min-w-0">
                   <div className="font-medium truncate">{b.name}</div>
                   {b.description && <div className="text-[10px] text-muted-foreground truncate">{b.description}</div>}

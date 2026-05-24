@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cutRods, type RodStock, type RodPiece, type RodResult } from "@/lib/cutting";
-import { Plus, Trash2, Scissors } from "lucide-react";
+import { Plus, Trash2, Scissors, FileDown } from "lucide-react";
 import { toast } from "sonner";
+import { exportRodsPDF } from "@/lib/pdf";
+import { AdSlot } from "@/components/AdSlot";
 
 export const Route = createFileRoute("/app/rods")({ component: RodsPage });
 
@@ -59,7 +61,10 @@ function RodsPage() {
           <h2 className="font-semibold mb-3">النتيجة</h2>
           {!result ? <p className="text-sm text-muted-foreground">اضغط "حساب التقطيع" لعرض النتائج.</p> : (
             <div className="space-y-3">
-              <div className="text-sm">الهدر الإجمالي: <span className="text-gold font-bold">{result.totalWaste.toFixed(1)} سم</span></div>
+              <div className="flex items-center justify-between">
+                <div className="text-sm">الهدر الإجمالي: <span className="text-gold font-bold">{result.totalWaste.toFixed(1)} سم</span></div>
+                <Button size="sm" variant="outline" onClick={() => exportRodsPDF(result)}><FileDown className="size-3.5" /> PDF</Button>
+              </div>
               {result.unfulfilled.length > 0 && <div className="text-sm text-destructive">قطع لم تتسع: {result.unfulfilled.map(u => `${u.label}(×${u.quantity})`).join(", ")}</div>}
               {result.assignments.map((a, idx) => (
                 <div key={idx} className="rounded-lg border border-border/40 p-3">
@@ -83,6 +88,7 @@ function RodsPage() {
           )}
         </div>
       </div>
+      <div className="mt-6"><AdSlot /></div>
     </div>
   );
 }

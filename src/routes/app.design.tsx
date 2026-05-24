@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Suspense, useMemo, useRef, useState } from "react";
-import { Stage, Layer, Rect, Line, Text as KText, Group, Transformer } from "react-konva";
+import { useEffect, useRef, useState } from "react";
+import { Stage, Layer, Rect, Line, Text as KText, Group } from "react-konva";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Grid } from "@react-three/drei";
+import { OrbitControls, Grid, Environment, ContactShadows } from "@react-three/drei";
 import { KITCHEN_BLOCKS, DEFAULT_DESIGN, type DesignDoc, type PlacedBlock } from "@/lib/blocks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,16 +14,32 @@ import { toast } from "sonner";
 import { Save, Plus, Trash2 } from "lucide-react";
 import type Konva from "konva";
 
-export const Route = createFileRoute("/app/design")({ component: DesignEditor });
+export const Route = createFileRoute("/app/design")({
+  component: DesignEditor,
+  validateSearch: (s: Record<string, unknown>) => ({ id: typeof s.id === "string" ? s.id : undefined }),
+});
 
 function DesignEditor() {
   const { user } = useAuth();
+  const { id } = Route.useSearch();
   const [doc, setDoc] = useState<DesignDoc>(DEFAULT_DESIGN);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [name, setName] = useState("تصميم جديد");
+  const [designId, setDesignId] = useState<string | null>(null);
   const [unit, setUnit] = useState<"cm" | "m">("cm");
   const trRef = useRef<Konva.Transformer>(null);
   const shapeRefs = useRef<Record<string, Konva.Group>>({});
+
+  useEffect(() => {
+    if (!id || !user) return;
+    supabase.from("designs").select("*").eq("id", id).maybeSingle().then(({ data }) => {
+      if (data) {
+        setDoc(data.data as unknown as DesignDoc);
+        setName(data.name);
+        setDesignId(data.id);
+      }
+    });
+  }, [id, user]);
 
   // Canvas scale: pixels per cm
   const scale = 1.5;
@@ -55,9 +71,16 @@ function DesignEditor() {
 
   const save = async () => {
     if (!user) return;
-    const { error } = await supabase.from("designs").insert({ user_id: user.id, name, data: doc as any });
-    if (error) return toast.error("تعذر الحفظ");
-    toast.success("تم حفظ التصميم");
+    if (designId) {
+      const { error } = await supabase.from("designs").update({ name, data: doc as any, updated_at: new Date().toISOString() }).eq("id", designId);
+      if (error) return toast.error("تعذر الحفظ");
+      toast.success("تم تحديث التصميم");
+    } else {
+      const { data, error } = await supabase.from("designs").insert({ user_id: user.id, name, data: doc as any }).select("id").single();
+      if (error) return toast.error("تعذر الحفظ");
+      setDesignId(data.id);
+      toast.success("تم حفظ التصميم");
+    }
   };
 
   const toUnit = (cm: number) => (unit === "m" ? (cm / 100).toFixed(2) : cm.toString());
@@ -133,33 +156,39 @@ function DesignEditor() {
               </Layer>
             </Stage>
           </TabsContent>
-          <TabsContent value="3d" className="flex-1 m-0 bg-black">
-            <Canvas camera={{ position: [400, 400, 400], fov: 50 }}>
-              <ambientLight intensity={0.6} />
-              <directionalLight position={[300, 500, 300]} intensity={1} castShadow />
-              <Grid args={[1000, 1000]} cellColor="#444" sectionColor="#666" infiniteGrid />
+          <TabsContent value="3d" className="flex-1 m-0 bg-gradient-to-b from-zinc-900 to-black">
+            <Canvas shadows camera={{ position: [doc.roomWidth, doc.roomDepth * 1.2, doc.roomDepth * 1.4], fov: 45 }}>
+              <ambientLight intensity={0.35} />
+              <hemisphereLight args={["#fff5e1", "#1a1208", 0.4]} />
+              <directionalLight position={[doc.roomWidth, 600, doc.roomDepth]} intensity={1.1} castShadow shadow-mapSize-width={2048} shadow-mapSize-height={2048}>
+                <orthographicCamera attach="shadow-camera" args={[-600, 600, 600, -600, 0.1, 2000]} />
+              </directionalLight>
+              <pointLight position={[doc.roomWidth / 2, 220, doc.roomDepth / 2]} intensity={0.6} color="#ffd28a" />
+              <Environment preset="apartment" />
+              <Grid args={[2000, 2000]} cellColor="#333" sectionColor="#555" infiniteGrid fadeDistance={1500} />
               {/* Floor */}
-              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[doc.roomWidth / 2, 0, doc.roomDepth / 2]}>
+              <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[doc.roomWidth / 2, 0, doc.roomDepth / 2]}>
                 <planeGeometry args={[doc.roomWidth, doc.roomDepth]} />
-                <meshStandardMaterial color="#2a2a2a" />
+                <meshStandardMaterial color="#3a2a1c" roughness={0.6} metalness={0.05} />
               </mesh>
               {/* Walls */}
-              <mesh position={[doc.roomWidth / 2, 100, 0]}>
-                <boxGeometry args={[doc.roomWidth, 200, 5]} />
-                <meshStandardMaterial color="#3a2a1a" />
+              <mesh receiveShadow position={[doc.roomWidth / 2, 130, -2.5]}>
+                <boxGeometry args={[doc.roomWidth, 260, 5]} />
+                <meshStandardMaterial color="#e8dcc8" roughness={0.9} />
               </mesh>
-              <mesh position={[0, 100, doc.roomDepth / 2]}>
-                <boxGeometry args={[5, 200, doc.roomDepth]} />
-                <meshStandardMaterial color="#3a2a1a" />
+              <mesh receiveShadow position={[-2.5, 130, doc.roomDepth / 2]}>
+                <boxGeometry args={[5, 260, doc.roomDepth]} />
+                <meshStandardMaterial color="#e8dcc8" roughness={0.9} />
               </mesh>
+              <ContactShadows position={[doc.roomWidth / 2, 0.1, doc.roomDepth / 2]} opacity={0.5} scale={Math.max(doc.roomWidth, doc.roomDepth) * 1.5} blur={2} far={50} />
               {/* Blocks */}
               {doc.blocks.map((b) => (
-                <mesh key={b.id} position={[b.x + b.width / 2, b.height / 2, b.y + b.depth / 2]} rotation={[0, (-b.rotation * Math.PI) / 180, 0]}>
+                <mesh key={b.id} castShadow receiveShadow position={[b.x + b.width / 2, b.height / 2, b.y + b.depth / 2]} rotation={[0, (-b.rotation * Math.PI) / 180, 0]}>
                   <boxGeometry args={[b.width, b.height, b.depth]} />
-                  <meshStandardMaterial color={b.color} />
+                  <meshStandardMaterial color={b.color} roughness={0.45} metalness={0.1} />
                 </mesh>
               ))}
-              <OrbitControls target={[doc.roomWidth / 2, 50, doc.roomDepth / 2]} />
+              <OrbitControls target={[doc.roomWidth / 2, 80, doc.roomDepth / 2]} maxPolarAngle={Math.PI / 2.05} />
             </Canvas>
           </TabsContent>
         </Tabs>

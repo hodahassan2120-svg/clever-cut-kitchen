@@ -9,38 +9,174 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppRodsRouteImport } from './routes/app.rods'
+import { Route as AppInventoryRouteImport } from './routes/app.inventory'
+import { Route as AppDesignsRouteImport } from './routes/app.designs'
+import { Route as AppDesignRouteImport } from './routes/app.design'
+import { Route as AppBoardsRouteImport } from './routes/app.boards'
+import { Route as AppAdminRouteImport } from './routes/app.admin'
 
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppRodsRoute = AppRodsRouteImport.update({
+  id: '/rods',
+  path: '/rods',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppInventoryRoute = AppInventoryRouteImport.update({
+  id: '/inventory',
+  path: '/inventory',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDesignsRoute = AppDesignsRouteImport.update({
+  id: '/designs',
+  path: '/designs',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDesignRoute = AppDesignRouteImport.update({
+  id: '/design',
+  path: '/design',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBoardsRoute = AppBoardsRouteImport.update({
+  id: '/boards',
+  path: '/boards',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminRoute = AppAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/app/admin': typeof AppAdminRoute
+  '/app/boards': typeof AppBoardsRoute
+  '/app/design': typeof AppDesignRoute
+  '/app/designs': typeof AppDesignsRoute
+  '/app/inventory': typeof AppInventoryRoute
+  '/app/rods': typeof AppRodsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/app/admin': typeof AppAdminRoute
+  '/app/boards': typeof AppBoardsRoute
+  '/app/design': typeof AppDesignRoute
+  '/app/designs': typeof AppDesignsRoute
+  '/app/inventory': typeof AppInventoryRoute
+  '/app/rods': typeof AppRodsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/app/admin': typeof AppAdminRoute
+  '/app/boards': typeof AppBoardsRoute
+  '/app/design': typeof AppDesignRoute
+  '/app/designs': typeof AppDesignsRoute
+  '/app/inventory': typeof AppInventoryRoute
+  '/app/rods': typeof AppRodsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/login'
+    | '/register'
+    | '/app/admin'
+    | '/app/boards'
+    | '/app/design'
+    | '/app/designs'
+    | '/app/inventory'
+    | '/app/rods'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/app'
+    | '/login'
+    | '/register'
+    | '/app/admin'
+    | '/app/boards'
+    | '/app/design'
+    | '/app/designs'
+    | '/app/inventory'
+    | '/app/rods'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/login'
+    | '/register'
+    | '/app/admin'
+    | '/app/boards'
+    | '/app/design'
+    | '/app/designs'
+    | '/app/inventory'
+    | '/app/rods'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
+  LoginRoute: typeof LoginRoute
+  RegisterRoute: typeof RegisterRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +184,77 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/rods': {
+      id: '/app/rods'
+      path: '/rods'
+      fullPath: '/app/rods'
+      preLoaderRoute: typeof AppRodsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/inventory': {
+      id: '/app/inventory'
+      path: '/inventory'
+      fullPath: '/app/inventory'
+      preLoaderRoute: typeof AppInventoryRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/designs': {
+      id: '/app/designs'
+      path: '/designs'
+      fullPath: '/app/designs'
+      preLoaderRoute: typeof AppDesignsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/design': {
+      id: '/app/design'
+      path: '/design'
+      fullPath: '/app/design'
+      preLoaderRoute: typeof AppDesignRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/boards': {
+      id: '/app/boards'
+      path: '/boards'
+      fullPath: '/app/boards'
+      preLoaderRoute: typeof AppBoardsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/admin': {
+      id: '/app/admin'
+      path: '/admin'
+      fullPath: '/app/admin'
+      preLoaderRoute: typeof AppAdminRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppAdminRoute: typeof AppAdminRoute
+  AppBoardsRoute: typeof AppBoardsRoute
+  AppDesignRoute: typeof AppDesignRoute
+  AppDesignsRoute: typeof AppDesignsRoute
+  AppInventoryRoute: typeof AppInventoryRoute
+  AppRodsRoute: typeof AppRodsRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppAdminRoute: AppAdminRoute,
+  AppBoardsRoute: AppBoardsRoute,
+  AppDesignRoute: AppDesignRoute,
+  AppDesignsRoute: AppDesignsRoute,
+  AppInventoryRoute: AppInventoryRoute,
+  AppRodsRoute: AppRodsRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
+  LoginRoute: LoginRoute,
+  RegisterRoute: RegisterRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

@@ -1,0 +1,134 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
+import { Users, Settings as SettingsIcon, Shield } from "lucide-react";
+
+export const Route = createFileRoute("/app/admin")({ component: Admin });
+
+interface UserRow { id: string; phone: string; full_name: string | null; trial_ends_at: string; is_active: boolean; activated_until: string | null; }
+
+function Admin() {
+  const { isAdmin, loading } = useAuth();
+  const [users, setUsers] = useState<UserRow[]>([]);
+  const [stats, setStats] = useState({ users: 0, active: 0, designs: 0 });
+  const [settings, setSettings] = useState({ adsense_client: "", adsense_enabled: false, whatsapp_number: "" });
+
+  const load = async () => {
+    const [{ data: profiles }, { data: subs }, designs, { data: s }] = await Promise.all([
+      supabase.from("profiles").select("id,phone,full_name"),
+      supabase.from("subscriptions").select("user_id,trial_ends_at,is_active,activated_until"),
+      supabase.from("designs").select("id", { count: "exact", head: true }),
+      supabase.from("app_settings").select("*").eq("id", 1).maybeSingle(),
+    ]);
+    const subMap = new Map((subs ?? []).map((x) => [x.user_id, x]));
+    const merged: UserRow[] = (profiles ?? []).map((p: any) => {
+      const sub = subMap.get(p.id);
+      return { id: p.id, phone: p.phone, full_name: p.full_name, trial_ends_at: sub?.trial_ends_at ?? "", is_active: sub?.is_active ?? false, activated_until: sub?.activated_until ?? null };
+    });
+    setUsers(merged);
+    const activeCount = merged.filter((u) => u.is_active && (u.activated_until ? new Date(u.activated_until) > new Date() : new Date(u.trial_ends_at) > new Date())).length;
+    setStats({ users: merged.length, active: activeCount, designs: (designs as any).count ?? 0 });
+    if (s) setSettings({ adsense_client: s.adsense_client ?? "", adsense_enabled: !!s.adsense_enabled, whatsapp_number: s.whatsapp_number ?? "" });
+  };
+
+  useEffect(() => { if (isAdmin) load(); }, [isAdmin]);
+
+  if (loading) return <div className="p-6">جارٍ التحميل...</div>;
+  if (!isAdmin) return <div className="p-6 text-center text-destructive">لا تملك صلاحية الوصول لهذه الصفحة</div>;
+
+  const extend = async (userId: string, days: number) => {
+    const until = new Date(Date.now() + days * 86400000).toISOString();
+    await supabase.from("subscriptions").update({ activated_until: until, is_active: true, activated_at: new Date().toISOString() }).eq("user_id", userId);
+    toast.success(`تم التفعيل ${days} يوم`);
+    load();
+  };
+  const toggle = async (userId: string, active: boolean) => {
+    await supabase.from("subscriptions").update({ is_active: active }).eq("user_id", userId);
+    load();
+  };
+  const saveSettings = async () => {
+    const { error } = await supabase.from("app_settings").update(settings).eq("id", 1);
+    if (error) return toast.error("تعذر الحفظ");
+    toast.success("تم حفظ الإعدادات");
+  };
+
+  return (
+    <div className="p-6 max-w-7xl mx-auto">
+      <div className="flex items-center gap-2 mb-6">
+        <Shield className="size-6 text-gold" />
+        <h1 className="text-2xl font-bold">لوحة الأدمن</h1>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <StatCard label="إجمالي المستخدمين" value={stats.users} />
+        <StatCard label="اشتراكات نشطة" value={stats.active} />
+        <StatCard label="إجمالي التصميمات" value={stats.designs} />
+      </div>
+
+      <Tabs defaultValue="users">
+        <TabsList>
+          <TabsTrigger value="users"><Users className="size-4" /> المستخدمون</TabsTrigger>
+          <TabsTrigger value="settings"><SettingsIcon className="size-4" /> الإعدادات</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="users" className="mt-4">
+          <div className="rounded-2xl border border-border/60 bg-card/50 p-4 overflow-auto">
+            <table className="w-full text-sm">
+              <thead><tr className="border-b border-border/40 text-muted-foreground text-xs"><th className="text-right p-2">الاسم</th><th className="text-right p-2">الهاتف</th><th className="text-right p-2">انتهاء التجربة</th><th className="text-right p-2">مفعل حتى</th><th className="text-right p-2">الحالة</th><th>إجراءات</th></tr></thead>
+              <tbody>
+                {users.map((u) => (
+                  <tr key={u.id} className="border-b border-border/20">
+                    <td className="p-2">{u.full_name || "-"}</td>
+                    <td className="p-2" dir="ltr">{u.phone}</td>
+                    <td className="p-2 text-xs">{u.trial_ends_at ? new Date(u.trial_ends_at).toLocaleDateString("ar-EG") : "-"}</td>
+                    <td className="p-2 text-xs">{u.activated_until ? new Date(u.activated_until).toLocaleDateString("ar-EG") : "—"}</td>
+                    <td className="p-2"><Switch checked={u.is_active} onCheckedChange={(v) => toggle(u.id, v)} /></td>
+                    <td className="p-2 flex gap-1">
+                      <Button size="sm" variant="outline" onClick={() => extend(u.id, 30)}>+30 يوم</Button>
+                      <Button size="sm" variant="outline" onClick={() => extend(u.id, 365)}>+سنة</Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="settings" className="mt-4">
+          <div className="rounded-2xl border border-border/60 bg-card/50 p-6 space-y-4 max-w-xl">
+            <div>
+              <Label>رقم واتساب الأدمن (لطلبات التفعيل)</Label>
+              <Input dir="ltr" placeholder="+201234567890" value={settings.whatsapp_number} onChange={(e) => setSettings({ ...settings, whatsapp_number: e.target.value })} />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label>تفعيل إعلانات AdSense</Label>
+              <Switch checked={settings.adsense_enabled} onCheckedChange={(v) => setSettings({ ...settings, adsense_enabled: v })} />
+            </div>
+            <div>
+              <Label>كود AdSense Client (ca-pub-xxxxx)</Label>
+              <Input dir="ltr" placeholder="ca-pub-1234567890" value={settings.adsense_client} onChange={(e) => setSettings({ ...settings, adsense_client: e.target.value })} />
+              <p className="text-xs text-muted-foreground mt-1">سيتم عرض الإعلانات داخل التطبيق للمستخدمين العاديين فقط.</p>
+            </div>
+            <Button onClick={saveSettings} className="bg-gradient-primary shadow-glow">حفظ الإعدادات</Button>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-2xl border border-border/60 bg-card/50 p-5">
+      <div className="text-xs text-muted-foreground mb-1">{label}</div>
+      <div className="text-3xl font-bold text-gradient">{value}</div>
+    </div>
+  );
+}

@@ -308,35 +308,35 @@ function DesignEditor() {
             <Canvas
               camera={{ position: [doc.roomWidth, doc.roomDepth * 1.2, doc.roomDepth * 1.4], fov: 45 }}
               dpr={[1, 1.5]}
-              gl={{ antialias: false, powerPreference: "default" }}
+              gl={{ antialias: false, powerPreference: "default", preserveDrawingBuffer: false, alpha: false }}
+              frameloop="demand"
             >
               <color attach="background" args={["#1a1208"]} />
-              <ambientLight intensity={0.6} />
-              <hemisphereLight args={["#fff5e1", "#1a1208", 0.5]} />
-              <directionalLight position={[doc.roomWidth, 600, doc.roomDepth]} intensity={1} />
-              <pointLight position={[doc.roomWidth / 2, 220, doc.roomDepth / 2]} intensity={0.5} color="#ffd28a" />
+              <ambientLight intensity={0.8} />
+              <directionalLight position={[doc.roomWidth, 600, doc.roomDepth]} intensity={0.9} />
               <Grid args={[2000, 2000]} cellColor="#333" sectionColor="#555" infiniteGrid fadeDistance={1500} />
               <mesh rotation={[-Math.PI / 2, 0, 0]} position={[doc.roomWidth / 2, 0, doc.roomDepth / 2]}>
                 <planeGeometry args={[doc.roomWidth, doc.roomDepth]} />
-                <meshStandardMaterial color="#3a2a1c" roughness={0.8} />
+                <meshStandardMaterial color="#3a2a1c" roughness={0.9} />
               </mesh>
               <mesh position={[doc.roomWidth / 2, 130, -2.5]}>
                 <boxGeometry args={[doc.roomWidth, 260, 5]} />
-                <meshStandardMaterial color="#e8dcc8" roughness={0.9} />
+                <meshStandardMaterial color="#e8dcc8" roughness={0.95} />
               </mesh>
               <mesh position={[-2.5, 130, doc.roomDepth / 2]}>
                 <boxGeometry args={[5, 260, doc.roomDepth]} />
-                <meshStandardMaterial color="#e8dcc8" roughness={0.9} />
+                <meshStandardMaterial color="#e8dcc8" roughness={0.95} />
               </mesh>
               {doc.blocks.map((b) => (
                 <mesh key={b.id} position={[b.x + b.width / 2, b.height / 2, b.y + b.depth / 2]} rotation={[0, (-b.rotation * Math.PI) / 180, 0]}>
                   <boxGeometry args={[b.width, b.height, b.depth]} />
-                  <meshStandardMaterial color={b.color} roughness={0.55} />
+                  <meshStandardMaterial color={b.color} roughness={0.6} />
                 </mesh>
               ))}
-              <OrbitControls target={[doc.roomWidth / 2, 80, doc.roomDepth / 2]} maxPolarAngle={Math.PI / 2.05} />
+              <OrbitControls target={[doc.roomWidth / 2, 80, doc.roomDepth / 2]} maxPolarAngle={Math.PI / 2.05} makeDefault />
             </Canvas>
           </TabsContent>
+
 
         </Tabs>
       </div>

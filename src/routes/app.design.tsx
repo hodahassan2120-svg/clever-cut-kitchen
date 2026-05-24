@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Stage, Layer, Rect, Line, Text as KText, Group } from "react-konva";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Grid, Environment, ContactShadows } from "@react-three/drei";
+import { OrbitControls, Grid } from "@react-three/drei";
 import { KITCHEN_BLOCKS, CATEGORY_LABELS, DEFAULT_DESIGN, type DesignDoc, type KitchenBlock, type PlacedBlock } from "@/lib/blocks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

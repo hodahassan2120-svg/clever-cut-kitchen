@@ -1,7 +1,7 @@
-import { createFileRoute, Outlet, Link, useNavigate, redirect } from "@tanstack/react-router";
+import { createFileRoute, Outlet, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuth, isSubscriptionActive } from "@/lib/auth";
-import { Cuboid, Box, Scissors, Ruler, Archive, Save, LogOut, Shield, Sparkles } from "lucide-react";
+import { Cuboid, Scissors, Ruler, Archive, Save, LogOut, Shield, Sparkles, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/app")({ component: AppLayout });
@@ -26,6 +26,7 @@ function AppLayout() {
   }
 
   const links = [
+    { to: "/app", label: "الرئيسية", icon: Home, exact: true },
     { to: "/app/design", label: "محرر التصميم", icon: Cuboid },
     { to: "/app/designs", label: "تصميماتي", icon: Save },
     { to: "/app/boards", label: "تقطيع الألواح", icon: Scissors },
@@ -34,8 +35,9 @@ function AppLayout() {
   ];
 
   return (
-    <div className="min-h-screen flex">
-      <aside className="w-64 border-l border-border/60 bg-sidebar p-4 flex flex-col">
+    <div className="min-h-screen flex flex-col md:flex-row">
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex w-64 border-l border-border/60 bg-sidebar p-4 flex-col">
         <Link to="/" className="flex items-center gap-2 mb-8 px-2">
           <div className="size-9 rounded-lg bg-gradient-primary shadow-glow flex items-center justify-center">
             <Cuboid className="size-5 text-primary-foreground" />
@@ -47,6 +49,7 @@ function AppLayout() {
             <Link
               key={l.to}
               to={l.to}
+              activeOptions={l.exact ? { exact: true } : undefined}
               activeProps={{ className: "bg-sidebar-accent text-primary" }}
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-sidebar-accent/60 transition"
             >
@@ -67,15 +70,47 @@ function AppLayout() {
           <LogOut className="size-4" /> خروج
         </Button>
       </aside>
-      <main className="flex-1 overflow-auto">
+
+      {/* Mobile top bar */}
+      <header className="md:hidden flex items-center justify-between border-b border-border/60 bg-sidebar/80 backdrop-blur px-3 h-12 sticky top-0 z-40">
+        <Link to="/app" className="flex items-center gap-2">
+          <div className="size-7 rounded-md bg-gradient-primary shadow-glow flex items-center justify-center">
+            <Cuboid className="size-4 text-primary-foreground" />
+          </div>
+          <span className="text-sm font-bold font-display">كيتشن برو</span>
+        </Link>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-gold">متبقي {daysLeft}ي</span>
+          <Button onClick={signOut} variant="ghost" size="icon" className="size-8">
+            <LogOut className="size-4" />
+          </Button>
+        </div>
+      </header>
+
+      <main className="flex-1 overflow-auto pb-16 md:pb-0">
         <Outlet />
       </main>
+
+      {/* Mobile bottom nav */}
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border/60 bg-sidebar/95 backdrop-blur grid grid-cols-6 h-14">
+        {links.map((l) => (
+          <Link
+            key={l.to}
+            to={l.to}
+            activeOptions={l.exact ? { exact: true } : undefined}
+            activeProps={{ className: "text-primary" }}
+            className="flex flex-col items-center justify-center gap-0.5 text-[9px] text-muted-foreground hover:text-foreground transition"
+          >
+            <l.icon className="size-4" />
+            <span className="leading-none">{l.label.replace("محرر التصميم", "تصميم").replace("تقطيع ", "")}</span>
+          </Link>
+        ))}
+      </nav>
     </div>
   );
 }
 
 function TrialExpired({ onSignOut }: { onSignOut: () => void }) {
-  // Read whatsapp number from settings — fetched lazily
   const whatsappLink = "https://wa.me/?text=" + encodeURIComponent("أرغب في تفعيل اشتراك كيتشن برو");
   return (
     <div className="min-h-screen flex items-center justify-center p-4">

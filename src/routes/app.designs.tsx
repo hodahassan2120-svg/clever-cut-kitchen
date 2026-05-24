@@ -39,7 +39,9 @@ function Designs() {
               <h3 className="font-semibold">{r.name}</h3>
               <p className="text-xs text-muted-foreground mt-1">{new Date(r.updated_at).toLocaleDateString("ar-EG")}</p>
               <div className="flex gap-2 mt-3">
-                <Button size="sm" variant="ghost" className="flex-1">فتح</Button>
+                <Button size="sm" variant="ghost" className="flex-1" asChild>
+                  <Link to="/app/design" search={{ id: r.id }}>فتح</Link>
+                </Button>
                 <Button size="sm" variant="ghost" onClick={async () => { await supabase.from("designs").delete().eq("id", r.id); load(); }}>
                   <Trash2 className="size-3.5 text-destructive" />
                 </Button>

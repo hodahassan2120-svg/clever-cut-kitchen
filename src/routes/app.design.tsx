@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Suspense, useMemo, useRef, useState } from "react";
-import { Stage, Layer, Rect, Line, Text as KText, Group, Transformer } from "react-konva";
+import { useEffect, useRef, useState } from "react";
+import { Stage, Layer, Rect, Line, Text as KText, Group } from "react-konva";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Grid } from "@react-three/drei";
+import { OrbitControls, Grid, Environment, ContactShadows } from "@react-three/drei";
 import { KITCHEN_BLOCKS, DEFAULT_DESIGN, type DesignDoc, type PlacedBlock } from "@/lib/blocks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,16 +14,32 @@ import { toast } from "sonner";
 import { Save, Plus, Trash2 } from "lucide-react";
 import type Konva from "konva";
 
-export const Route = createFileRoute("/app/design")({ component: DesignEditor });
+export const Route = createFileRoute("/app/design")({
+  component: DesignEditor,
+  validateSearch: (s: Record<string, unknown>) => ({ id: typeof s.id === "string" ? s.id : undefined }),
+});
 
 function DesignEditor() {
   const { user } = useAuth();
+  const { id } = Route.useSearch();
   const [doc, setDoc] = useState<DesignDoc>(DEFAULT_DESIGN);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [name, setName] = useState("تصميم جديد");
+  const [designId, setDesignId] = useState<string | null>(null);
   const [unit, setUnit] = useState<"cm" | "m">("cm");
   const trRef = useRef<Konva.Transformer>(null);
   const shapeRefs = useRef<Record<string, Konva.Group>>({});
+
+  useEffect(() => {
+    if (!id || !user) return;
+    supabase.from("designs").select("*").eq("id", id).maybeSingle().then(({ data }) => {
+      if (data) {
+        setDoc(data.data as unknown as DesignDoc);
+        setName(data.name);
+        setDesignId(data.id);
+      }
+    });
+  }, [id, user]);
 
   // Canvas scale: pixels per cm
   const scale = 1.5;
@@ -55,9 +71,16 @@ function DesignEditor() {
 
   const save = async () => {
     if (!user) return;
-    const { error } = await supabase.from("designs").insert({ user_id: user.id, name, data: doc as any });
-    if (error) return toast.error("تعذر الحفظ");
-    toast.success("تم حفظ التصميم");
+    if (designId) {
+      const { error } = await supabase.from("designs").update({ name, data: doc as any, updated_at: new Date().toISOString() }).eq("id", designId);
+      if (error) return toast.error("تعذر الحفظ");
+      toast.success("تم تحديث التصميم");
+    } else {
+      const { data, error } = await supabase.from("designs").insert({ user_id: user.id, name, data: doc as any }).select("id").single();
+      if (error) return toast.error("تعذر الحفظ");
+      setDesignId(data.id);
+      toast.success("تم حفظ التصميم");
+    }
   };
 
   const toUnit = (cm: number) => (unit === "m" ? (cm / 100).toFixed(2) : cm.toString());

@@ -1,8 +1,13 @@
 import { createFileRoute, Outlet, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth, isSubscriptionActive } from "@/lib/auth";
-import { Cuboid, Scissors, Ruler, Archive, Save, LogOut, Shield, Sparkles, Home } from "lucide-react";
+import { Cuboid, Scissors, Ruler, Archive, Save, LogOut, Shield, Sparkles, Home, Clock, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/app")({ component: AppLayout });
 
@@ -22,7 +27,7 @@ function AppLayout() {
   const daysLeft = subscription ? Math.max(0, Math.ceil((new Date(subscription.activated_until ?? subscription.trial_ends_at).getTime() - Date.now()) / 86400000)) : 0;
 
   if (!active && !isAdmin) {
-    return <TrialExpired onSignOut={signOut} />;
+    return <TrialExpired onSignOut={signOut} userId={user.id} />;
   }
 
   const links = [
@@ -110,20 +115,110 @@ function AppLayout() {
   );
 }
 
-function TrialExpired({ onSignOut }: { onSignOut: () => void }) {
-  const whatsappLink = "https://wa.me/?text=" + encodeURIComponent("أرغب في تفعيل اشتراك كيتشن برو");
+function TrialExpired({ onSignOut, userId }: { onSignOut: () => void; userId: string }) {
+  const [existing, setExisting] = useState<{ status: string; created_at: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [note, setNote] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [whatsapp, setWhatsapp] = useState<string>("");
+
+  useEffect(() => {
+    (async () => {
+      const [{ data: req }, { data: profile }, { data: settings }] = await Promise.all([
+        supabase.from("activation_requests").select("status,created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+        supabase.from("profiles").select("phone,full_name").eq("id", userId).maybeSingle(),
+        supabase.from("app_settings").select("whatsapp_number").eq("id", 1).maybeSingle(),
+      ]);
+      setExisting(req ?? null);
+      if (profile) { setName(profile.full_name ?? ""); setPhone(profile.phone ?? ""); }
+      setWhatsapp(settings?.whatsapp_number ?? "");
+      setLoading(false);
+    })();
+  }, [userId]);
+
+  const submit = async () => {
+    if (!name.trim() || !phone.trim()) return toast.error("الاسم والهاتف مطلوبان");
+    setSubmitting(true);
+    const { error } = await supabase.from("activation_requests").insert({ user_id: userId, phone: phone.trim(), full_name: name.trim(), note: note.trim() || null });
+    setSubmitting(false);
+    if (error) return toast.error("تعذر إرسال الطلب");
+    toast.success("تم إرسال طلب التفعيل، سيتم مراجعته قريباً");
+    setExisting({ status: "pending", created_at: new Date().toISOString() });
+  };
+
+  const whatsappLink = whatsapp
+    ? `https://wa.me/${whatsapp.replace(/\D/g, "")}?text=` + encodeURIComponent(`طلب تفعيل اشتراك\nالاسم: ${name}\nالهاتف: ${phone}`)
+    : null;
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="max-w-md w-full rounded-2xl border border-gold/30 bg-card/80 p-8 text-center shadow-gold">
+      <div className="max-w-md w-full rounded-2xl border border-gold/30 bg-card/80 p-8 shadow-gold">
         <div className="size-16 rounded-2xl bg-gradient-primary mx-auto flex items-center justify-center shadow-glow mb-4">
           <Sparkles className="size-8 text-primary-foreground" />
         </div>
-        <h1 className="text-2xl font-bold mb-2">انتهت فترة التجربة</h1>
-        <p className="text-muted-foreground mb-6">للاستمرار في استخدام البرنامج، يرجى التواصل معنا لتفعيل اشتراكك.</p>
-        <a href={whatsappLink} target="_blank" rel="noreferrer" className="inline-flex w-full justify-center items-center gap-2 rounded-md bg-gradient-primary px-4 py-3 text-sm font-medium text-primary-foreground shadow-glow">
-          تواصل عبر واتساب للتفعيل
-        </a>
-        <Button onClick={onSignOut} variant="ghost" className="mt-3 w-full">تسجيل خروج</Button>
+        <h1 className="text-2xl font-bold mb-2 text-center">انتهت فترة التجربة</h1>
+        <p className="text-muted-foreground mb-6 text-center text-sm">للاستمرار في استخدام البرنامج، أرسل طلب تفعيل للأدمن وسيتم التواصل معك.</p>
+
+        {loading ? (
+          <div className="text-center text-muted-foreground text-sm">جارٍ التحميل...</div>
+        ) : existing ? (
+          <div className="space-y-3">
+            <div className={`rounded-xl border p-4 text-sm flex items-start gap-3 ${
+              existing.status === "approved" ? "border-emerald-500/40 bg-emerald-500/5" :
+              existing.status === "rejected" ? "border-destructive/40 bg-destructive/5" :
+              "border-gold/40 bg-gold/5"
+            }`}>
+              {existing.status === "approved" ? <CheckCircle2 className="size-5 text-emerald-500 shrink-0" /> :
+               existing.status === "rejected" ? <XCircle className="size-5 text-destructive shrink-0" /> :
+               <Clock className="size-5 text-gold shrink-0" />}
+              <div>
+                <div className="font-semibold mb-1">
+                  {existing.status === "approved" ? "تم قبول طلبك" :
+                   existing.status === "rejected" ? "تم رفض الطلب" :
+                   "طلبك قيد المراجعة"}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {existing.status === "approved" ? "حدّث الصفحة لتفعيل اشتراكك." :
+                   existing.status === "rejected" ? "يمكنك التواصل مع الأدمن أو إرسال طلب جديد." :
+                   `تم الإرسال ${new Date(existing.created_at).toLocaleDateString("ar-EG")} — سنرد عليك قريباً.`}
+                </div>
+              </div>
+            </div>
+            {existing.status === "approved" && (
+              <Button onClick={() => location.reload()} className="w-full bg-gradient-primary shadow-glow">تحديث الصفحة</Button>
+            )}
+            {existing.status === "rejected" && (
+              <Button onClick={() => setExisting(null)} variant="outline" className="w-full">إرسال طلب جديد</Button>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs">الاسم الكامل</Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="اسمك" />
+            </div>
+            <div>
+              <Label className="text-xs">رقم الهاتف</Label>
+              <Input dir="ltr" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+201234567890" />
+            </div>
+            <div>
+              <Label className="text-xs">ملاحظة (اختياري)</Label>
+              <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="أي تفاصيل تود إضافتها..." rows={2} />
+            </div>
+            <Button onClick={submit} disabled={submitting} className="w-full bg-gradient-primary shadow-glow">
+              {submitting ? "جارٍ الإرسال..." : "إرسال طلب التفعيل"}
+            </Button>
+            {whatsappLink && (
+              <a href={whatsappLink} target="_blank" rel="noreferrer" className="block text-center text-xs text-gold hover:underline">
+                أو تواصل عبر واتساب
+              </a>
+            )}
+          </div>
+        )}
+
+        <Button onClick={onSignOut} variant="ghost" className="mt-4 w-full text-xs">تسجيل خروج</Button>
       </div>
     </div>
   );

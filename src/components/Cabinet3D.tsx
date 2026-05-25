@@ -106,26 +106,28 @@ export function Cabinet3D({ block, defaultColor }: Props) {
           // المقبض في الجانب الداخلي للضلفة (تجاه مركز الوحدة)
           const handleX = i < doors / 2 ? eachW / 2 - 2.5 : -eachW / 2 + 2.5;
           return (
-            <group key={`door${i}`} position={[x, yBase, D / 2 + DOOR_T / 2]}>
+            <group key={`door${i}`} position={[x, yBase, D / 2 + DOOR_T / 2 + zFightGap]}>
               <mesh>
                 <boxGeometry args={[eachW, totalDoorH - GAP, DOOR_T]} />
                 {isGlass ? (
-                  <meshPhysicalMaterial color="#a8c5d8" roughness={0.05} transmission={0.7} thickness={0.5} transparent opacity={0.55} metalness={0.1} />
+                  <meshStandardMaterial color="#9eb8c6" roughness={0.18} transparent opacity={0.42} polygonOffset polygonOffsetFactor={-1} polygonOffsetUnits={-1} />
                 ) : (
-                  <meshStandardMaterial color={bodyColor} roughness={0.58} metalness={0.04} />
+                  <meshStandardMaterial color={bodyColor} roughness={0.64} metalness={0.02} polygonOffset polygonOffsetFactor={-1} polygonOffsetUnits={-1} />
                 )}
               </mesh>
               {/* إطار خشبي للزجاج */}
               {isGlass && (
-                <mesh>
-                  <boxGeometry args={[eachW, totalDoorH - GAP, DOOR_T * 0.6]} />
-                  <meshStandardMaterial color={bodyColor} roughness={0.6} wireframe />
-                </mesh>
+                <group position={[0, 0, DOOR_T / 2 + 0.08]}>
+                  <mesh position={[0, (totalDoorH - GAP) / 2 - 1.2, 0]}><boxGeometry args={[eachW, 1.4, 0.7]} /><meshStandardMaterial color={bodyColor} roughness={0.7} /></mesh>
+                  <mesh position={[0, -(totalDoorH - GAP) / 2 + 1.2, 0]}><boxGeometry args={[eachW, 1.4, 0.7]} /><meshStandardMaterial color={bodyColor} roughness={0.7} /></mesh>
+                  <mesh position={[-eachW / 2 + 1.2, 0, 0]}><boxGeometry args={[1.4, totalDoorH - GAP, 0.7]} /><meshStandardMaterial color={bodyColor} roughness={0.7} /></mesh>
+                  <mesh position={[eachW / 2 - 1.2, 0, 0]}><boxGeometry args={[1.4, totalDoorH - GAP, 0.7]} /><meshStandardMaterial color={bodyColor} roughness={0.7} /></mesh>
+                </group>
               )}
               {/* مقبض عمودي */}
               <mesh position={[handleX, 0, DOOR_T / 2 + HANDLE_T / 2]}>
                 <boxGeometry args={[1.2, Math.min(15, totalDoorH * 0.3), HANDLE_T]} />
-                <meshStandardMaterial color="#d4b572" roughness={0.3} metalness={0.7} />
+                <meshStandardMaterial color="#c7a15a" roughness={0.45} metalness={0.35} />
               </mesh>
             </group>
           );
@@ -134,17 +136,17 @@ export function Cabinet3D({ block, defaultColor }: Props) {
 
       {/* رخامة للوحدات السفلية */}
       {block.placement === "base" && (
-        <mesh position={[0, H / 2 + 1.5, FRONT_INSET / 2]}>
+          <mesh position={[0, H / 2 + 1.5, FRONT_INSET / 2 + zFightGap]}>
           <boxGeometry args={[W + 2, 3, D + FRONT_INSET]} />
-          <meshStandardMaterial color="#e8e0d0" roughness={0.3} metalness={0.1} />
+            <meshStandardMaterial color="#d8cfbf" roughness={0.55} metalness={0.02} />
         </mesh>
       )}
 
       {/* قاعدة للوحدات السفلية */}
       {block.placement === "base" && (
-        <mesh position={[0, -H / 2 + 5, D / 2 - 2]}>
+          <mesh position={[0, -H / 2 + 5, D / 2 - 2 - zFightGap]}>
           <boxGeometry args={[W, 10, 4]} />
-          <meshStandardMaterial color="#1a1208" roughness={1} />
+            <meshStandardMaterial color="#211b16" roughness={1} />
         </mesh>
       )}
     </group>

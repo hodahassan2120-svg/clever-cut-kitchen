@@ -33,8 +33,8 @@ function RodsPage() {
   const stocks = useInventory ? invStocks : manualStocks;
 
   const run = () => {
-    const validStocks = stocks.filter((s) => s.length > 0 && s.quantity > 0);
-    const validPieces = pieces.filter((p) => p.length > 0 && p.quantity > 0);
+    const validStocks = stocks.filter((s) => s.length > 0 && s.quantity > 0 && (useInventory || (s.width || 0) > 0));
+    const validPieces = pieces.filter((p) => p.length > 0 && (p.width || 0) > 0 && p.quantity > 0);
     if (validStocks.length === 0) return toast.error(useInventory ? "لا توجد أعواد صالحة في المخزون" : "أضف عوداً واحداً على الأقل");
     if (validPieces.length === 0) return toast.error("أضف قطعة واحدة على الأقل");
     setResult(cutRods(validStocks, validPieces));
@@ -70,7 +70,7 @@ function RodsPage() {
                       <TableRow key={s.id}>
                         <TableCell><Input className="h-10 min-w-28" value={s.name} onChange={(e) => updStock(i, { name: e.target.value })} /></TableCell>
                         <TableCell><Input className="h-10 min-w-24 text-base tabular-nums" inputMode="decimal" type="number" min="0" placeholder="0" value={s.length || ""} onChange={(e) => updStock(i, { length: +e.target.value })} /></TableCell>
-                        <TableCell><Input className="h-10 min-w-20 text-base tabular-nums" inputMode="decimal" type="number" min="0" placeholder="0" disabled value="—" /></TableCell>
+                        <TableCell><Input className="h-10 min-w-20 text-base tabular-nums" inputMode="decimal" type="number" min="0" placeholder="0" value={s.width || ""} onChange={(e) => updStock(i, { width: +e.target.value })} /></TableCell>
                         <TableCell><Input className="h-10 min-w-20 text-base tabular-nums" inputMode="numeric" type="number" min="1" placeholder="1" value={s.quantity || ""} onChange={(e) => updStock(i, { quantity: +e.target.value })} /></TableCell>
                         <TableCell><Button size="icon" variant="ghost" className="h-10 w-10" onClick={() => setManualStocks(manualStocks.filter((_, j) => j !== i))}><Trash2 className="size-4 text-destructive" /></Button></TableCell>
                       </TableRow>
@@ -78,7 +78,7 @@ function RodsPage() {
                   </TableBody>
                 </Table>
               </div>
-              <Button onClick={() => setManualStocks([...manualStocks, { id: crypto.randomUUID(), name: `عود ${manualStocks.length + 1}`, length: 0, quantity: 1 }])} variant="outline" size="sm" className="mt-3"><Plus className="size-3.5" /> إضافة عود</Button>
+              <Button onClick={() => setManualStocks([...manualStocks, { id: crypto.randomUUID(), name: `عود ${manualStocks.length + 1}`, length: 0, width: 0, quantity: 1 }])} variant="outline" size="sm" className="mt-3"><Plus className="size-3.5" /> إضافة عود</Button>
             </div>
           )}
 
@@ -93,7 +93,7 @@ function RodsPage() {
                       <TableRow key={p.id}>
                         <TableCell><Input className="h-10 min-w-28" value={p.label} onChange={(e) => updPiece(i, { label: e.target.value })} /></TableCell>
                         <TableCell><Input className="h-10 min-w-24 text-base tabular-nums" inputMode="decimal" type="number" min="0" placeholder="0" value={p.length || ""} onChange={(e) => updPiece(i, { length: +e.target.value })} /></TableCell>
-                        <TableCell><Input className="h-10 min-w-20 text-base tabular-nums" inputMode="decimal" type="number" min="0" placeholder="0" disabled value="—" /></TableCell>
+                        <TableCell><Input className="h-10 min-w-20 text-base tabular-nums" inputMode="decimal" type="number" min="0" placeholder="0" value={p.width || ""} onChange={(e) => updPiece(i, { width: +e.target.value })} /></TableCell>
                         <TableCell><Input className="h-10 min-w-20 text-base tabular-nums" inputMode="numeric" type="number" min="1" placeholder="1" value={p.quantity || ""} onChange={(e) => updPiece(i, { quantity: +e.target.value })} /></TableCell>
                         <TableCell><Button size="icon" variant="ghost" className="h-10 w-10" onClick={() => setPieces(pieces.filter((_, j) => j !== i))}><Trash2 className="size-4 text-destructive" /></Button></TableCell>
                       </TableRow>
@@ -101,7 +101,7 @@ function RodsPage() {
                   </TableBody>
                 </Table>
               </div>
-            <Button onClick={() => setPieces([...pieces, { id: crypto.randomUUID(), label: `قطعة ${pieces.length + 1}`, length: 0, quantity: 1 }])} variant="outline" size="sm" className="mt-3"><Plus className="size-3.5" /> إضافة قطعة</Button>
+            <Button onClick={() => setPieces([...pieces, { id: crypto.randomUUID(), label: `قطعة ${pieces.length + 1}`, length: 0, width: 0, quantity: 1 }])} variant="outline" size="sm" className="mt-3"><Plus className="size-3.5" /> إضافة قطعة</Button>
             <Button onClick={run} className="w-full mt-4 bg-gradient-primary shadow-glow"><Scissors className="size-4" /> حساب التقطيع</Button>
           </div>
         </div>

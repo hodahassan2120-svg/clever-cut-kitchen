@@ -832,18 +832,11 @@ function DesignEditor() {
               </Button>
             )}
 
-            {/* لوحة تحريك الوحدة المحددة في الـ 3D */}
+            {/* لوحة الوحدة المحددة في الـ 3D */}
             {selected && (
               <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 bg-card/95 backdrop-blur border border-border/60 rounded-xl shadow-glow p-1.5 max-w-[calc(100%-1rem)]">
-                <span className="text-[11px] font-bold px-2 truncate max-w-[100px]">{selected.name}</span>
-                <div className="flex items-center gap-0.5">
-                  <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => nudgeSelected(-NUDGE, 0)} title="يسار"><ArrowLeft className="size-3.5" /></Button>
-                  <div className="flex flex-col gap-0.5">
-                    <Button size="icon" variant="outline" className="h-7 w-8" onClick={() => nudgeSelected(0, -NUDGE)} title="للخلف"><ArrowUp className="size-3.5" /></Button>
-                    <Button size="icon" variant="outline" className="h-7 w-8" onClick={() => nudgeSelected(0, NUDGE)} title="للأمام"><ArrowDown className="size-3.5" /></Button>
-                  </div>
-                  <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => nudgeSelected(NUDGE, 0)} title="يمين"><ArrowRight className="size-3.5" /></Button>
-                </div>
+                <span className="text-[11px] font-bold px-2 truncate max-w-[140px]">{selected.name}</span>
+                <span className="text-[10px] text-muted-foreground px-1 hidden sm:inline">اسحب الوحدة لتحريكها</span>
                 <Button size="sm" variant="outline" className="h-8 px-2 gap-1" onClick={() => rotateBlock(selected.id, 90)} title="تدوير 90°">
                   <RotateCw className="size-3.5" />
                 </Button>
@@ -864,7 +857,7 @@ function DesignEditor() {
               dpr={[1, 1.5]}
               gl={{ antialias: true, powerPreference: "default", preserveDrawingBuffer: true, alpha: false }}
               frameloop="demand"
-              onPointerMissed={() => setSelectedId(null)}
+              onPointerMissed={() => { if (!dragRef.current) setSelectedId(null); }}
             >
               <SceneCamera view={view3d} roomWidth={doc.roomWidth} roomDepth={doc.roomDepth} />
               <color attach="background" args={["#f3eee6"]} />
@@ -886,8 +879,43 @@ function DesignEditor() {
                 const wallMounted = b.placement === "wall" || b.type.startsWith("wall_") || b.type === "appl_hood" || b.type === "appl_hood_chimney" || b.type === "appl_microwave_built" || b.type === "special_window";
                 const vy = wallMounted ? 145 : 0;
                 const isSel = selectedId === b.id;
+                const onDown = (e: ThreeEvent<PointerEvent>) => {
+                  e.stopPropagation();
+                  setSelectedId(b.id);
+                  // مستوى أفقي على ارتفاع منتصف الوحدة لحساب نقطة السحب
+                  const planeY = vy + b.height / 2;
+                  const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -planeY);
+                  const point = new THREE.Vector3();
+                  if (!e.ray.intersectPlane(plane, point)) return;
+                  dragRef.current = {
+                    id: b.id,
+                    offsetX: point.x - b.x,
+                    offsetZ: point.z - b.y,
+                    plane,
+                    moved: false,
+                  };
+                  setIsDragging3d(true);
+                  (e.target as Element).setPointerCapture?.(e.pointerId);
+                };
+                const onMove = (e: ThreeEvent<PointerEvent>) => {
+                  const d = dragRef.current;
+                  if (!d || d.id !== b.id) return;
+                  const point = new THREE.Vector3();
+                  if (!e.ray.intersectPlane(d.plane, point)) return;
+                  const nx = Math.round(point.x - d.offsetX);
+                  const nz = Math.round(point.z - d.offsetZ);
+                  d.moved = true;
+                  updateBlock(b.id, { x: nx, y: nz });
+                };
+                const onUp = (e: ThreeEvent<PointerEvent>) => {
+                  if (dragRef.current?.id === b.id) {
+                    dragRef.current = null;
+                    setIsDragging3d(false);
+                    (e.target as Element).releasePointerCapture?.(e.pointerId);
+                  }
+                };
                 return (
-                  <group key={b.id} onPointerDown={(e) => { e.stopPropagation(); setSelectedId(b.id); }}>
+                  <group key={b.id} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
                     <Cabinet3D block={b} defaultColor={isPaintableBlock(b) ? (doc.globalColor || b.color) : b.color} marbleColor={doc.marbleColor} />
                     {isSel && (
                       <mesh position={[b.x + b.width / 2, vy + b.height / 2, b.y + b.depth / 2]} rotation={[0, (-b.rotation * Math.PI) / 180, 0]}>
@@ -898,8 +926,9 @@ function DesignEditor() {
                   </group>
                 );
               })}
-              <OrbitControls target={[doc.roomWidth / 2, 80, doc.roomDepth / 2]} maxPolarAngle={Math.PI / 2.05} makeDefault enabled={view3d === "perspective"} />
+              <OrbitControls ref={orbitRef} target={[doc.roomWidth / 2, 80, doc.roomDepth / 2]} maxPolarAngle={Math.PI / 2.05} makeDefault enabled={view3d === "perspective" && !isDragging3d} />
             </Canvas>
+
           </TabsContent>
 
 

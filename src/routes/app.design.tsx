@@ -26,6 +26,26 @@ export const Route = createFileRoute("/app/design")({
   validateSearch: (s: Record<string, unknown>) => ({ id: typeof s.id === "string" ? s.id : undefined }),
 });
 
+function SceneCamera({ view, roomWidth, roomDepth }: { view: "perspective" | "top" | "front" | "right" | "left"; roomWidth: number; roomDepth: number }) {
+  const { camera, invalidate } = useThree();
+  useEffect(() => {
+    const target: [number, number, number] = [roomWidth / 2, 80, roomDepth / 2];
+    const maxDim = Math.max(roomWidth, roomDepth, 260);
+    const positions: Record<typeof view, [number, number, number]> = {
+      perspective: [roomWidth, roomDepth * 1.2, roomDepth * 1.4],
+      top: [roomWidth / 2, maxDim * 1.8, roomDepth / 2 + 0.01],
+      front: [roomWidth / 2, 130, -maxDim * 1.4],
+      right: [roomWidth + maxDim * 1.2, 130, roomDepth / 2],
+      left: [-maxDim * 1.2, 130, roomDepth / 2],
+    };
+    camera.position.set(...positions[view]);
+    camera.lookAt(...target);
+    camera.updateProjectionMatrix();
+    invalidate();
+  }, [camera, invalidate, roomDepth, roomWidth, view]);
+  return null;
+}
+
 function DesignEditor() {
   const { user } = useAuth();
   const { id } = Route.useSearch();

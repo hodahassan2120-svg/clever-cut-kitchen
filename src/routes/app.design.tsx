@@ -68,6 +68,10 @@ function DesignEditor() {
   const [view3d, setView3d] = useState<"perspective" | "top" | "front" | "right" | "left">("perspective");
   const stageWrapRef = useRef<HTMLDivElement>(null);
   const [stageSize, setStageSize] = useState({ w: 360, h: 400 });
+  const [aiRendering, setAiRendering] = useState(false);
+  const [aiResultUrl, setAiResultUrl] = useState<string | null>(null);
+  const callRender = useServerFn(renderRealistic);
+
 
   useEffect(() => {
     if (!id || !user) return;

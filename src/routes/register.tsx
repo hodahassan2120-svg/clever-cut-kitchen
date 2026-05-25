@@ -34,7 +34,10 @@ function Register() {
       },
     });
     setLoading(false);
-    if (error) return toast.error(error.message.includes("already") ? "هذا الرقم مسجل بالفعل" : "تعذر التسجيل: " + error.message);
+    if (error) {
+      console.error("register error:", error);
+      return toast.error(error.message.includes("already") ? "هذا الرقم مسجل بالفعل" : "تعذر التسجيل، يرجى المحاولة مرة أخرى");
+    }
     await refresh();
     toast.success("تم إنشاء حسابك! تجربة مجانية 7 أيام");
     navigate({ to: "/app/design" });

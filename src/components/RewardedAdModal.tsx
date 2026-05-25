@@ -22,6 +22,7 @@ export function RewardedAdModal({
   const [zone, setZone] = useState<string | null>(null);
   const [enabled, setEnabled] = useState(false);
   const [opened, setOpened] = useState(false);
+  const [adVerified, setAdVerified] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(WATCH_SECONDS);
   const [claiming, setClaiming] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -38,8 +39,19 @@ export function RewardedAdModal({
         setEnabled(!!data?.rewarded_ads_enabled);
       });
     setOpened(false);
+    setAdVerified(false);
     setSecondsLeft(WATCH_SECONDS);
   }, [open]);
+
+  // Detect if user actually switched to the ad tab (page hidden) — proves the ad opened
+  useEffect(() => {
+    if (!opened || !open) return;
+    const onVisibility = () => {
+      if (document.hidden) setAdVerified(true);
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [opened, open]);
 
   useEffect(() => {
     if (!opened) return;
@@ -61,6 +73,10 @@ export function RewardedAdModal({
 
   const claim = async () => {
     if (!user) return;
+    if (!adVerified) {
+      toast.error("لازم تفتح الإعلان فعلاً وترجع — جرب اضغط 'مشاهدة الإعلان' تاني");
+      return;
+    }
     setClaiming(true);
     const { data, error } = await supabase.rpc("grant_rewarded_ad_credit", { _user_id: user.id });
     setClaiming(false);

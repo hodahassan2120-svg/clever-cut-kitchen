@@ -94,7 +94,7 @@ function DesignEditor() {
     const ro = new ResizeObserver(update);
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [editorStarted]);
 
   // Auto-fit scale: room fits inside stageSize with padding
   const PAD = 40;
@@ -162,6 +162,8 @@ function DesignEditor() {
 
   const toUnit = (cm: number) => (unit === "m" ? (cm / 100).toFixed(2) : cm.toString());
   const fromUnit = (v: string) => (unit === "m" ? parseFloat(v) * 100 : parseFloat(v));
+  const isPaintableBlock = (b: PlacedBlock) => !!b.placement || b.type.startsWith("base_") || b.type.startsWith("wall_") || b.type.startsWith("tall_") || b.type === "special_island";
+  const blockColor = (b: PlacedBlock) => b.customColor || !isPaintableBlock(b) ? b.color : (doc.globalColor || b.color);
 
   const roomPolygon = () => {
     const cw = doc.roomShape === "l_shape" ? Math.max(0, doc.cutoutWidth || 0) : 0;

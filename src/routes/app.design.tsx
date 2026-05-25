@@ -331,22 +331,46 @@ function DesignEditor() {
                   {Array.from({ length: Math.floor(doc.roomDepth / 50) }).map((_, i) => (
                     <Line key={`h${i}`} points={[PAD, PAD + (i + 1) * 50 * scale, PAD + doc.roomWidth * scale, PAD + (i + 1) * 50 * scale]} stroke="#333" strokeWidth={0.5} />
                   ))}
-                  {doc.blocks.map((b) => (
-                    <Group
-                      key={b.id}
-                      x={PAD + b.x * scale}
-                      y={PAD + b.y * scale}
-                      rotation={b.rotation}
-                      draggable
-                      onClick={() => setSelectedId(b.id)}
-                      onTap={() => setSelectedId(b.id)}
-                      onDragEnd={(e) => updateBlock(b.id, { x: (e.target.x() - PAD) / scale, y: (e.target.y() - PAD) / scale })}
-                    >
-                      <Rect width={b.width * scale} height={b.depth * scale} fill={b.color} stroke={selectedId === b.id ? "#f59e0b" : "#000"} strokeWidth={selectedId === b.id ? 3 : 1} cornerRadius={3} />
-                      <KText text={b.name} fontSize={10} fill="#000" padding={3} width={b.width * scale} align="center" y={Math.max(2, b.depth * scale / 2 - 10)} />
-                      <KText text={`${Math.round(b.width)}×${Math.round(b.depth)}`} fontSize={9} fill="#1a1a1a" padding={2} width={b.width * scale} align="center" y={b.depth * scale - 12} />
-                    </Group>
-                  ))}
+                  {doc.blocks.map((b) => {
+                    const fill = b.customColor ? b.color : (doc.globalColor || b.color);
+                    const W = b.width * scale;
+                    const H = b.depth * scale;
+                    const doors = Math.max(0, Math.min(4, b.doors || 0));
+                    const drawers = Math.max(0, Math.min(4, b.drawers || 0));
+                    return (
+                      <Group
+                        key={b.id}
+                        x={PAD + b.x * scale}
+                        y={PAD + b.y * scale}
+                        rotation={b.rotation}
+                        draggable
+                        onClick={() => setSelectedId(b.id)}
+                        onTap={() => setSelectedId(b.id)}
+                        onDragEnd={(e) => updateBlock(b.id, { x: (e.target.x() - PAD) / scale, y: (e.target.y() - PAD) / scale })}
+                      >
+                        <Rect width={W} height={H} fill={fill} stroke={selectedId === b.id ? "#f59e0b" : "#000"} strokeWidth={selectedId === b.id ? 3 : 1} cornerRadius={3} />
+                        {/* خطوط تقسيم الضلف عمودياً */}
+                        {doors > 1 && Array.from({ length: doors - 1 }).map((_, i) => (
+                          <Line key={`vd${i}`} points={[((i + 1) * W) / doors, drawers > 0 ? H * 0.3 : 0, ((i + 1) * W) / doors, H]} stroke="#000" strokeWidth={0.8} opacity={0.6} />
+                        ))}
+                        {/* خط فاصل بين الأدراج والضلف */}
+                        {drawers > 0 && doors > 0 && <Line points={[0, H * 0.3, W, H * 0.3]} stroke="#000" strokeWidth={1} opacity={0.7} />}
+                        {/* خطوط تقسيم الأدراج أفقياً */}
+                        {drawers > 1 && Array.from({ length: drawers - 1 }).map((_, i) => {
+                          const drawerArea = doors > 0 ? H * 0.3 : H;
+                          return <Line key={`hd${i}`} points={[0, ((i + 1) * drawerArea) / drawers, W, ((i + 1) * drawerArea) / drawers]} stroke="#000" strokeWidth={0.6} opacity={0.5} />;
+                        })}
+                        {/* مؤشر الزجاج */}
+                        {b.glass && doors > 0 && (
+                          <Rect x={W * 0.15} y={drawers > 0 ? H * 0.45 : H * 0.2} width={W * 0.7} height={drawers > 0 ? H * 0.4 : H * 0.6} fill="#a8c5d8" opacity={0.4} cornerRadius={2} />
+                        )}
+                        {/* علامة الركنية */}
+                        {b.corner && <Line points={[0, 0, W * 0.3, 0, 0, H * 0.3]} stroke="#f59e0b" strokeWidth={2} closed fill="#f59e0b" opacity={0.3} />}
+                        <KText text={b.name} fontSize={9} fontStyle="bold" fill="#000" padding={2} width={W} align="center" y={Math.max(2, H / 2 - 6)} />
+                        <KText text={`${Math.round(b.width)}×${Math.round(b.depth)}`} fontSize={8} fill="#1a1a1a" padding={2} width={W} align="center" y={H - 11} />
+                      </Group>
+                    );
+                  })}
                 </Layer>
               </Stage>
             </div>

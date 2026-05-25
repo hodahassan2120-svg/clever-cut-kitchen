@@ -524,7 +524,7 @@ function DesignEditor() {
             <div ref={stageWrapRef} className="w-full h-full">
               <Stage width={stageSize.w} height={stageSize.h} onMouseDown={(e) => { if (e.target === e.target.getStage()) setSelectedId(null); }}>
                 <Layer>
-                  <Rect x={PAD} y={PAD} width={doc.roomWidth * scale} height={doc.roomDepth * scale} fill="#1a1a1a" stroke="#c2956b" strokeWidth={2} />
+                  <Line points={roomPolygon().map((p, i) => (i % 2 === 0 ? PAD + p * scale : PAD + p * scale))} fill="#1a1a1a" stroke="#c2956b" strokeWidth={2} closed />
                   {Array.from({ length: Math.floor(doc.roomWidth / 50) }).map((_, i) => (
                     <Line key={`v${i}`} points={[PAD + (i + 1) * 50 * scale, PAD, PAD + (i + 1) * 50 * scale, PAD + doc.roomDepth * scale]} stroke="#333" strokeWidth={0.5} />
                   ))}
@@ -546,7 +546,10 @@ function DesignEditor() {
                         draggable
                         onClick={() => setSelectedId(b.id)}
                         onTap={() => setSelectedId(b.id)}
-                        onDragEnd={(e) => updateBlock(b.id, { x: (e.target.x() - PAD) / scale, y: (e.target.y() - PAD) / scale })}
+                         onDragEnd={(e) => {
+                           const moved = snapBlockToWall({ ...b, x: (e.target.x() - PAD) / scale, y: (e.target.y() - PAD) / scale });
+                           setDoc({ ...doc, blocks: doc.blocks.map((item) => (item.id === b.id ? moved : item)) });
+                         }}
                       >
                         <Rect width={W} height={H} fill={fill} stroke={selectedId === b.id ? "#f59e0b" : "#000"} strokeWidth={selectedId === b.id ? 3 : 1} cornerRadius={3} />
                         {/* خطوط تقسيم الضلف عمودياً */}

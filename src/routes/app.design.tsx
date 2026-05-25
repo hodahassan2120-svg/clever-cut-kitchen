@@ -138,6 +138,16 @@ function DesignEditor() {
 
   const BlocksPanel = (
     <div className="space-y-4">
+      <button
+        onClick={() => setBuilderOpen(true)}
+        className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-gradient-primary text-primary-foreground font-bold text-sm shadow-glow hover:opacity-90 transition"
+      >
+        <Wand2 className="size-4" />
+        إنشاء وحدة مخصصة
+      </button>
+      <div className="text-[10px] text-muted-foreground text-center -mt-2">اختر الضلف، الأدراج، الزجاج، الركنية…</div>
+
+      <div className="text-[11px] font-bold text-muted-foreground px-1 pt-2 border-t border-border/40">أو اختر من القوالب الجاهزة:</div>
       {groupedBlocks.map((g) => (
         <div key={g.cat}>
           <h3 className="text-[11px] font-bold text-muted-foreground mb-2 px-1 sticky top-0 bg-card/80 backdrop-blur py-1">{g.label}</h3>

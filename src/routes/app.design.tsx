@@ -238,6 +238,29 @@ function DesignEditor() {
     }, 180);
   };
 
+  const generateRealisticRender = async () => {
+    setView3d("perspective");
+    await new Promise((r) => setTimeout(r, 220));
+    const canvas = document.querySelector<HTMLCanvasElement>("[data-design-3d] canvas");
+    if (!canvas) return toast.error("تعذر التقاط لقطة 3D");
+    const dataUrl = canvas.toDataURL("image/png");
+    setAiRendering(true);
+    setAiResultUrl(null);
+    try {
+      const res = await callRender({ data: { imageDataUrl: dataUrl } });
+      setAiResultUrl(res.imageDataUrl);
+      toast.success("تم توليد الصورة الواقعية");
+    } catch (err) {
+      console.error("[ai render] failed", err);
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.includes("RATE_LIMIT")) toast.error("تم تجاوز الحد المسموح، حاول بعد قليل");
+      else if (msg.includes("NO_CREDITS")) toast.error("نفذت الرصيد الذكاء الاصطناعي، يرجى التواصل مع الأدمن");
+      else toast.error("تعذر توليد الصورة، حاول مرة أخرى");
+    } finally {
+      setAiRendering(false);
+    }
+  };
+
   const toUnit = (cm: number) => (unit === "m" ? (cm / 100).toFixed(2) : cm.toString());
   const fromUnit = (v: string) => (unit === "m" ? parseFloat(v) * 100 : parseFloat(v));
   const isPaintableBlock = (b: PlacedBlock) => !!b.placement || b.type.startsWith("base_") || b.type.startsWith("wall_") || b.type.startsWith("tall_") || b.type === "special_island";

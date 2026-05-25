@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { useEffect, useState } from "react";
+import { useThree } from "@react-three/fiber";
 import { getTexture } from "@/lib/textures";
 
 interface Props {
@@ -45,19 +46,29 @@ export function TexturedMaterial({
   metalness = 0.05,
 }: Props) {
   const tex = getTexture(textureId);
-  const [map, setMap] = useState<THREE.Texture | null>(() => (tex ? cache.get(tex.url) ?? null : null));
+  const { invalidate } = useThree();
+  const [map, setMap] = useState<THREE.Texture | null>(null);
 
   useEffect(() => {
     if (!tex) {
       setMap(null);
+      invalidate();
       return;
     }
     let cancelled = false;
     loadCached(tex.url).then((t) => {
-      if (!cancelled) setMap(t);
+      if (cancelled) return;
+      const clone = t.clone();
+      clone.wrapS = THREE.RepeatWrapping;
+      clone.wrapT = THREE.RepeatWrapping;
+      clone.anisotropy = t.anisotropy;
+      clone.colorSpace = THREE.SRGBColorSpace;
+      clone.needsUpdate = true;
+      setMap(clone);
+      invalidate();
     }).catch(() => { /* ignore */ });
     return () => { cancelled = true; };
-  }, [tex]);
+  }, [tex, invalidate]);
 
   useEffect(() => {
     if (!map || !tex) return;
@@ -65,7 +76,8 @@ export function TexturedMaterial({
     const ry = Math.max(1, surfaceHeightCm / tex.realSizeCm);
     map.repeat.set(rx, ry);
     map.needsUpdate = true;
-  }, [map, tex, surfaceWidthCm, surfaceHeightCm]);
+    invalidate();
+  }, [map, tex, surfaceWidthCm, surfaceHeightCm, invalidate]);
 
   if (!tex || !map) {
     return <meshStandardMaterial key={`fb-${fallbackColor}`} color={fallbackColor} roughness={roughness} metalness={metalness} />;

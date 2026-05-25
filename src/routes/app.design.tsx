@@ -17,7 +17,8 @@ import { Cabinet3D } from "@/components/Cabinet3D";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { Save, Plus, Trash2, LayoutGrid, Settings2, Wand2, Palette, FolderOpen, Ruler, PenLine } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { Save, Plus, Trash2, LayoutGrid, Settings2, Wand2, Palette, FolderOpen, Ruler, PenLine, RotateCw, Pencil, X } from "lucide-react";
 import type Konva from "konva";
 
 export const Route = createFileRoute("/app/design")({
@@ -37,6 +38,8 @@ function DesignEditor() {
   const [pendingDims, setPendingDims] = useState({ width: "", depth: "", height: "", notes: "" });
   const [builderOpen, setBuilderOpen] = useState(false);
   const [editorStarted, setEditorStarted] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDims, setEditDims] = useState({ width: "", depth: "", height: "", notes: "" });
   const [setupRoom, setSetupRoom] = useState({ name: "تصميم جديد", width: "400", depth: "300", shape: "rectangle" as "rectangle" | "l_shape", cutoutWidth: "100", cutoutDepth: "100" });
   const [savedRows, setSavedRows] = useState<{ id: string; name: string; updated_at: string }[]>([]);
   const stageWrapRef = useRef<HTMLDivElement>(null);
@@ -143,18 +146,41 @@ function DesignEditor() {
     setDoc({ ...doc, blocks: doc.blocks.filter((b) => b.id !== id) });
     setSelectedId(null);
   };
+  const rotateBlock = (id: string, delta: number) => {
+    const b = doc.blocks.find((x) => x.id === id);
+    if (!b) return;
+    updateBlock(id, { rotation: ((b.rotation || 0) + delta + 360) % 360 });
+  };
+  const openEditDialog = (b: PlacedBlock) => {
+    setEditingId(b.id);
+    setEditDims({
+      width: toUnit(b.width),
+      depth: toUnit(b.depth),
+      height: toUnit(b.height),
+      notes: b.notes || "",
+    });
+  };
+  const confirmEdit = () => {
+    if (!editingId) return;
+    const w = fromUnit(editDims.width), d = fromUnit(editDims.depth), h = fromUnit(editDims.height);
+    if (!w || !d || !h) return toast.error("أدخل جميع المقاسات");
+    updateBlock(editingId, { width: w, depth: d, height: h, notes: editDims.notes || undefined });
+    setEditingId(null);
+    toast.success("تم تعديل الوحدة");
+  };
 
   const selected = doc.blocks.find((b) => b.id === selectedId);
 
   const save = async () => {
-    if (!user) return;
+    if (!user) return toast.error("سجل الدخول أولاً");
+    if (!name.trim()) return toast.error("اكتب اسماً للتصميم");
     if (designId) {
       const { error } = await supabase.from("designs").update({ name, data: doc as any, updated_at: new Date().toISOString() }).eq("id", designId);
-      if (error) return toast.error("تعذر الحفظ");
+      if (error) return toast.error(error.message.includes("subscription") || error.message.includes("policy") ? "انتهت الفترة التجريبية — اطلب تفعيل الحساب" : "تعذر الحفظ: " + error.message);
       toast.success("تم تحديث التصميم");
     } else {
       const { data, error } = await supabase.from("designs").insert({ user_id: user.id, name, data: doc as any }).select("id").single();
-      if (error) return toast.error("تعذر الحفظ");
+      if (error) return toast.error(error.message.includes("subscription") || error.message.includes("policy") ? "انتهت الفترة التجريبية — اطلب تفعيل الحساب" : "تعذر الحفظ: " + error.message);
       setDesignId(data.id);
       toast.success("تم حفظ التصميم");
     }
@@ -334,8 +360,19 @@ function DesignEditor() {
             <Input type="number" value={toUnit(selected.height)} onChange={(e) => updateBlock(selected.id, { height: fromUnit(e.target.value) || 0 })} />
           </div>
           <div>
-            <Label className="text-xs">الدوران (درجة)</Label>
-            <Input type="number" value={selected.rotation} onChange={(e) => updateBlock(selected.id, { rotation: parseFloat(e.target.value) || 0 })} />
+            <Label className="text-xs flex items-center justify-between">
+              <span>الدوران: {Math.round(selected.rotation)}°</span>
+              <span className="flex gap-1">
+                <Button size="sm" variant="outline" className="h-6 px-1.5 text-[10px]" onClick={() => rotateBlock(selected.id, -15)}>-15°</Button>
+                <Button size="sm" variant="outline" className="h-6 px-1.5 text-[10px]" onClick={() => rotateBlock(selected.id, 90)}>+90°</Button>
+              </span>
+            </Label>
+            <Slider
+              value={[((selected.rotation % 360) + 360) % 360]}
+              min={0} max={360} step={1}
+              onValueChange={(v) => updateBlock(selected.id, { rotation: v[0] })}
+              className="mt-2"
+            />
           </div>
           {/* لون خاص للوحدة */}
           <div className="p-2 rounded-lg border border-border/40 bg-muted/20 space-y-2">
@@ -522,7 +559,7 @@ function DesignEditor() {
             <TabsTrigger value="2d">2D</TabsTrigger>
             <TabsTrigger value="3d">3D</TabsTrigger>
           </TabsList>
-          <TabsContent value="2d" className="flex-1 overflow-hidden bg-muted/20 m-0 min-h-0">
+          <TabsContent value="2d" className="flex-1 overflow-hidden bg-muted/20 m-0 min-h-0 relative">
             <div ref={stageWrapRef} className="w-full h-full">
               <Stage width={stageSize.w} height={stageSize.h} onMouseDown={(e) => { if (e.target === e.target.getStage()) setSelectedId(null); }}>
                 <Layer>
@@ -533,6 +570,26 @@ function DesignEditor() {
                   {Array.from({ length: Math.floor(doc.roomDepth / 50) }).map((_, i) => (
                     <Line key={`h${i}`} points={[PAD, PAD + (i + 1) * 50 * scale, PAD + doc.roomWidth * scale, PAD + (i + 1) * 50 * scale]} stroke="#333" strokeWidth={0.5} />
                   ))}
+                  {/* قياسات الجدران */}
+                  <KText text={`${toUnit(doc.roomWidth)} ${unit}`} fontSize={13} fontStyle="bold" fill="#f59e0b" x={PAD} y={PAD - 18} width={doc.roomWidth * scale} align="center" />
+                  <KText text={`${toUnit(doc.roomWidth)} ${unit}`} fontSize={13} fontStyle="bold" fill="#f59e0b" x={PAD} y={PAD + doc.roomDepth * scale + 4} width={doc.roomWidth * scale} align="center" />
+                  <KText text={`${toUnit(doc.roomDepth)} ${unit}`} fontSize={13} fontStyle="bold" fill="#f59e0b" x={PAD - 38} y={PAD + (doc.roomDepth * scale) / 2 - 7} width={32} align="right" />
+                  <KText text={`${toUnit(doc.roomDepth)} ${unit}`} fontSize={13} fontStyle="bold" fill="#f59e0b" x={PAD + doc.roomWidth * scale + 6} y={PAD + (doc.roomDepth * scale) / 2 - 7} width={50} align="left" />
+                  {/* مقابض سحب الجدران (مستطيلة فقط) */}
+                  {(doc.roomShape || "rectangle") === "rectangle" && (
+                    <>
+                      {/* مقبض الحائط السفلي — لتغيير العمق */}
+                      <Rect x={PAD + (doc.roomWidth * scale) / 2 - 18} y={PAD + doc.roomDepth * scale - 6} width={36} height={12} fill="#f59e0b" cornerRadius={6} draggable
+                        dragBoundFunc={(pos) => ({ x: PAD + (doc.roomWidth * scale) / 2 - 18, y: pos.y })}
+                        onDragEnd={(e) => { const newY = e.target.y() + 6; const newDepth = Math.max(150, Math.round((newY - PAD) / scale / 10) * 10); setDoc({ ...doc, roomDepth: newDepth }); e.target.position({ x: PAD + (doc.roomWidth * scale) / 2 - 18, y: PAD + newDepth * scale - 6 }); }}
+                      />
+                      {/* مقبض الحائط الأيمن — لتغيير العرض */}
+                      <Rect x={PAD + doc.roomWidth * scale - 6} y={PAD + (doc.roomDepth * scale) / 2 - 18} width={12} height={36} fill="#f59e0b" cornerRadius={6} draggable
+                        dragBoundFunc={(pos) => ({ x: pos.x, y: PAD + (doc.roomDepth * scale) / 2 - 18 })}
+                        onDragEnd={(e) => { const newX = e.target.x() + 6; const newWidth = Math.max(150, Math.round((newX - PAD) / scale / 10) * 10); setDoc({ ...doc, roomWidth: newWidth }); e.target.position({ x: PAD + newWidth * scale - 6, y: PAD + (doc.roomDepth * scale) / 2 - 18 }); }}
+                      />
+                    </>
+                  )}
                   {doc.blocks.map((b) => {
                     const fill = blockColor(b);
                     const W = b.width * scale;
@@ -579,6 +636,27 @@ function DesignEditor() {
                 </Layer>
               </Stage>
             </div>
+            {/* شريط أدوات عائم للوحدة المحددة */}
+            {selected && (
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-card/95 backdrop-blur border border-border/60 rounded-xl shadow-glow p-1.5 z-10">
+                <span className="text-xs font-bold px-2 truncate max-w-[120px]">{selected.name}</span>
+                <Button size="sm" variant="outline" className="h-8 px-2 gap-1" onClick={() => rotateBlock(selected.id, -15)} title="تدوير -15°">
+                  <RotateCw className="size-3.5 -scale-x-100" /> <span className="text-[10px]">15°</span>
+                </Button>
+                <Button size="sm" variant="outline" className="h-8 px-2 gap-1" onClick={() => rotateBlock(selected.id, 90)} title="تدوير +90°">
+                  <RotateCw className="size-3.5" /> <span className="text-[10px]">90°</span>
+                </Button>
+                <Button size="sm" variant="outline" className="h-8 px-2 gap-1" onClick={() => openEditDialog(selected)}>
+                  <Pencil className="size-3.5" /> <span className="text-[10px]">تعديل</span>
+                </Button>
+                <Button size="sm" variant="outline" className="h-8 px-2 gap-1 text-destructive hover:bg-destructive/10" onClick={() => removeBlock(selected.id)}>
+                  <Trash2 className="size-3.5" /> <span className="text-[10px]">حذف</span>
+                </Button>
+                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setSelectedId(null)}>
+                  <X className="size-3.5" />
+                </Button>
+              </div>
+            )}
           </TabsContent>
           <TabsContent value="3d" className="flex-1 m-0 bg-gradient-to-b from-zinc-900 to-black min-h-0">
             <Canvas
@@ -673,6 +751,39 @@ function DesignEditor() {
           setSelectedId(placed.id);
         }}
       />
+
+      {/* تعديل وحدة موجودة */}
+      <Dialog open={!!editingId} onOpenChange={(o) => !o && setEditingId(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>تعديل الوحدة</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <Label className="text-xs">العرض ({unit})</Label>
+                <Input type="number" value={editDims.width} onChange={(e) => setEditDims({ ...editDims, width: e.target.value })} autoFocus />
+              </div>
+              <div>
+                <Label className="text-xs">العمق ({unit})</Label>
+                <Input type="number" value={editDims.depth} onChange={(e) => setEditDims({ ...editDims, depth: e.target.value })} />
+              </div>
+              <div>
+                <Label className="text-xs">الارتفاع ({unit})</Label>
+                <Input type="number" value={editDims.height} onChange={(e) => setEditDims({ ...editDims, height: e.target.value })} />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">تفاصيل إضافية</Label>
+              <Textarea value={editDims.notes} onChange={(e) => setEditDims({ ...editDims, notes: e.target.value })} rows={2} />
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setEditingId(null)}>إلغاء</Button>
+            <Button onClick={confirmEdit} className="bg-gradient-primary">حفظ التعديلات</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

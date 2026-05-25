@@ -10,7 +10,8 @@ export function Cabinet3D({ block, defaultColor }: Props) {
   const color = block.customColor ? block.color : (defaultColor || block.color);
   const { width: W, depth: D, height: H } = block;
   const bodyColor = color;
-  const carcassColor = block.placement ? "#2f261c" : color;
+  // الجوانب والأعلى والأسفل بنفس لون الجسم — فقط داخل الوحدة (خلف الواجهة) يكون داكنًا
+  const carcassColor = bodyColor;
 
   // الإحداثيات: المركز عند (x + W/2, H/2, y + D/2)
   const cx = block.x + W / 2;

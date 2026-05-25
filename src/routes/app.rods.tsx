@@ -18,10 +18,8 @@ function RodsPage() {
   const { user } = useAuth();
   const [useInventory, setUseInventory] = useState(false);
   const [invStocks, setInvStocks] = useState<RodStock[]>([]);
-  const [manualStocks, setManualStocks] = useState<RodStock[]>([
-    { id: crypto.randomUUID(), name: "عود", length: 600, quantity: 3 },
-  ]);
-  const [pieces, setPieces] = useState<RodPiece[]>([{ id: crypto.randomUUID(), label: "قطعة 1", length: 120, quantity: 3 }]);
+  const [manualStocks, setManualStocks] = useState<RodStock[]>([]);
+  const [pieces, setPieces] = useState<RodPiece[]>([]);
   const [result, setResult] = useState<RodResult | null>(null);
 
   useEffect(() => {
@@ -34,8 +32,11 @@ function RodsPage() {
   const stocks = useInventory ? invStocks : manualStocks;
 
   const run = () => {
-    if (stocks.length === 0) return toast.error(useInventory ? "لا توجد أعواد في المخزون" : "أضف عوداً واحداً على الأقل");
-    setResult(cutRods(stocks, pieces));
+    const validStocks = stocks.filter((s) => s.length > 0 && s.quantity > 0);
+    const validPieces = pieces.filter((p) => p.length > 0 && p.quantity > 0);
+    if (validStocks.length === 0) return toast.error(useInventory ? "لا توجد أعواد صالحة في المخزون" : "أضف عوداً واحداً على الأقل");
+    if (validPieces.length === 0) return toast.error("أضف قطعة واحدة على الأقل");
+    setResult(cutRods(validStocks, validPieces));
     toast.success("تم حساب التقطيع");
   };
 

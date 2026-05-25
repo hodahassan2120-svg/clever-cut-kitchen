@@ -640,6 +640,27 @@ function DesignEditor() {
                 </Layer>
               </Stage>
             </div>
+            {/* شريط أدوات عائم للوحدة المحددة */}
+            {selected && (
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-card/95 backdrop-blur border border-border/60 rounded-xl shadow-glow p-1.5 z-10">
+                <span className="text-xs font-bold px-2 truncate max-w-[120px]">{selected.name}</span>
+                <Button size="sm" variant="outline" className="h-8 px-2 gap-1" onClick={() => rotateBlock(selected.id, -15)} title="تدوير -15°">
+                  <RotateCw className="size-3.5 -scale-x-100" /> <span className="text-[10px]">15°</span>
+                </Button>
+                <Button size="sm" variant="outline" className="h-8 px-2 gap-1" onClick={() => rotateBlock(selected.id, 90)} title="تدوير +90°">
+                  <RotateCw className="size-3.5" /> <span className="text-[10px]">90°</span>
+                </Button>
+                <Button size="sm" variant="outline" className="h-8 px-2 gap-1" onClick={() => openEditDialog(selected)}>
+                  <Pencil className="size-3.5" /> <span className="text-[10px]">تعديل</span>
+                </Button>
+                <Button size="sm" variant="outline" className="h-8 px-2 gap-1 text-destructive hover:bg-destructive/10" onClick={() => removeBlock(selected.id)}>
+                  <Trash2 className="size-3.5" /> <span className="text-[10px]">حذف</span>
+                </Button>
+                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setSelectedId(null)}>
+                  <X className="size-3.5" />
+                </Button>
+              </div>
+            )}
           </TabsContent>
           <TabsContent value="3d" className="flex-1 m-0 bg-gradient-to-b from-zinc-900 to-black min-h-0">
             <Canvas

@@ -314,7 +314,7 @@ function FridgeMini(W: number, H: number, D: number) {
 }
 
 /* ───── الحوض ───── */
-function SinkBase(W: number, H: number, D: number, marbleColor: string | undefined, doorColor: string, basins: 1 | 2) {
+function SinkBase(W: number, H: number, D: number, marbleColor: string | undefined, marbleTextureId: string | undefined, doorColor: string, basins: 1 | 2) {
   const marble = marbleColor || "#d8cfbf";
   const basinDepth = 8;
   return (
@@ -325,7 +325,7 @@ function SinkBase(W: number, H: number, D: number, marbleColor: string | undefin
       <mesh position={[0, 0, D / 2 + 0.1]}><boxGeometry args={[W - 1, H - 2, 0.5]} /><meshStandardMaterial color={doorColor} roughness={0.6} metalness={0.04} /></mesh>
       <mesh position={[0, -H * 0.3, D / 2 + 0.7]}><boxGeometry args={[W * 0.3, 1, 1.2]} /><meshStandardMaterial color="#c7a15a" metalness={0.4} roughness={0.4} /></mesh>
       {/* الرخامة */}
-      <mesh position={[0, H / 2 + 1.5, 0.5]}><boxGeometry args={[W + 2, 3, D + 1]} /><meshStandardMaterial color={marble} roughness={0.42} metalness={0.05} /></mesh>
+      <mesh position={[0, H / 2 + 1.5, 0.5]}><boxGeometry args={[W + 2, 3, D + 1]} /><TexturedMaterial textureId={marbleTextureId} surfaceWidthCm={W + 2} surfaceHeightCm={D + 1} fallbackColor={marble} roughness={0.42} metalness={0.05} /></mesh>
       {/* الأحواض الستانلس (مفجورة في الرخامة) */}
       {basins === 1 ? (
         <mesh position={[0, H / 2 + 1.5 - basinDepth / 2 - 0.5, 0]}>
@@ -384,7 +384,7 @@ function OvenMicroColumn(W: number, H: number, D: number, color: string) {
 }
 
 /* ───── سفلية مدمج فيها فرن ───── */
-function BaseWithOven(W: number, H: number, D: number, color: string, marbleColor: string | undefined) {
+function BaseWithOven(W: number, H: number, D: number, color: string, marbleColor: string | undefined, marbleTextureId: string | undefined) {
   const marble = marbleColor || "#d8cfbf";
   const ovenH = H * 0.45;
   return (
@@ -400,7 +400,7 @@ function BaseWithOven(W: number, H: number, D: number, color: string, marbleColo
         <mesh position={[0, ovenH * 0.05, 0.7]}><boxGeometry args={[W - 8, 1.3, 1.2]} /><meshStandardMaterial color={STEEL} metalness={0.9} roughness={0.2} /></mesh>
       </group>
       {/* الرخامة */}
-      <mesh position={[0, H / 2 + 1.5, 0.5]}><boxGeometry args={[W + 2, 3, D + 1]} /><meshStandardMaterial color={marble} roughness={0.42} /></mesh>
+      <mesh position={[0, H / 2 + 1.5, 0.5]}><boxGeometry args={[W + 2, 3, D + 1]} /><TexturedMaterial textureId={marbleTextureId} surfaceWidthCm={W + 2} surfaceHeightCm={D + 1} fallbackColor={marble} roughness={0.42} /></mesh>
       <mesh position={[0, -H / 2 + 5, D / 2 - 2]}><boxGeometry args={[W, 10, 4]} /><meshStandardMaterial color="#211b16" /></mesh>
     </group>
   );

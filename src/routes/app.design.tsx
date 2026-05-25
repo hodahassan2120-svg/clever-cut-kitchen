@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Stage, Layer, Rect, Line, Text as KText, Group } from "react-konva";
 import { Canvas } from "@react-three/fiber";
@@ -17,7 +17,7 @@ import { Cabinet3D } from "@/components/Cabinet3D";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { Save, Plus, Trash2, LayoutGrid, Settings2, Wand2, Palette } from "lucide-react";
+import { Save, Plus, Trash2, LayoutGrid, Settings2, Wand2, Palette, FolderOpen, Ruler, PenLine } from "lucide-react";
 import type Konva from "konva";
 
 export const Route = createFileRoute("/app/design")({
@@ -36,6 +36,9 @@ function DesignEditor() {
   const [pendingBlock, setPendingBlock] = useState<KitchenBlock | null>(null);
   const [pendingDims, setPendingDims] = useState({ width: "", depth: "", height: "", notes: "" });
   const [builderOpen, setBuilderOpen] = useState(false);
+  const [editorStarted, setEditorStarted] = useState(false);
+  const [setupRoom, setSetupRoom] = useState({ name: "تصميم جديد", width: "400", depth: "300", shape: "rectangle" as "rectangle" | "l_shape", cutoutWidth: "100", cutoutDepth: "100" });
+  const [savedRows, setSavedRows] = useState<{ id: string; name: string; updated_at: string }[]>([]);
   const stageWrapRef = useRef<HTMLDivElement>(null);
   const [stageSize, setStageSize] = useState({ w: 360, h: 400 });
 
@@ -43,12 +46,41 @@ function DesignEditor() {
     if (!id || !user) return;
     supabase.from("designs").select("*").eq("id", id).maybeSingle().then(({ data }) => {
       if (data) {
-        setDoc(data.data as unknown as DesignDoc);
+        setDoc({ ...DEFAULT_DESIGN, ...(data.data as unknown as DesignDoc) });
         setName(data.name);
         setDesignId(data.id);
+        setEditorStarted(true);
       }
     });
   }, [id, user]);
+
+  useEffect(() => {
+    if (!user || id) return;
+    supabase.from("designs").select("id,name,updated_at").eq("user_id", user.id).order("updated_at", { ascending: false }).then(({ data }) => {
+      setSavedRows(data ?? []);
+    });
+  }, [id, user]);
+
+  const startNewDesign = () => {
+    const roomWidth = unit === "m" ? parseFloat(setupRoom.width) * 100 : parseFloat(setupRoom.width);
+    const roomDepth = unit === "m" ? parseFloat(setupRoom.depth) * 100 : parseFloat(setupRoom.depth);
+    const cutoutWidth = unit === "m" ? parseFloat(setupRoom.cutoutWidth) * 100 : parseFloat(setupRoom.cutoutWidth);
+    const cutoutDepth = unit === "m" ? parseFloat(setupRoom.cutoutDepth) * 100 : parseFloat(setupRoom.cutoutDepth);
+    if (!roomWidth || !roomDepth) return toast.error("أدخل مقاسات الغرفة");
+    setName(setupRoom.name || "تصميم جديد");
+    setDesignId(null);
+    setSelectedId(null);
+    setDoc({
+      ...DEFAULT_DESIGN,
+      roomWidth,
+      roomDepth,
+      roomShape: setupRoom.shape,
+      cutoutWidth: setupRoom.shape === "l_shape" ? Math.min(cutoutWidth || 0, roomWidth - 50) : 0,
+      cutoutDepth: setupRoom.shape === "l_shape" ? Math.min(cutoutDepth || 0, roomDepth - 50) : 0,
+      blocks: [],
+    });
+    setEditorStarted(true);
+  };
 
   // Responsive stage size — measure container
   useLayoutEffect(() => {
@@ -62,7 +94,7 @@ function DesignEditor() {
     const ro = new ResizeObserver(update);
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [editorStarted]);
 
   // Auto-fit scale: room fits inside stageSize with padding
   const PAD = 40;
@@ -92,19 +124,20 @@ function DesignEditor() {
       type: pendingBlock.type,
       name: pendingBlock.name,
       color: pendingBlock.color,
-      x: 20, y: 20,
+      x: 0, y: 0,
       width: w * mul, depth: d * mul, height: h * mul,
       rotation: 0,
       notes: pendingDims.notes || undefined,
     };
-    setDoc({ ...doc, blocks: [...doc.blocks, block] });
-    setSelectedId(block.id);
+    const placed = autoPlaceBlock(block);
+    setDoc({ ...doc, blocks: [...doc.blocks, placed] });
+    setSelectedId(placed.id);
     setPendingBlock(null);
     toast.success(`تم إضافة ${pendingBlock.name}`);
   };
 
   const updateBlock = (id: string, patch: Partial<PlacedBlock>) => {
-    setDoc({ ...doc, blocks: doc.blocks.map((b) => (b.id === id ? { ...b, ...patch } : b)) });
+    setDoc({ ...doc, blocks: doc.blocks.map((b) => (b.id === id ? clampBlock({ ...b, ...patch }) : b)) });
   };
   const removeBlock = (id: string) => {
     setDoc({ ...doc, blocks: doc.blocks.filter((b) => b.id !== id) });
@@ -129,6 +162,62 @@ function DesignEditor() {
 
   const toUnit = (cm: number) => (unit === "m" ? (cm / 100).toFixed(2) : cm.toString());
   const fromUnit = (v: string) => (unit === "m" ? parseFloat(v) * 100 : parseFloat(v));
+  const isPaintableBlock = (b: PlacedBlock) => !!b.placement || b.type.startsWith("base_") || b.type.startsWith("wall_") || b.type.startsWith("tall_") || b.type === "special_island";
+  const blockColor = (b: PlacedBlock) => b.customColor || !isPaintableBlock(b) ? b.color : (doc.globalColor || b.color);
+
+  const roomPolygon = () => {
+    const cw = doc.roomShape === "l_shape" ? Math.max(0, doc.cutoutWidth || 0) : 0;
+    const cd = doc.roomShape === "l_shape" ? Math.max(0, doc.cutoutDepth || 0) : 0;
+    return doc.roomShape === "l_shape" && cw > 0 && cd > 0
+      ? [0, 0, doc.roomWidth - cw, 0, doc.roomWidth - cw, cd, doc.roomWidth, cd, doc.roomWidth, doc.roomDepth, 0, doc.roomDepth]
+      : [0, 0, doc.roomWidth, 0, doc.roomWidth, doc.roomDepth, 0, doc.roomDepth];
+  };
+
+  const clampBlock = (b: PlacedBlock) => ({
+    ...b,
+    x: Math.max(0, Math.min(b.x, doc.roomWidth - b.width)),
+    y: Math.max(0, Math.min(b.y, doc.roomDepth - b.depth)),
+  });
+
+  const snapBlockToWall = (block: PlacedBlock, blocks = doc.blocks) => {
+    const b = clampBlock(block);
+    const distances = [
+      { wall: "back" as const, value: b.y },
+      { wall: "left" as const, value: b.x },
+      { wall: "front" as const, value: doc.roomDepth - (b.y + b.depth) },
+      { wall: "right" as const, value: doc.roomWidth - (b.x + b.width) },
+    ].sort((a, z) => a.value - z.value);
+    const wall = distances[0].wall;
+    if (wall === "back") b.y = 0;
+    if (wall === "front") b.y = doc.roomDepth - b.depth;
+    if (wall === "left") b.x = 0;
+    if (wall === "right") b.x = doc.roomWidth - b.width;
+
+    const sameWall = blocks.filter((o) => o.id !== b.id && (
+      wall === "back" ? Math.abs(o.y) < 2 :
+      wall === "front" ? Math.abs(o.y + o.depth - doc.roomDepth) < 2 :
+      wall === "left" ? Math.abs(o.x) < 2 :
+      Math.abs(o.x + o.width - doc.roomWidth) < 2
+    ));
+    const SNAP = 18;
+    for (const o of sameWall) {
+      if (wall === "back" || wall === "front") {
+        if (Math.abs(b.x - (o.x + o.width)) <= SNAP) b.x = o.x + o.width;
+        if (Math.abs((b.x + b.width) - o.x) <= SNAP) b.x = o.x - b.width;
+      } else {
+        if (Math.abs(b.y - (o.y + o.depth)) <= SNAP) b.y = o.y + o.depth;
+        if (Math.abs((b.y + b.depth) - o.y) <= SNAP) b.y = o.y - b.depth;
+      }
+    }
+    return clampBlock(b);
+  };
+
+  const autoPlaceBlock = (block: PlacedBlock) => {
+    const row = doc.blocks.filter((b) => Math.abs(b.y) < 2).sort((a, z) => a.x - z.x);
+    const last = row[row.length - 1];
+    const nextX = last ? last.x + last.width : 0;
+    return snapBlockToWall({ ...block, x: nextX + block.width <= doc.roomWidth ? nextX : 0, y: 0, rotation: 0 }, doc.blocks);
+  };
 
   const groupedBlocks = (["base", "wall", "tall", "appliance", "special"] as const).map((cat) => ({
     cat,
@@ -185,6 +274,25 @@ function DesignEditor() {
           <Label className="text-xs">العمق ({unit})</Label>
           <Input type="number" value={toUnit(doc.roomDepth)} onChange={(e) => setDoc({ ...doc, roomDepth: fromUnit(e.target.value) || 0 })} />
         </div>
+        <div>
+          <Label className="text-xs mb-1 block">شكل الغرفة</Label>
+          <div className="grid grid-cols-2 gap-1.5">
+            <Button size="sm" variant={(doc.roomShape || "rectangle") === "rectangle" ? "default" : "outline"} onClick={() => setDoc({ ...doc, roomShape: "rectangle" })}>مستطيلة</Button>
+            <Button size="sm" variant={doc.roomShape === "l_shape" ? "default" : "outline"} onClick={() => setDoc({ ...doc, roomShape: "l_shape", cutoutWidth: doc.cutoutWidth || 100, cutoutDepth: doc.cutoutDepth || 100 })}>شكل L</Button>
+          </div>
+        </div>
+        {doc.roomShape === "l_shape" && (
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label className="text-xs">عرض الجزء الناقص</Label>
+              <Input type="number" value={toUnit(doc.cutoutWidth || 0)} onChange={(e) => setDoc({ ...doc, cutoutWidth: fromUnit(e.target.value) || 0 })} />
+            </div>
+            <div>
+              <Label className="text-xs">عمق الجزء الناقص</Label>
+              <Input type="number" value={toUnit(doc.cutoutDepth || 0)} onChange={(e) => setDoc({ ...doc, cutoutDepth: fromUnit(e.target.value) || 0 })} />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* اللون العام لكل الوحدات */}
@@ -256,6 +364,93 @@ function DesignEditor() {
       )}
     </>
   );
+
+  if (id && !editorStarted) {
+    return <div className="p-6 text-center text-sm text-muted-foreground">جاري فتح التصميم...</div>;
+  }
+
+  if (!editorStarted) {
+    return (
+      <div className="min-h-[calc(100dvh-6rem)] p-4 md:p-8">
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-[1.1fr_0.9fr] gap-5 items-start">
+          <section className="border border-border/60 bg-card/60 rounded-2xl p-5 md:p-6 shadow-card">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="size-11 rounded-xl bg-primary/10 text-primary grid place-items-center"><Ruler className="size-5" /></div>
+              <div>
+                <h1 className="text-2xl font-bold">تصميم جديد</h1>
+                <p className="text-sm text-muted-foreground">اكتب مقاسات الغرفة وحدد شكلها قبل فتح مساحة التصميم.</p>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <Label className="text-xs">اسم التصميم</Label>
+                <Input value={setupRoom.name} onChange={(e) => setSetupRoom({ ...setupRoom, name: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">عرض الغرفة ({unit})</Label>
+                  <Input type="number" value={setupRoom.width} onChange={(e) => setSetupRoom({ ...setupRoom, width: e.target.value })} />
+                </div>
+                <div>
+                  <Label className="text-xs">عمق الغرفة ({unit})</Label>
+                  <Input type="number" value={setupRoom.depth} onChange={(e) => setSetupRoom({ ...setupRoom, depth: e.target.value })} />
+                </div>
+              </div>
+              <div className="flex items-center gap-1">
+                <Button size="sm" variant={unit === "cm" ? "default" : "outline"} onClick={() => setUnit("cm")}>سم</Button>
+                <Button size="sm" variant={unit === "m" ? "default" : "outline"} onClick={() => setUnit("m")}>م</Button>
+              </div>
+              <div>
+                <Label className="text-xs mb-2 block">شكل الغرفة</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button onClick={() => setSetupRoom({ ...setupRoom, shape: "rectangle" })} className={`p-3 rounded-xl border text-sm font-semibold ${setupRoom.shape === "rectangle" ? "border-primary bg-primary/10 text-primary" : "border-border/60 bg-muted/20"}`}>مستطيلة</button>
+                  <button onClick={() => setSetupRoom({ ...setupRoom, shape: "l_shape" })} className={`p-3 rounded-xl border text-sm font-semibold ${setupRoom.shape === "l_shape" ? "border-primary bg-primary/10 text-primary" : "border-border/60 bg-muted/20"}`}>غير منتظمة L</button>
+                </div>
+              </div>
+              {setupRoom.shape === "l_shape" && (
+                <div className="grid grid-cols-2 gap-3 p-3 rounded-xl border border-border/50 bg-muted/20">
+                  <div>
+                    <Label className="text-xs">عرض الجزء الناقص ({unit})</Label>
+                    <Input type="number" value={setupRoom.cutoutWidth} onChange={(e) => setSetupRoom({ ...setupRoom, cutoutWidth: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">عمق الجزء الناقص ({unit})</Label>
+                    <Input type="number" value={setupRoom.cutoutDepth} onChange={(e) => setSetupRoom({ ...setupRoom, cutoutDepth: e.target.value })} />
+                  </div>
+                </div>
+              )}
+              <Button onClick={startNewDesign} className="w-full bg-gradient-primary shadow-glow"><PenLine className="size-4" /> ابدأ التصميم</Button>
+            </div>
+          </section>
+
+          <section className="border border-border/60 bg-card/60 rounded-2xl p-5 md:p-6 shadow-card">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="size-11 rounded-xl bg-primary/10 text-primary grid place-items-center"><FolderOpen className="size-5" /></div>
+              <div>
+                <h2 className="text-xl font-bold">تعديل تصميم محفوظ</h2>
+                <p className="text-sm text-muted-foreground">افتح تصميم سابق واستكمل عليه.</p>
+              </div>
+            </div>
+            {savedRows.length === 0 ? (
+              <div className="rounded-xl border border-border/50 bg-muted/20 p-6 text-center text-sm text-muted-foreground">لا توجد تصميمات محفوظة بعد.</div>
+            ) : (
+              <div className="space-y-2 max-h-[420px] overflow-auto pr-1">
+                {savedRows.map((r) => (
+                  <Link key={r.id} to="/app/design" search={{ id: r.id }} className="flex items-center justify-between gap-3 rounded-xl border border-border/50 bg-muted/20 p-3 hover:border-primary/60 transition">
+                    <div className="min-w-0">
+                      <div className="font-semibold truncate">{r.name}</div>
+                      <div className="text-xs text-muted-foreground">{new Date(r.updated_at).toLocaleDateString("ar-EG")}</div>
+                    </div>
+                    <FolderOpen className="size-4 text-primary shrink-0" />
+                  </Link>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col md:flex-row h-[calc(100dvh-6.5rem)] md:h-screen">
@@ -331,7 +526,7 @@ function DesignEditor() {
             <div ref={stageWrapRef} className="w-full h-full">
               <Stage width={stageSize.w} height={stageSize.h} onMouseDown={(e) => { if (e.target === e.target.getStage()) setSelectedId(null); }}>
                 <Layer>
-                  <Rect x={PAD} y={PAD} width={doc.roomWidth * scale} height={doc.roomDepth * scale} fill="#1a1a1a" stroke="#c2956b" strokeWidth={2} />
+                  <Line points={roomPolygon().map((p, i) => (i % 2 === 0 ? PAD + p * scale : PAD + p * scale))} fill="#1a1a1a" stroke="#c2956b" strokeWidth={2} closed />
                   {Array.from({ length: Math.floor(doc.roomWidth / 50) }).map((_, i) => (
                     <Line key={`v${i}`} points={[PAD + (i + 1) * 50 * scale, PAD, PAD + (i + 1) * 50 * scale, PAD + doc.roomDepth * scale]} stroke="#333" strokeWidth={0.5} />
                   ))}
@@ -339,7 +534,7 @@ function DesignEditor() {
                     <Line key={`h${i}`} points={[PAD, PAD + (i + 1) * 50 * scale, PAD + doc.roomWidth * scale, PAD + (i + 1) * 50 * scale]} stroke="#333" strokeWidth={0.5} />
                   ))}
                   {doc.blocks.map((b) => {
-                    const fill = b.customColor ? b.color : (doc.globalColor || b.color);
+                    const fill = blockColor(b);
                     const W = b.width * scale;
                     const H = b.depth * scale;
                     const doors = Math.max(0, Math.min(4, b.doors || 0));
@@ -353,7 +548,10 @@ function DesignEditor() {
                         draggable
                         onClick={() => setSelectedId(b.id)}
                         onTap={() => setSelectedId(b.id)}
-                        onDragEnd={(e) => updateBlock(b.id, { x: (e.target.x() - PAD) / scale, y: (e.target.y() - PAD) / scale })}
+                         onDragEnd={(e) => {
+                           const moved = snapBlockToWall({ ...b, x: (e.target.x() - PAD) / scale, y: (e.target.y() - PAD) / scale });
+                           setDoc({ ...doc, blocks: doc.blocks.map((item) => (item.id === b.id ? moved : item)) });
+                         }}
                       >
                         <Rect width={W} height={H} fill={fill} stroke={selectedId === b.id ? "#f59e0b" : "#000"} strokeWidth={selectedId === b.id ? 3 : 1} cornerRadius={3} />
                         {/* خطوط تقسيم الضلف عمودياً */}
@@ -406,7 +604,7 @@ function DesignEditor() {
                 <meshStandardMaterial color="#e8dcc8" roughness={0.95} />
               </mesh>
               {doc.blocks.map((b) => (
-                <Cabinet3D key={b.id} block={b} defaultColor={doc.globalColor || b.color} />
+                <Cabinet3D key={b.id} block={b} defaultColor={isPaintableBlock(b) ? (doc.globalColor || b.color) : b.color} />
               ))}
               <OrbitControls target={[doc.roomWidth / 2, 80, doc.roomDepth / 2]} maxPolarAngle={Math.PI / 2.05} makeDefault />
             </Canvas>
@@ -470,8 +668,9 @@ function DesignEditor() {
         unit={unit}
         defaultColor={doc.globalColor || "#b88858"}
         onAdd={(block) => {
-          setDoc({ ...doc, blocks: [...doc.blocks, block] });
-          setSelectedId(block.id);
+          const placed = autoPlaceBlock(block);
+          setDoc({ ...doc, blocks: [...doc.blocks, placed] });
+          setSelectedId(placed.id);
         }}
       />
     </div>

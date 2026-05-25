@@ -9,6 +9,8 @@ interface Props {
 export function Cabinet3D({ block, defaultColor }: Props) {
   const color = block.customColor ? block.color : (defaultColor || block.color);
   const { width: W, depth: D, height: H } = block;
+  const bodyColor = color;
+  const carcassColor = block.placement ? "#2f261c" : color;
 
   // الإحداثيات: المركز عند (x + W/2, H/2, y + D/2)
   const cx = block.x + W / 2;
@@ -21,7 +23,7 @@ export function Cabinet3D({ block, defaultColor }: Props) {
     return (
       <mesh position={[cx, cy, cz]} rotation={rotation}>
         <boxGeometry args={[W, H, D]} />
-        <meshStandardMaterial color={color} roughness={0.6} />
+        <meshStandardMaterial color={bodyColor} roughness={0.68} metalness={0.03} />
       </mesh>
     );
   }
@@ -45,7 +47,7 @@ export function Cabinet3D({ block, defaultColor }: Props) {
       {/* جسم الوحدة (carcass) — لون داكن خلفي */}
       <mesh>
         <boxGeometry args={[W, H, D]} />
-        <meshStandardMaterial color="#2a1f15" roughness={0.95} />
+        <meshStandardMaterial color={carcassColor} roughness={0.9} />
       </mesh>
 
       {/* الأدراج (في الأعلى إن وُجدت مع ضلف، أو كامل الوحدة إن لم يوجد ضلف) */}
@@ -59,7 +61,7 @@ export function Cabinet3D({ block, defaultColor }: Props) {
             <group key={`dr${i}`} position={[0, y, D / 2 + DOOR_T / 2]}>
               <mesh>
                 <boxGeometry args={[W - GAP * 2, eachH, DOOR_T]} />
-                <meshStandardMaterial color={color} roughness={0.55} metalness={0.05} />
+                <meshStandardMaterial color={bodyColor} roughness={0.58} metalness={0.04} />
               </mesh>
               {/* مقبض أفقي في المنتصف */}
               <mesh position={[0, 0, DOOR_T / 2 + HANDLE_T / 2]}>
@@ -88,14 +90,14 @@ export function Cabinet3D({ block, defaultColor }: Props) {
                 {isGlass ? (
                   <meshPhysicalMaterial color="#a8c5d8" roughness={0.05} transmission={0.7} thickness={0.5} transparent opacity={0.55} metalness={0.1} />
                 ) : (
-                  <meshStandardMaterial color={color} roughness={0.55} metalness={0.05} />
+                  <meshStandardMaterial color={bodyColor} roughness={0.58} metalness={0.04} />
                 )}
               </mesh>
               {/* إطار خشبي للزجاج */}
               {isGlass && (
                 <mesh>
                   <boxGeometry args={[eachW, totalDoorH - GAP, DOOR_T * 0.6]} />
-                  <meshStandardMaterial color={color} roughness={0.6} wireframe />
+                  <meshStandardMaterial color={bodyColor} roughness={0.6} wireframe />
                 </mesh>
               )}
               {/* مقبض عمودي */}

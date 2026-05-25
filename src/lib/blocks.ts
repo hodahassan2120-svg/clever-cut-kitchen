@@ -82,6 +82,9 @@ export interface Wall {
 export interface DesignDoc {
   roomWidth: number;
   roomDepth: number;
+  roomShape?: "rectangle" | "l_shape"; // مستطيلة أو غير منتظمة على شكل L
+  cutoutWidth?: number;  // cm — الجزء المقتطع من الركن العلوي الأيمن
+  cutoutDepth?: number;  // cm
   walls: Wall[];
   blocks: PlacedBlock[];
   globalColor?: string;  // اللون العام لكل الوحدات
@@ -90,6 +93,9 @@ export interface DesignDoc {
 export const DEFAULT_DESIGN: DesignDoc = {
   roomWidth: 400,
   roomDepth: 300,
+  roomShape: "rectangle",
+  cutoutWidth: 100,
+  cutoutDepth: 100,
   walls: [],
   blocks: [],
   globalColor: "#b88858",

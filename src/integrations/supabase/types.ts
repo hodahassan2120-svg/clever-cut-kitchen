@@ -50,23 +50,65 @@ export type Database = {
         }
         Relationships: []
       }
+      ad_views: {
+        Row: {
+          ad_type: string
+          created_at: string
+          credits_granted: number
+          id: string
+          user_id: string
+        }
+        Insert: {
+          ad_type: string
+          created_at?: string
+          credits_granted?: number
+          id?: string
+          user_id: string
+        }
+        Update: {
+          ad_type?: string
+          created_at?: string
+          credits_granted?: number
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           adsense_client: string | null
           adsense_enabled: boolean
+          adsterra_interstitial_zone: string | null
+          adsterra_rewarded_zone: string | null
+          credits_per_ad: number
           id: number
+          interstitial_ads_enabled: boolean
+          max_daily_ad_credits: number
+          rewarded_ads_enabled: boolean
           whatsapp_number: string | null
         }
         Insert: {
           adsense_client?: string | null
           adsense_enabled?: boolean
+          adsterra_interstitial_zone?: string | null
+          adsterra_rewarded_zone?: string | null
+          credits_per_ad?: number
           id?: number
+          interstitial_ads_enabled?: boolean
+          max_daily_ad_credits?: number
+          rewarded_ads_enabled?: boolean
           whatsapp_number?: string | null
         }
         Update: {
           adsense_client?: string | null
           adsense_enabled?: boolean
+          adsterra_interstitial_zone?: string | null
+          adsterra_rewarded_zone?: string | null
+          credits_per_ad?: number
           id?: number
+          interstitial_ads_enabled?: boolean
+          max_daily_ad_credits?: number
+          rewarded_ads_enabled?: boolean
           whatsapp_number?: string | null
         }
         Relationships: []
@@ -183,6 +225,7 @@ export type Database = {
         Row: {
           activated_at: string | null
           activated_until: string | null
+          ai_credits: number
           created_at: string
           id: string
           is_active: boolean
@@ -193,6 +236,7 @@ export type Database = {
         Insert: {
           activated_at?: string | null
           activated_until?: string | null
+          ai_credits?: number
           created_at?: string
           id?: string
           is_active?: boolean
@@ -203,6 +247,7 @@ export type Database = {
         Update: {
           activated_at?: string | null
           activated_until?: string | null
+          ai_credits?: number
           created_at?: string
           id?: string
           is_active?: boolean
@@ -235,6 +280,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      consume_ai_credit: { Args: { _user_id: string }; Returns: Json }
+      grant_rewarded_ad_credit: { Args: { _user_id: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -243,6 +290,7 @@ export type Database = {
         Returns: boolean
       }
       is_subscription_active: { Args: { _user_id: string }; Returns: boolean }
+      log_interstitial_view: { Args: { _user_id: string }; Returns: undefined }
     }
     Enums: {
       activation_status: "pending" | "approved" | "rejected"

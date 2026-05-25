@@ -62,7 +62,15 @@ export interface PlacedBlock {
   rotation: number; // degrees
   color: string;
   name: string;
-  notes?: string;  // تفاصيل إضافية (شباك/باب/ملاحظات)
+  notes?: string;
+  // تفاصيل تركيب الوحدة المخصصة
+  placement?: "base" | "wall" | "tall";   // سفلية / علوية / طولية (دولاب)
+  doors?: number;        // عدد الضلف (0-4)
+  drawers?: number;      // عدد الأدراج (0-4)
+  glass?: boolean;       // ضلفة زجاج
+  corner?: boolean;      // وحدة ركنية
+  cabinet?: boolean;     // دولاب (طولي بارتفاع كامل)
+  customColor?: boolean; // هل اللون مخصص (لا يتأثر باللون العام)
 }
 
 export interface Wall {
@@ -76,6 +84,7 @@ export interface DesignDoc {
   roomDepth: number;
   walls: Wall[];
   blocks: PlacedBlock[];
+  globalColor?: string;  // اللون العام لكل الوحدات
 }
 
 export const DEFAULT_DESIGN: DesignDoc = {
@@ -83,4 +92,5 @@ export const DEFAULT_DESIGN: DesignDoc = {
   roomDepth: 300,
   walls: [],
   blocks: [],
+  globalColor: "#b88858",
 };

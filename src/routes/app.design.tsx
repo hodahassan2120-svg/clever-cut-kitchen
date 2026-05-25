@@ -146,6 +146,28 @@ function DesignEditor() {
     setDoc({ ...doc, blocks: doc.blocks.filter((b) => b.id !== id) });
     setSelectedId(null);
   };
+  const rotateBlock = (id: string, delta: number) => {
+    const b = doc.blocks.find((x) => x.id === id);
+    if (!b) return;
+    updateBlock(id, { rotation: ((b.rotation || 0) + delta + 360) % 360 });
+  };
+  const openEditDialog = (b: PlacedBlock) => {
+    setEditingId(b.id);
+    setEditDims({
+      width: toUnit(b.width),
+      depth: toUnit(b.depth),
+      height: toUnit(b.height),
+      notes: b.notes || "",
+    });
+  };
+  const confirmEdit = () => {
+    if (!editingId) return;
+    const w = fromUnit(editDims.width), d = fromUnit(editDims.depth), h = fromUnit(editDims.height);
+    if (!w || !d || !h) return toast.error("أدخل جميع المقاسات");
+    updateBlock(editingId, { width: w, depth: d, height: h, notes: editDims.notes || undefined });
+    setEditingId(null);
+    toast.success("تم تعديل الوحدة");
+  };
 
   const selected = doc.blocks.find((b) => b.id === selectedId);
 

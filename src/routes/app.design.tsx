@@ -124,19 +124,20 @@ function DesignEditor() {
       type: pendingBlock.type,
       name: pendingBlock.name,
       color: pendingBlock.color,
-      x: 20, y: 20,
+      x: 0, y: 0,
       width: w * mul, depth: d * mul, height: h * mul,
       rotation: 0,
       notes: pendingDims.notes || undefined,
     };
-    setDoc({ ...doc, blocks: [...doc.blocks, block] });
-    setSelectedId(block.id);
+    const placed = autoPlaceBlock(block);
+    setDoc({ ...doc, blocks: [...doc.blocks, placed] });
+    setSelectedId(placed.id);
     setPendingBlock(null);
     toast.success(`تم إضافة ${pendingBlock.name}`);
   };
 
   const updateBlock = (id: string, patch: Partial<PlacedBlock>) => {
-    setDoc({ ...doc, blocks: doc.blocks.map((b) => (b.id === id ? { ...b, ...patch } : b)) });
+    setDoc({ ...doc, blocks: doc.blocks.map((b) => (b.id === id ? clampBlock({ ...b, ...patch }) : b)) });
   };
   const removeBlock = (id: string) => {
     setDoc({ ...doc, blocks: doc.blocks.filter((b) => b.id !== id) });

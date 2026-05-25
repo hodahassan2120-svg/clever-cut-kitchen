@@ -84,13 +84,12 @@ function RodsPage() {
               <h2 className="font-semibold mb-3">الأعواد المتوفرة (سم)</h2>
               <div className="rounded-xl border border-border/50 overflow-hidden">
                 <Table>
-                  <TableHeader><TableRow><TableHead className="text-right min-w-24">الطول</TableHead><TableHead className="text-right min-w-20">العرض</TableHead><TableHead className="text-right min-w-20">العدد</TableHead><TableHead className="w-12" /></TableRow></TableHeader>
+                  <TableHeader><TableRow><TableHead className="text-right min-w-24">الطول (سم)</TableHead><TableHead className="text-right min-w-20">العدد</TableHead><TableHead className="w-12" /></TableRow></TableHeader>
                   <TableBody>
-                    {manualStocks.length === 0 && <TableRow><TableCell colSpan={4} className="h-20 text-center text-sm text-muted-foreground">اضغط "إضافة عود" لبدء إدخال المقاسات.</TableCell></TableRow>}
+                    {manualStocks.length === 0 && <TableRow><TableCell colSpan={3} className="h-20 text-center text-sm text-muted-foreground">اضغط "إضافة عود" لبدء إدخال المقاسات.</TableCell></TableRow>}
                     {manualStocks.map((s, i) => (
                       <TableRow key={s.id}>
                         <TableCell><Input className="h-10 min-w-24 text-base tabular-nums" inputMode="decimal" type="number" min="0" placeholder="0" value={s.length || ""} onChange={(e) => updStock(i, { length: +e.target.value })} /></TableCell>
-                        <TableCell><Input className="h-10 min-w-20 text-base tabular-nums" inputMode="decimal" type="number" min="0" placeholder="0" value={s.width || ""} onChange={(e) => updStock(i, { width: +e.target.value })} /></TableCell>
                         <TableCell><Input className="h-10 min-w-20 text-base tabular-nums" inputMode="numeric" type="number" min="0" placeholder="0" value={s.quantity || ""} onChange={(e) => updStock(i, { quantity: +e.target.value })} /></TableCell>
                         <TableCell><Button size="icon" variant="ghost" className="h-10 w-10" onClick={() => setManualStocks(manualStocks.filter((_, j) => j !== i))}><Trash2 className="size-4 text-destructive" /></Button></TableCell>
                       </TableRow>

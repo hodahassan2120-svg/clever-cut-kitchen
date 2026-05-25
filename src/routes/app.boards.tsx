@@ -115,8 +115,12 @@ function BoardsPage() {
           <h2 className="font-semibold mb-3">النتيجة</h2>
           {!result ? <p className="text-sm text-muted-foreground">اضغط "حساب التقطيع" لعرض النتائج.</p> : (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="text-sm">الهدر: <span className="text-gold font-bold">{(result.totalWaste / 10000).toFixed(2)} م²</span></div>
+              <div className="grid grid-cols-3 gap-2 text-sm">
+                <div className="rounded-lg bg-muted/30 p-2">عدد الألواح: <span className="text-gold font-bold">{totalBoards}</span></div>
+                <div className="rounded-lg bg-muted/30 p-2">عدد القطع: <span className="font-bold">{totalPieces}</span></div>
+                <div className="rounded-lg bg-muted/30 p-2">الهدر: <span className="text-gold font-bold">{(result.totalWaste / 10000).toFixed(2)} م²</span></div>
+              </div>
+              <div className="flex justify-end">
                 <Button size="sm" variant="outline" onClick={() => exportBoardsPDF(result)}><FileDown className="size-3.5" /> PDF</Button>
               </div>
               {result.unfulfilled.length > 0 && <div className="text-sm text-destructive">قطع لم تتسع: {result.unfulfilled.map(u => `${u.label}(×${u.quantity})`).join(", ")}</div>}

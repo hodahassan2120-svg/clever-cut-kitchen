@@ -97,12 +97,22 @@ function AuthInvalidator() {
   return null;
 }
 
+function MonetagSW() {
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!("serviceWorker" in navigator)) return;
+    navigator.serviceWorker.register("/sw.js").catch((e) => console.warn("[sw] register failed", e));
+  }, []);
+  return null;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <AuthInvalidator />
+        <MonetagSW />
         <Outlet />
         <Toaster richColors position="top-center" dir="rtl" theme="dark" />
       </AuthProvider>

@@ -21,7 +21,12 @@ function Admin() {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [requests, setRequests] = useState<RequestRow[]>([]);
   const [stats, setStats] = useState({ users: 0, active: 0, designs: 0, pending: 0 });
-  const [settings, setSettings] = useState({ adsense_client: "", adsense_enabled: false, whatsapp_number: "" });
+  const [settings, setSettings] = useState({
+    adsense_client: "", adsense_enabled: false, whatsapp_number: "",
+    adsterra_rewarded_zone: "", adsterra_interstitial_zone: "",
+    rewarded_ads_enabled: false, interstitial_ads_enabled: false,
+    credits_per_ad: 1, max_daily_ad_credits: 10,
+  });
 
   const load = async () => {
     const [{ data: profiles }, { data: subs }, designs, { data: s }, { data: reqs }] = await Promise.all([
@@ -42,7 +47,12 @@ function Admin() {
     const activeCount = merged.filter((u) => u.is_active && (u.activated_until ? new Date(u.activated_until) > new Date() : new Date(u.trial_ends_at) > new Date())).length;
     const pendingCount = list.filter((r) => r.status === "pending").length;
     setStats({ users: merged.length, active: activeCount, designs: (designs as any).count ?? 0, pending: pendingCount });
-    if (s) setSettings({ adsense_client: s.adsense_client ?? "", adsense_enabled: !!s.adsense_enabled, whatsapp_number: s.whatsapp_number ?? "" });
+    if (s) setSettings({
+      adsense_client: s.adsense_client ?? "", adsense_enabled: !!s.adsense_enabled, whatsapp_number: s.whatsapp_number ?? "",
+      adsterra_rewarded_zone: s.adsterra_rewarded_zone ?? "", adsterra_interstitial_zone: s.adsterra_interstitial_zone ?? "",
+      rewarded_ads_enabled: !!s.rewarded_ads_enabled, interstitial_ads_enabled: !!s.interstitial_ads_enabled,
+      credits_per_ad: s.credits_per_ad ?? 1, max_daily_ad_credits: s.max_daily_ad_credits ?? 10,
+    });
   };
 
   useEffect(() => { if (isAdmin) load(); }, [isAdmin]);
@@ -204,6 +214,40 @@ function Admin() {
               <Input dir="ltr" placeholder="ca-pub-1234567890" value={settings.adsense_client} onChange={(e) => setSettings({ ...settings, adsense_client: e.target.value })} />
               <p className="text-xs text-muted-foreground mt-1">سيتم عرض الإعلانات داخل التطبيق للمستخدمين العاديين فقط.</p>
             </div>
+
+            <div className="border-t border-border/40 pt-4 mt-4">
+              <h3 className="font-semibold text-gold mb-3">إعلانات Adsterra (Rewarded + Interstitial)</h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>تفعيل إعلانات المكافأة (Rewarded)</Label>
+                  <Switch checked={settings.rewarded_ads_enabled} onCheckedChange={(v) => setSettings({ ...settings, rewarded_ads_enabled: v })} />
+                </div>
+                <div>
+                  <Label>Adsterra Rewarded Zone ID</Label>
+                  <Input dir="ltr" placeholder="xxxxxxxxxxxxxxxxxxxx" value={settings.adsterra_rewarded_zone} onChange={(e) => setSettings({ ...settings, adsterra_rewarded_zone: e.target.value })} />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs">كريديت لكل إعلان</Label>
+                    <Input type="number" min="1" value={settings.credits_per_ad} onChange={(e) => setSettings({ ...settings, credits_per_ad: +e.target.value || 1 })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">الحد اليومي للكريديت</Label>
+                    <Input type="number" min="1" value={settings.max_daily_ad_credits} onChange={(e) => setSettings({ ...settings, max_daily_ad_credits: +e.target.value || 10 })} />
+                  </div>
+                </div>
+                <div className="flex items-center justify-between pt-2">
+                  <Label>تفعيل إعلان البداية (Interstitial)</Label>
+                  <Switch checked={settings.interstitial_ads_enabled} onCheckedChange={(v) => setSettings({ ...settings, interstitial_ads_enabled: v })} />
+                </div>
+                <div>
+                  <Label>Adsterra Interstitial Zone ID</Label>
+                  <Input dir="ltr" placeholder="xxxxxxxxxxxxxxxxxxxx" value={settings.adsterra_interstitial_zone} onChange={(e) => setSettings({ ...settings, adsterra_interstitial_zone: e.target.value })} />
+                  <p className="text-xs text-muted-foreground mt-1">يظهر مرة واحدة يومياً لكل مستخدم عادي (ليس الأدمن).</p>
+                </div>
+              </div>
+            </div>
+
             <Button onClick={saveSettings} className="bg-gradient-primary shadow-glow">حفظ الإعدادات</Button>
           </div>
         </TabsContent>

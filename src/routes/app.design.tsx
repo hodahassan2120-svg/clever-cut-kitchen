@@ -613,6 +613,7 @@ function DesignEditor() {
 
   return (
     <div className="flex flex-col md:flex-row h-[calc(100dvh-6.5rem)] md:h-screen">
+      <SocialBarAd />
       {/* Desktop: blocks library */}
       <aside className="hidden md:block w-60 border-l border-border/60 bg-card/50 p-3 overflow-auto">
         {BlocksPanel}

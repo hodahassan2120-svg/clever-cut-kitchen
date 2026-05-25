@@ -1,8 +1,13 @@
 import { createFileRoute, Outlet, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth, isSubscriptionActive } from "@/lib/auth";
-import { Cuboid, Scissors, Ruler, Archive, Save, LogOut, Shield, Sparkles, Home } from "lucide-react";
+import { Cuboid, Scissors, Ruler, Archive, Save, LogOut, Shield, Sparkles, Home, Clock, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/app")({ component: AppLayout });
 
@@ -22,7 +27,7 @@ function AppLayout() {
   const daysLeft = subscription ? Math.max(0, Math.ceil((new Date(subscription.activated_until ?? subscription.trial_ends_at).getTime() - Date.now()) / 86400000)) : 0;
 
   if (!active && !isAdmin) {
-    return <TrialExpired onSignOut={signOut} />;
+    return <TrialExpired onSignOut={signOut} userId={user.id} />;
   }
 
   const links = [

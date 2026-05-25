@@ -32,12 +32,12 @@ function RodsPage() {
 
   const stocks = useInventory ? invStocks : manualStocks;
 
-  const newPiece = (n: number): RodPiece => ({ id: crypto.randomUUID(), label: `مقاس ${n}`, length: 0, width: 0, quantity: 0 });
-  const newStock = (n: number): RodStock => ({ id: crypto.randomUUID(), name: `عود ${n}`, length: 0, width: 0, quantity: 0 });
+  const newPiece = (n: number): RodPiece => ({ id: crypto.randomUUID(), label: `مقاس ${n}`, length: 0, quantity: 0 });
+  const newStock = (n: number): RodStock => ({ id: crypto.randomUUID(), name: `عود ${n}`, length: 0, quantity: 0 });
 
   const run = () => {
-    const validStocks = stocks.filter((s) => s.length > 0 && s.quantity > 0 && (useInventory || (s.width || 0) > 0));
-    const validPieces = pieces.filter((p) => p.length > 0 && (p.width || 0) > 0 && p.quantity > 0);
+    const validStocks = stocks.filter((s) => s.length > 0 && s.quantity > 0);
+    const validPieces = pieces.filter((p) => p.length > 0 && p.quantity > 0);
     if (validStocks.length === 0) return toast.error(useInventory ? "لا توجد أعواد صالحة في المخزون" : "أضف عوداً واحداً على الأقل");
     if (validPieces.length === 0) return toast.error("أضف مقاساً واحداً على الأقل");
     setResult(cutRods(validStocks, validPieces));
@@ -48,7 +48,7 @@ function RodsPage() {
     setManualStocks((prev) => {
       const next = prev.map((s, idx) => idx === i ? { ...s, ...patch } : s);
       const last = next[next.length - 1];
-      if (i === next.length - 1 && last.quantity > 0 && last.length > 0 && (last.width || 0) > 0) {
+      if (i === next.length - 1 && last.quantity > 0 && last.length > 0) {
         next.push(newStock(next.length + 1));
       }
       return next;
@@ -58,7 +58,7 @@ function RodsPage() {
     setPieces((prev) => {
       const next = prev.map((p, idx) => idx === i ? { ...p, ...patch } : p);
       const last = next[next.length - 1];
-      if (i === next.length - 1 && last.quantity > 0 && last.length > 0 && (last.width || 0) > 0) {
+      if (i === next.length - 1 && last.quantity > 0 && last.length > 0) {
         next.push(newPiece(next.length + 1));
       }
       return next;

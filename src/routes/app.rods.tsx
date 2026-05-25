@@ -32,12 +32,12 @@ function RodsPage() {
 
   const stocks = useInventory ? invStocks : manualStocks;
 
-  const newPiece = (n: number): RodPiece => ({ id: crypto.randomUUID(), label: `مقاس ${n}`, length: 0, width: 0, quantity: 0 });
-  const newStock = (n: number): RodStock => ({ id: crypto.randomUUID(), name: `عود ${n}`, length: 0, width: 0, quantity: 0 });
+  const newPiece = (n: number): RodPiece => ({ id: crypto.randomUUID(), label: `مقاس ${n}`, length: 0, quantity: 0 });
+  const newStock = (n: number): RodStock => ({ id: crypto.randomUUID(), name: `عود ${n}`, length: 0, quantity: 0 });
 
   const run = () => {
-    const validStocks = stocks.filter((s) => s.length > 0 && s.quantity > 0 && (useInventory || (s.width || 0) > 0));
-    const validPieces = pieces.filter((p) => p.length > 0 && (p.width || 0) > 0 && p.quantity > 0);
+    const validStocks = stocks.filter((s) => s.length > 0 && s.quantity > 0);
+    const validPieces = pieces.filter((p) => p.length > 0 && p.quantity > 0);
     if (validStocks.length === 0) return toast.error(useInventory ? "لا توجد أعواد صالحة في المخزون" : "أضف عوداً واحداً على الأقل");
     if (validPieces.length === 0) return toast.error("أضف مقاساً واحداً على الأقل");
     setResult(cutRods(validStocks, validPieces));
@@ -48,7 +48,7 @@ function RodsPage() {
     setManualStocks((prev) => {
       const next = prev.map((s, idx) => idx === i ? { ...s, ...patch } : s);
       const last = next[next.length - 1];
-      if (i === next.length - 1 && last.quantity > 0 && last.length > 0 && (last.width || 0) > 0) {
+      if (i === next.length - 1 && last.quantity > 0 && last.length > 0) {
         next.push(newStock(next.length + 1));
       }
       return next;
@@ -58,7 +58,7 @@ function RodsPage() {
     setPieces((prev) => {
       const next = prev.map((p, idx) => idx === i ? { ...p, ...patch } : p);
       const last = next[next.length - 1];
-      if (i === next.length - 1 && last.quantity > 0 && last.length > 0 && (last.width || 0) > 0) {
+      if (i === next.length - 1 && last.quantity > 0 && last.length > 0) {
         next.push(newPiece(next.length + 1));
       }
       return next;
@@ -84,13 +84,12 @@ function RodsPage() {
               <h2 className="font-semibold mb-3">الأعواد المتوفرة (سم)</h2>
               <div className="rounded-xl border border-border/50 overflow-hidden">
                 <Table>
-                  <TableHeader><TableRow><TableHead className="text-right min-w-24">الطول</TableHead><TableHead className="text-right min-w-20">العرض</TableHead><TableHead className="text-right min-w-20">العدد</TableHead><TableHead className="w-12" /></TableRow></TableHeader>
+                  <TableHeader><TableRow><TableHead className="text-right min-w-24">الطول (سم)</TableHead><TableHead className="text-right min-w-20">العدد</TableHead><TableHead className="w-12" /></TableRow></TableHeader>
                   <TableBody>
-                    {manualStocks.length === 0 && <TableRow><TableCell colSpan={4} className="h-20 text-center text-sm text-muted-foreground">اضغط "إضافة عود" لبدء إدخال المقاسات.</TableCell></TableRow>}
+                    {manualStocks.length === 0 && <TableRow><TableCell colSpan={3} className="h-20 text-center text-sm text-muted-foreground">اضغط "إضافة عود" لبدء إدخال المقاسات.</TableCell></TableRow>}
                     {manualStocks.map((s, i) => (
                       <TableRow key={s.id}>
                         <TableCell><Input className="h-10 min-w-24 text-base tabular-nums" inputMode="decimal" type="number" min="0" placeholder="0" value={s.length || ""} onChange={(e) => updStock(i, { length: +e.target.value })} /></TableCell>
-                        <TableCell><Input className="h-10 min-w-20 text-base tabular-nums" inputMode="decimal" type="number" min="0" placeholder="0" value={s.width || ""} onChange={(e) => updStock(i, { width: +e.target.value })} /></TableCell>
                         <TableCell><Input className="h-10 min-w-20 text-base tabular-nums" inputMode="numeric" type="number" min="0" placeholder="0" value={s.quantity || ""} onChange={(e) => updStock(i, { quantity: +e.target.value })} /></TableCell>
                         <TableCell><Button size="icon" variant="ghost" className="h-10 w-10" onClick={() => setManualStocks(manualStocks.filter((_, j) => j !== i))}><Trash2 className="size-4 text-destructive" /></Button></TableCell>
                       </TableRow>
@@ -106,13 +105,12 @@ function RodsPage() {
             <h2 className="font-semibold mb-3">المقاسات المطلوبة (سم)</h2>
               <div className="rounded-xl border border-border/50 overflow-hidden">
                 <Table>
-                  <TableHeader><TableRow><TableHead className="text-right min-w-24">الطول</TableHead><TableHead className="text-right min-w-20">العرض</TableHead><TableHead className="text-right min-w-20">العدد</TableHead><TableHead className="w-12" /></TableRow></TableHeader>
+                  <TableHeader><TableRow><TableHead className="text-right min-w-24">الطول (سم)</TableHead><TableHead className="text-right min-w-20">العدد</TableHead><TableHead className="w-12" /></TableRow></TableHeader>
                   <TableBody>
-                    {pieces.length === 0 && <TableRow><TableCell colSpan={4} className="h-20 text-center text-sm text-muted-foreground">اضغط "إضافة مقاس" للبدء.</TableCell></TableRow>}
+                    {pieces.length === 0 && <TableRow><TableCell colSpan={3} className="h-20 text-center text-sm text-muted-foreground">اضغط "إضافة مقاس" للبدء.</TableCell></TableRow>}
                     {pieces.map((p, i) => (
                       <TableRow key={p.id}>
                         <TableCell><Input className="h-10 min-w-24 text-base tabular-nums" inputMode="decimal" type="number" min="0" placeholder="0" value={p.length || ""} onChange={(e) => updPiece(i, { length: +e.target.value })} /></TableCell>
-                        <TableCell><Input className="h-10 min-w-20 text-base tabular-nums" inputMode="decimal" type="number" min="0" placeholder="0" value={p.width || ""} onChange={(e) => updPiece(i, { width: +e.target.value })} /></TableCell>
                         <TableCell><Input className="h-10 min-w-20 text-base tabular-nums" inputMode="numeric" type="number" min="0" placeholder="0" value={p.quantity || ""} onChange={(e) => updPiece(i, { quantity: +e.target.value })} /></TableCell>
                         <TableCell><Button size="icon" variant="ghost" className="h-10 w-10" onClick={() => setPieces(pieces.filter((_, j) => j !== i))}><Trash2 className="size-4 text-destructive" /></Button></TableCell>
                       </TableRow>

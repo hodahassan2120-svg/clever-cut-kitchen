@@ -14,11 +14,13 @@ import { Users, Settings as SettingsIcon, Shield, Inbox, Check, X, Clock } from 
 export const Route = createFileRoute("/app/admin")({ component: Admin });
 
 interface UserRow { id: string; phone: string; full_name: string | null; trial_ends_at: string; is_active: boolean; activated_until: string | null; }
+interface RequestRow { id: string; user_id: string; phone: string; full_name: string | null; note: string | null; status: "pending" | "approved" | "rejected"; created_at: string; handled_at: string | null; }
 
 function Admin() {
-  const { isAdmin, loading } = useAuth();
+  const { isAdmin, loading, user } = useAuth();
   const [users, setUsers] = useState<UserRow[]>([]);
-  const [stats, setStats] = useState({ users: 0, active: 0, designs: 0 });
+  const [requests, setRequests] = useState<RequestRow[]>([]);
+  const [stats, setStats] = useState({ users: 0, active: 0, designs: 0, pending: 0 });
   const [settings, setSettings] = useState({ adsense_client: "", adsense_enabled: false, whatsapp_number: "" });
 
   const load = async () => {

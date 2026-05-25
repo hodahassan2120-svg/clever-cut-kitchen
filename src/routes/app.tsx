@@ -248,7 +248,7 @@ function TrialExpired({ onSignOut, userId }: { onSignOut: () => void; userId: st
           </div>
         )}
 
-        <Button onClick={onSignOut} variant="ghost" className="mt-4 w-full text-xs">تسجيل خروج</Button>
+        <ConfirmSignOutButton onConfirm={onSignOut} className="mt-4 w-full text-xs" />
       </div>
     </div>
   );

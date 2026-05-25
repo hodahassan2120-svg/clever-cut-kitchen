@@ -154,7 +154,7 @@ export function Cabinet3D({ block, defaultColor, marbleColor, marbleTextureId }:
       {block.placement === "base" && (
           <mesh position={[0, H / 2 + 1.5, FRONT_INSET / 2 + zFightGap]}>
           <boxGeometry args={[W + 2, 3, D + FRONT_INSET]} />
-            <meshStandardMaterial color={marbleColor || "#d8cfbf"} roughness={0.45} metalness={0.04} />
+            <TexturedMaterial textureId={marbleTextureId} surfaceWidthCm={W + 2} surfaceHeightCm={D + FRONT_INSET} fallbackColor={marbleColor || "#d8cfbf"} roughness={0.4} metalness={0.05} />
         </mesh>
       )}
 

@@ -24,11 +24,12 @@ function Admin() {
   const [settings, setSettings] = useState({ adsense_client: "", adsense_enabled: false, whatsapp_number: "" });
 
   const load = async () => {
-    const [{ data: profiles }, { data: subs }, designs, { data: s }] = await Promise.all([
+    const [{ data: profiles }, { data: subs }, designs, { data: s }, { data: reqs }] = await Promise.all([
       supabase.from("profiles").select("id,phone,full_name"),
       supabase.from("subscriptions").select("user_id,trial_ends_at,is_active,activated_until"),
       supabase.from("designs").select("id", { count: "exact", head: true }),
       supabase.from("app_settings").select("*").eq("id", 1).maybeSingle(),
+      supabase.from("activation_requests").select("*").order("created_at", { ascending: false }),
     ]);
     const subMap = new Map((subs ?? []).map((x) => [x.user_id, x]));
     const merged: UserRow[] = (profiles ?? []).map((p: any) => {
@@ -36,8 +37,11 @@ function Admin() {
       return { id: p.id, phone: p.phone, full_name: p.full_name, trial_ends_at: sub?.trial_ends_at ?? "", is_active: sub?.is_active ?? false, activated_until: sub?.activated_until ?? null };
     });
     setUsers(merged);
+    const list = (reqs ?? []) as RequestRow[];
+    setRequests(list);
     const activeCount = merged.filter((u) => u.is_active && (u.activated_until ? new Date(u.activated_until) > new Date() : new Date(u.trial_ends_at) > new Date())).length;
-    setStats({ users: merged.length, active: activeCount, designs: (designs as any).count ?? 0 });
+    const pendingCount = list.filter((r) => r.status === "pending").length;
+    setStats({ users: merged.length, active: activeCount, designs: (designs as any).count ?? 0, pending: pendingCount });
     if (s) setSettings({ adsense_client: s.adsense_client ?? "", adsense_enabled: !!s.adsense_enabled, whatsapp_number: s.whatsapp_number ?? "" });
   };
 
@@ -52,14 +56,26 @@ function Admin() {
     toast.success(`تم التفعيل ${days} يوم`);
     load();
   };
-  const toggle = async (userId: string, active: boolean) => {
-    await supabase.from("subscriptions").update({ is_active: active }).eq("user_id", userId);
+
+  const approveRequest = async (req: RequestRow, days: number) => {
+    const until = new Date(Date.now() + days * 86400000).toISOString();
+    const { error: subErr } = await supabase.from("subscriptions").update({ activated_until: until, is_active: true, activated_at: new Date().toISOString() }).eq("user_id", req.user_id);
+    if (subErr) return toast.error("تعذر تفعيل الاشتراك");
+    await supabase.from("activation_requests").update({ status: "approved", handled_at: new Date().toISOString(), handled_by: user?.id }).eq("id", req.id);
+    toast.success(`تم القبول وتفعيل ${days} يوم`);
     load();
   };
-  const saveSettings = async () => {
-    const { error } = await supabase.from("app_settings").update(settings).eq("id", 1);
-    if (error) return toast.error("تعذر الحفظ");
-    toast.success("تم حفظ الإعدادات");
+
+  const rejectRequest = async (req: RequestRow) => {
+    const { error } = await supabase.from("activation_requests").update({ status: "rejected", handled_at: new Date().toISOString(), handled_by: user?.id }).eq("id", req.id);
+    if (error) return toast.error("تعذر تحديث الطلب");
+    toast.success("تم رفض الطلب");
+    load();
+  };
+
+  const deleteRequest = async (id: string) => {
+    await supabase.from("activation_requests").delete().eq("id", id);
+    load();
   };
 
   return (

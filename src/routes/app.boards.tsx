@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cutBoards, type BoardStock, type BoardPiece, type BoardResult } from "@/lib/cutting";
 import { Plus, Trash2, Scissors, FileDown } from "lucide-react";
 import { toast } from "sonner";
@@ -38,6 +39,8 @@ function BoardsPage() {
   const addStock = () => setManualStocks([...manualStocks, { id: crypto.randomUUID(), name: `لوح ${manualStocks.length + 1}`, width: 0, length: 0, quantity: 1 }]);
   const updStock = (i: number, patch: Partial<BoardStock>) => setManualStocks(manualStocks.map((s, idx) => idx === i ? { ...s, ...patch } : s));
   const rmStock = (i: number) => setManualStocks(manualStocks.filter((_, idx) => idx !== i));
+  const totalBoards = result?.assignments.length ?? 0;
+  const totalPieces = pieces.reduce((sum, p) => sum + (Number(p.quantity) || 0), 0);
 
   const run = () => {
     const validStocks = stocks.filter((s) => s.width > 0 && s.length > 0 && s.quantity > 0);
@@ -63,17 +66,22 @@ function BoardsPage() {
           {!useInventory && (
             <div className="rounded-2xl border border-border/60 bg-card/50 p-5">
               <h2 className="font-semibold mb-3">الألواح المتوفرة (سم)</h2>
-              <div className="space-y-2">
-                {manualStocks.length === 0 && <div className="rounded-xl border border-dashed border-border/70 bg-muted/20 p-4 text-center text-sm text-muted-foreground">أضف مقاس اللوح بدون بيانات تجريبية.</div>}
-                {manualStocks.map((s, i) => (
-                  <div key={s.id} className="grid grid-cols-2 md:grid-cols-12 gap-2 items-end rounded-xl border border-border/40 p-2">
-                    <div className="col-span-2 md:col-span-3"><Label className="text-xs">الاسم</Label><Input className="h-11 text-base" value={s.name} onChange={(e) => updStock(i, { name: e.target.value })} /></div>
-                    <div className="md:col-span-3"><Label className="text-xs">العرض</Label><Input className="h-11 text-base tabular-nums" inputMode="decimal" type="number" min="0" placeholder="0" value={s.width || ""} onChange={(e) => updStock(i, { width: +e.target.value })} /></div>
-                    <div className="md:col-span-3"><Label className="text-xs">الطول</Label><Input className="h-11 text-base tabular-nums" inputMode="decimal" type="number" min="0" placeholder="0" value={s.length || ""} onChange={(e) => updStock(i, { length: +e.target.value })} /></div>
-                    <div className="md:col-span-2"><Label className="text-xs">الكمية</Label><Input className="h-11 text-base tabular-nums" inputMode="numeric" type="number" min="1" placeholder="1" value={s.quantity || ""} onChange={(e) => updStock(i, { quantity: +e.target.value })} /></div>
-                    <div className="md:col-span-1"><Button size="icon" variant="ghost" onClick={() => rmStock(i)} className="h-11 w-11"><Trash2 className="size-4 text-destructive" /></Button></div>
-                  </div>
-                ))}
+              <div className="rounded-xl border border-border/50 overflow-hidden">
+                <Table>
+                  <TableHeader><TableRow><TableHead className="text-right min-w-28">الاسم</TableHead><TableHead className="text-right min-w-24">الطول</TableHead><TableHead className="text-right min-w-24">العرض</TableHead><TableHead className="text-right min-w-20">العدد</TableHead><TableHead className="w-12" /></TableRow></TableHeader>
+                  <TableBody>
+                    {manualStocks.length === 0 && <TableRow><TableCell colSpan={5} className="h-20 text-center text-sm text-muted-foreground">أضف مقاس اللوح بدون بيانات تجريبية.</TableCell></TableRow>}
+                    {manualStocks.map((s, i) => (
+                      <TableRow key={s.id}>
+                        <TableCell><Input className="h-10 min-w-28" value={s.name} onChange={(e) => updStock(i, { name: e.target.value })} /></TableCell>
+                        <TableCell><Input className="h-10 min-w-24 text-base tabular-nums" inputMode="decimal" type="number" min="0" placeholder="0" value={s.length || ""} onChange={(e) => updStock(i, { length: +e.target.value })} /></TableCell>
+                        <TableCell><Input className="h-10 min-w-24 text-base tabular-nums" inputMode="decimal" type="number" min="0" placeholder="0" value={s.width || ""} onChange={(e) => updStock(i, { width: +e.target.value })} /></TableCell>
+                        <TableCell><Input className="h-10 min-w-20 text-base tabular-nums" inputMode="numeric" type="number" min="1" placeholder="1" value={s.quantity || ""} onChange={(e) => updStock(i, { quantity: +e.target.value })} /></TableCell>
+                        <TableCell><Button size="icon" variant="ghost" onClick={() => rmStock(i)} className="h-10 w-10"><Trash2 className="size-4 text-destructive" /></Button></TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
               <Button onClick={addStock} variant="outline" size="sm" className="mt-3"><Plus className="size-3.5" /> إضافة لوح</Button>
             </div>
@@ -81,18 +89,23 @@ function BoardsPage() {
 
           <div className="rounded-2xl border border-border/60 bg-card/50 p-5">
             <h2 className="font-semibold mb-3">القطع المطلوبة (سم)</h2>
-              <div className="space-y-2">
-                {pieces.length === 0 && <div className="rounded-xl border border-dashed border-border/70 bg-muted/20 p-4 text-center text-sm text-muted-foreground">أضف القطع المطلوبة للبدء.</div>}
-              {pieces.map((p, i) => (
-                  <div key={p.id} className="grid grid-cols-2 md:grid-cols-12 gap-2 items-end rounded-xl border border-border/40 p-2">
-                    <div className="col-span-2 md:col-span-3"><Label className="text-xs">الاسم</Label><Input className="h-11 text-base" value={p.label} onChange={(e) => updPiece(i, { label: e.target.value })} /></div>
-                    <div className="md:col-span-3"><Label className="text-xs">العرض</Label><Input className="h-11 text-base tabular-nums" inputMode="decimal" type="number" min="0" placeholder="0" value={p.width || ""} onChange={(e) => updPiece(i, { width: +e.target.value })} /></div>
-                    <div className="md:col-span-3"><Label className="text-xs">الطول</Label><Input className="h-11 text-base tabular-nums" inputMode="decimal" type="number" min="0" placeholder="0" value={p.length || ""} onChange={(e) => updPiece(i, { length: +e.target.value })} /></div>
-                    <div className="md:col-span-2"><Label className="text-xs">الكمية</Label><Input className="h-11 text-base tabular-nums" inputMode="numeric" type="number" min="1" placeholder="1" value={p.quantity || ""} onChange={(e) => updPiece(i, { quantity: +e.target.value })} /></div>
-                    <div className="md:col-span-1"><Button size="icon" variant="ghost" onClick={() => rmPiece(i)} className="h-11 w-11"><Trash2 className="size-4 text-destructive" /></Button></div>
-                </div>
-              ))}
-            </div>
+              <div className="rounded-xl border border-border/50 overflow-hidden">
+                <Table>
+                  <TableHeader><TableRow><TableHead className="text-right min-w-28">الاسم</TableHead><TableHead className="text-right min-w-24">الطول</TableHead><TableHead className="text-right min-w-24">العرض</TableHead><TableHead className="text-right min-w-20">العدد</TableHead><TableHead className="w-12" /></TableRow></TableHeader>
+                  <TableBody>
+                    {pieces.length === 0 && <TableRow><TableCell colSpan={5} className="h-20 text-center text-sm text-muted-foreground">أضف القطع المطلوبة للبدء.</TableCell></TableRow>}
+                    {pieces.map((p, i) => (
+                      <TableRow key={p.id}>
+                        <TableCell><Input className="h-10 min-w-28" value={p.label} onChange={(e) => updPiece(i, { label: e.target.value })} /></TableCell>
+                        <TableCell><Input className="h-10 min-w-24 text-base tabular-nums" inputMode="decimal" type="number" min="0" placeholder="0" value={p.length || ""} onChange={(e) => updPiece(i, { length: +e.target.value })} /></TableCell>
+                        <TableCell><Input className="h-10 min-w-24 text-base tabular-nums" inputMode="decimal" type="number" min="0" placeholder="0" value={p.width || ""} onChange={(e) => updPiece(i, { width: +e.target.value })} /></TableCell>
+                        <TableCell><Input className="h-10 min-w-20 text-base tabular-nums" inputMode="numeric" type="number" min="1" placeholder="1" value={p.quantity || ""} onChange={(e) => updPiece(i, { quantity: +e.target.value })} /></TableCell>
+                        <TableCell><Button size="icon" variant="ghost" onClick={() => rmPiece(i)} className="h-10 w-10"><Trash2 className="size-4 text-destructive" /></Button></TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             <Button onClick={addPiece} variant="outline" size="sm" className="mt-3"><Plus className="size-3.5" /> إضافة قطعة</Button>
             <Button onClick={run} className="w-full mt-4 bg-gradient-primary shadow-glow"><Scissors className="size-4" /> حساب التقطيع</Button>
           </div>
@@ -102,8 +115,12 @@ function BoardsPage() {
           <h2 className="font-semibold mb-3">النتيجة</h2>
           {!result ? <p className="text-sm text-muted-foreground">اضغط "حساب التقطيع" لعرض النتائج.</p> : (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="text-sm">الهدر: <span className="text-gold font-bold">{(result.totalWaste / 10000).toFixed(2)} م²</span></div>
+              <div className="grid grid-cols-3 gap-2 text-sm">
+                <div className="rounded-lg bg-muted/30 p-2">عدد الألواح: <span className="text-gold font-bold">{totalBoards}</span></div>
+                <div className="rounded-lg bg-muted/30 p-2">عدد القطع: <span className="font-bold">{totalPieces}</span></div>
+                <div className="rounded-lg bg-muted/30 p-2">الهدر: <span className="text-gold font-bold">{(result.totalWaste / 10000).toFixed(2)} م²</span></div>
+              </div>
+              <div className="flex justify-end">
                 <Button size="sm" variant="outline" onClick={() => exportBoardsPDF(result)}><FileDown className="size-3.5" /> PDF</Button>
               </div>
               {result.unfulfilled.length > 0 && <div className="text-sm text-destructive">قطع لم تتسع: {result.unfulfilled.map(u => `${u.label}(×${u.quantity})`).join(", ")}</div>}

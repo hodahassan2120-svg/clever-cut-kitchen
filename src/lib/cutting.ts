@@ -1,31 +1,32 @@
 // 1D bin packing — first-fit decreasing for rod cutting
-export interface RodStock { id: string; length: number; quantity: number; name: string; }
-export interface RodPiece { id: string; length: number; quantity: number; label?: string; }
-export interface RodAssignment { stockId: string; stockName: string; stockLength: number; index: number; cuts: { label: string; length: number }[]; used: number; waste: number; }
-export interface RodResult { assignments: RodAssignment[]; unfulfilled: { label: string; length: number; quantity: number }[]; totalWaste: number; }
+export interface RodStock { id: string; length: number; quantity: number; name: string; width?: number; }
+export interface RodPiece { id: string; length: number; quantity: number; label?: string; width?: number; }
+export interface RodAssignment { stockId: string; stockName: string; stockLength: number; stockWidth?: number; index: number; cuts: { label: string; length: number; width?: number }[]; used: number; waste: number; }
+export interface RodResult { assignments: RodAssignment[]; unfulfilled: { label: string; length: number; width?: number; quantity: number }[]; totalWaste: number; }
 
 export function cutRods(stocks: RodStock[], pieces: RodPiece[], kerf = 0): RodResult {
   // Expand pieces
-  const items: { label: string; length: number }[] = [];
+  const items: { label: string; length: number; width?: number }[] = [];
   for (const p of pieces) {
-    for (let i = 0; i < p.quantity; i++) items.push({ label: p.label ?? p.id, length: p.length });
+    for (let i = 0; i < p.quantity; i++) items.push({ label: p.label ?? p.id, length: p.length, width: p.width });
   }
   items.sort((a, b) => b.length - a.length);
 
   // Track available stock pool
-  const pool: { stockId: string; name: string; length: number; index: number; remaining: number; cuts: { label: string; length: number }[] }[] = [];
+  const pool: { stockId: string; name: string; length: number; width?: number; index: number; remaining: number; cuts: { label: string; length: number; width?: number }[] }[] = [];
   const stockCounter: Record<string, number> = {};
   for (const s of stocks) {
     stockCounter[s.id] = 0;
   }
 
-  const unfulfilled: Record<string, { label: string; length: number; quantity: number }> = {};
+  const unfulfilled: Record<string, { label: string; length: number; width?: number; quantity: number }> = {};
+  const sameWidth = (stockWidth?: number, itemWidth?: number) => !itemWidth || !stockWidth || Math.abs(stockWidth - itemWidth) < 0.01;
 
   for (const item of items) {
     // Try existing opened stocks
     let placed = false;
     for (const bin of pool) {
-      if (bin.remaining >= item.length + (bin.cuts.length > 0 ? kerf : 0)) {
+      if (sameWidth(bin.width, item.width) && bin.remaining >= item.length + (bin.cuts.length > 0 ? kerf : 0)) {
         const used = item.length + (bin.cuts.length > 0 ? kerf : 0);
         bin.remaining -= used;
         bin.cuts.push(item);
@@ -35,20 +36,21 @@ export function cutRods(stocks: RodStock[], pieces: RodPiece[], kerf = 0): RodRe
     }
     if (placed) continue;
     // Open a new stock that fits
-    const stock = stocks.find((s) => s.length >= item.length && stockCounter[s.id] < s.quantity);
+    const stock = stocks.find((s) => sameWidth(s.width, item.width) && s.length >= item.length && stockCounter[s.id] < s.quantity);
     if (stock) {
       stockCounter[stock.id]++;
       pool.push({
         stockId: stock.id,
         name: stock.name,
         length: stock.length,
+        width: stock.width,
         index: stockCounter[stock.id],
         remaining: stock.length - item.length,
         cuts: [item],
       });
     } else {
-      const key = `${item.label}-${item.length}`;
-      if (!unfulfilled[key]) unfulfilled[key] = { label: item.label, length: item.length, quantity: 0 };
+      const key = `${item.label}-${item.length}-${item.width ?? ""}`;
+      if (!unfulfilled[key]) unfulfilled[key] = { label: item.label, length: item.length, width: item.width, quantity: 0 };
       unfulfilled[key].quantity++;
     }
   }
@@ -57,6 +59,7 @@ export function cutRods(stocks: RodStock[], pieces: RodPiece[], kerf = 0): RodRe
     stockId: b.stockId,
     stockName: b.name,
     stockLength: b.length,
+    stockWidth: b.width,
     index: b.index,
     cuts: b.cuts,
     used: b.length - b.remaining,

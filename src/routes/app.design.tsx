@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Stage, Layer, Rect, Line, Text as KText, Group } from "react-konva";
 import { Canvas, useThree } from "@react-three/fiber";
-import { OrbitControls, Grid } from "@react-three/drei";
+import { OrbitControls } from "@react-three/drei";
 import { KITCHEN_BLOCKS, CATEGORY_LABELS, DEFAULT_DESIGN, type DesignDoc, type KitchenBlock, type PlacedBlock } from "@/lib/blocks";
 import { BlockIcon } from "@/components/BlockIcon";
 import { Button } from "@/components/ui/button";
@@ -12,13 +12,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { CustomUnitBuilder } from "@/components/CustomUnitBuilder";
 import { Cabinet3D } from "@/components/Cabinet3D";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { Slider } from "@/components/ui/slider";
-import { Save, Plus, Trash2, LayoutGrid, Settings2, Wand2, Palette, FolderOpen, Ruler, PenLine, RotateCw, Pencil, X } from "lucide-react";
+import { Save, Plus, Trash2, LayoutGrid, Settings2, Wand2, Palette, FolderOpen, Ruler, PenLine, RotateCw, Pencil, X, Camera, ChevronDown } from "lucide-react";
 import type Konva from "konva";
 
 export const Route = createFileRoute("/app/design")({
@@ -691,7 +692,7 @@ function DesignEditor() {
               </div>
             )}
           </TabsContent>
-          <TabsContent value="3d" className="flex-1 m-0 bg-gradient-to-b from-zinc-900 to-black min-h-0 relative" data-design-3d>
+          <TabsContent value="3d" className="flex-1 m-0 bg-background min-h-0 relative" data-design-3d>
             <div className="absolute top-2 left-2 right-2 z-10 flex flex-wrap items-center gap-1.5 rounded-xl border border-border/60 bg-card/90 p-1.5 shadow-card backdrop-blur">
               {([
                 ["perspective", "منظور"],
@@ -702,17 +703,24 @@ function DesignEditor() {
               ] as const).map(([value, label]) => (
                 <Button key={value} size="sm" variant={view3d === value ? "default" : "outline"} className="h-8 px-2 text-xs" onClick={() => setView3d(value)}>{label}</Button>
               ))}
-              <div className="ms-auto flex flex-wrap gap-1">
-                {([
-                  ["perspective", "منظور"],
-                  ["top", "علوي"],
-                  ["front", "أمامي"],
-                  ["right", "يمين"],
-                  ["left", "يسار"],
-                ] as const).map(([value, label]) => (
-                  <Button key={`shot-${value}`} size="sm" variant="outline" className="h-8 px-2 text-xs" onClick={() => download3DView(value, label)}>سكرين {label}</Button>
-                ))}
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" variant="outline" className="ms-auto h-8 px-2 text-xs gap-1">
+                    <Camera className="size-3.5" /> الإسكرينات <ChevronDown className="size-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="min-w-40">
+                  {([
+                    ["perspective", "منظور"],
+                    ["top", "علوي"],
+                    ["front", "أمامي"],
+                    ["right", "يمين"],
+                    ["left", "يسار"],
+                  ] as const).map(([value, label]) => (
+                    <DropdownMenuItem key={`shot-${value}`} onClick={() => download3DView(value, label)}>سكرين {label}</DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
             <Canvas
               camera={{ position: [doc.roomWidth, doc.roomDepth * 1.2, doc.roomDepth * 1.4], fov: 45 }}
@@ -721,21 +729,20 @@ function DesignEditor() {
               frameloop="demand"
             >
               <SceneCamera view={view3d} roomWidth={doc.roomWidth} roomDepth={doc.roomDepth} />
-              <color attach="background" args={["#1a1208"]} />
-              <ambientLight intensity={0.8} />
-              <directionalLight position={[doc.roomWidth, 600, doc.roomDepth]} intensity={0.9} />
-              <Grid args={[2000, 2000]} cellColor="#333" sectionColor="#555" infiniteGrid fadeDistance={1500} />
-              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[doc.roomWidth / 2, 0, doc.roomDepth / 2]}>
+              <color attach="background" args={["#f3eee6"]} />
+              <ambientLight intensity={1.1} />
+              <directionalLight position={[doc.roomWidth, 520, doc.roomDepth]} intensity={0.65} />
+              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[doc.roomWidth / 2, -0.6, doc.roomDepth / 2]}>
                 <planeGeometry args={[doc.roomWidth, doc.roomDepth]} />
-                <meshStandardMaterial color="#3a2a1c" roughness={0.9} />
+                <meshStandardMaterial color="#d9cec0" roughness={0.92} />
               </mesh>
-              <mesh position={[doc.roomWidth / 2, 130, -2.5]}>
-                <boxGeometry args={[doc.roomWidth, 260, 5]} />
-                <meshStandardMaterial color="#e8dcc8" roughness={0.95} />
+              <mesh position={[doc.roomWidth / 2, 130, -5]}>
+                <boxGeometry args={[doc.roomWidth, 260, 8]} />
+                <meshStandardMaterial color="#efe7da" roughness={0.98} />
               </mesh>
-              <mesh position={[-2.5, 130, doc.roomDepth / 2]}>
-                <boxGeometry args={[5, 260, doc.roomDepth]} />
-                <meshStandardMaterial color="#e8dcc8" roughness={0.95} />
+              <mesh position={[-5, 130, doc.roomDepth / 2]}>
+                <boxGeometry args={[8, 260, doc.roomDepth]} />
+                <meshStandardMaterial color="#efe7da" roughness={0.98} />
               </mesh>
               {doc.blocks.map((b) => (
                 <Cabinet3D key={b.id} block={b} defaultColor={isPaintableBlock(b) ? (doc.globalColor || b.color) : b.color} />

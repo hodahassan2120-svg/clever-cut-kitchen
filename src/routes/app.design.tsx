@@ -17,7 +17,8 @@ import { Cabinet3D } from "@/components/Cabinet3D";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { Save, Plus, Trash2, LayoutGrid, Settings2, Wand2, Palette, FolderOpen, Ruler, PenLine } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { Save, Plus, Trash2, LayoutGrid, Settings2, Wand2, Palette, FolderOpen, Ruler, PenLine, RotateCw, Pencil, X } from "lucide-react";
 import type Konva from "konva";
 
 export const Route = createFileRoute("/app/design")({

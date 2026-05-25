@@ -534,7 +534,7 @@ function DesignEditor() {
                     <Line key={`h${i}`} points={[PAD, PAD + (i + 1) * 50 * scale, PAD + doc.roomWidth * scale, PAD + (i + 1) * 50 * scale]} stroke="#333" strokeWidth={0.5} />
                   ))}
                   {doc.blocks.map((b) => {
-                    const fill = b.customColor ? b.color : (doc.globalColor || b.color);
+                    const fill = blockColor(b);
                     const W = b.width * scale;
                     const H = b.depth * scale;
                     const doors = Math.max(0, Math.min(4, b.doors || 0));
@@ -604,7 +604,7 @@ function DesignEditor() {
                 <meshStandardMaterial color="#e8dcc8" roughness={0.95} />
               </mesh>
               {doc.blocks.map((b) => (
-                <Cabinet3D key={b.id} block={b} defaultColor={doc.globalColor || b.color} />
+                <Cabinet3D key={b.id} block={b} defaultColor={isPaintableBlock(b) ? (doc.globalColor || b.color) : b.color} />
               ))}
               <OrbitControls target={[doc.roomWidth / 2, 80, doc.roomDepth / 2]} maxPolarAngle={Math.PI / 2.05} makeDefault />
             </Canvas>

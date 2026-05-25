@@ -46,12 +46,41 @@ function DesignEditor() {
     if (!id || !user) return;
     supabase.from("designs").select("*").eq("id", id).maybeSingle().then(({ data }) => {
       if (data) {
-        setDoc(data.data as unknown as DesignDoc);
+        setDoc({ ...DEFAULT_DESIGN, ...(data.data as unknown as DesignDoc) });
         setName(data.name);
         setDesignId(data.id);
+        setEditorStarted(true);
       }
     });
   }, [id, user]);
+
+  useEffect(() => {
+    if (!user || id) return;
+    supabase.from("designs").select("id,name,updated_at").eq("user_id", user.id).order("updated_at", { ascending: false }).then(({ data }) => {
+      setSavedRows(data ?? []);
+    });
+  }, [id, user]);
+
+  const startNewDesign = () => {
+    const roomWidth = unit === "m" ? parseFloat(setupRoom.width) * 100 : parseFloat(setupRoom.width);
+    const roomDepth = unit === "m" ? parseFloat(setupRoom.depth) * 100 : parseFloat(setupRoom.depth);
+    const cutoutWidth = unit === "m" ? parseFloat(setupRoom.cutoutWidth) * 100 : parseFloat(setupRoom.cutoutWidth);
+    const cutoutDepth = unit === "m" ? parseFloat(setupRoom.cutoutDepth) * 100 : parseFloat(setupRoom.cutoutDepth);
+    if (!roomWidth || !roomDepth) return toast.error("أدخل مقاسات الغرفة");
+    setName(setupRoom.name || "تصميم جديد");
+    setDesignId(null);
+    setSelectedId(null);
+    setDoc({
+      ...DEFAULT_DESIGN,
+      roomWidth,
+      roomDepth,
+      roomShape: setupRoom.shape,
+      cutoutWidth: setupRoom.shape === "l_shape" ? Math.min(cutoutWidth || 0, roomWidth - 50) : 0,
+      cutoutDepth: setupRoom.shape === "l_shape" ? Math.min(cutoutDepth || 0, roomDepth - 50) : 0,
+      blocks: [],
+    });
+    setEditorStarted(true);
+  };
 
   // Responsive stage size — measure container
   useLayoutEffect(() => {

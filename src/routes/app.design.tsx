@@ -80,7 +80,7 @@ function DesignEditor() {
   const [adModalOpen, setAdModalOpen] = useState(false);
   const [toolbar3dVisible, setToolbar3dVisible] = useState(true);
   const orbitRef = useRef<any>(null);
-  const dragRef = useRef<{ id: string; offsetX: number; offsetZ: number; plane: THREE.Plane; moved: boolean } | null>(null);
+  const dragRef = useRef<{ id: string; offsetX: number; offsetZ: number; currentX: number; currentY: number; plane: THREE.Plane; moved: boolean } | null>(null);
   const [isDragging3d, setIsDragging3d] = useState(false);
   const callRender = useServerFn(renderRealistic);
 
@@ -186,7 +186,7 @@ function DesignEditor() {
   };
 
   const updateBlock = (id: string, patch: Partial<PlacedBlock>) => {
-    setDoc({ ...doc, blocks: doc.blocks.map((b) => (b.id === id ? clampBlock({ ...b, ...patch }) : b)) });
+    setDoc((current) => ({ ...current, blocks: current.blocks.map((b) => (b.id === id ? clampBlock({ ...b, ...patch }) : b)) }));
   };
   const removeBlock = (id: string) => {
     setDoc({ ...doc, blocks: doc.blocks.filter((b) => b.id !== id) });

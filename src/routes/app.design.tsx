@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Stage, Layer, Rect, Line, Text as KText, Group } from "react-konva";
 import { Canvas } from "@react-three/fiber";
@@ -17,7 +17,7 @@ import { Cabinet3D } from "@/components/Cabinet3D";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { Save, Plus, Trash2, LayoutGrid, Settings2, Wand2, Palette } from "lucide-react";
+import { Save, Plus, Trash2, LayoutGrid, Settings2, Wand2, Palette, FolderOpen, Ruler, PenLine } from "lucide-react";
 import type Konva from "konva";
 
 export const Route = createFileRoute("/app/design")({
@@ -36,6 +36,9 @@ function DesignEditor() {
   const [pendingBlock, setPendingBlock] = useState<KitchenBlock | null>(null);
   const [pendingDims, setPendingDims] = useState({ width: "", depth: "", height: "", notes: "" });
   const [builderOpen, setBuilderOpen] = useState(false);
+  const [editorStarted, setEditorStarted] = useState(false);
+  const [setupRoom, setSetupRoom] = useState({ name: "تصميم جديد", width: "400", depth: "300", shape: "rectangle" as "rectangle" | "l_shape", cutoutWidth: "100", cutoutDepth: "100" });
+  const [savedRows, setSavedRows] = useState<{ id: string; name: string; updated_at: string }[]>([]);
   const stageWrapRef = useRef<HTMLDivElement>(null);
   const [stageSize, setStageSize] = useState({ w: 360, h: 400 });
 

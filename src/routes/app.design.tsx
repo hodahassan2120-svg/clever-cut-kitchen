@@ -666,8 +666,9 @@ function DesignEditor() {
         unit={unit}
         defaultColor={doc.globalColor || "#b88858"}
         onAdd={(block) => {
-          setDoc({ ...doc, blocks: [...doc.blocks, block] });
-          setSelectedId(block.id);
+          const placed = autoPlaceBlock(block);
+          setDoc({ ...doc, blocks: [...doc.blocks, placed] });
+          setSelectedId(placed.id);
         }}
       />
     </div>

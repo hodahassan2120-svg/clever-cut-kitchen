@@ -24,6 +24,8 @@ function loadCached(url: string): Promise<THREE.Texture> {
         tex.wrapS = THREE.RepeatWrapping;
         tex.wrapT = THREE.RepeatWrapping;
         tex.anisotropy = 8;
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.needsUpdate = true;
         cache.set(url, tex);
         resolve(tex);
       },
@@ -66,7 +68,7 @@ export function TexturedMaterial({
   }, [map, tex, surfaceWidthCm, surfaceHeightCm]);
 
   if (!tex || !map) {
-    return <meshStandardMaterial color={fallbackColor} roughness={roughness} metalness={metalness} />;
+    return <meshStandardMaterial key={`fb-${fallbackColor}`} color={fallbackColor} roughness={roughness} metalness={metalness} />;
   }
-  return <meshStandardMaterial map={map} roughness={roughness} metalness={metalness} />;
+  return <meshStandardMaterial key={`tx-${tex.id}`} map={map} color="#ffffff" roughness={roughness} metalness={metalness} />;
 }

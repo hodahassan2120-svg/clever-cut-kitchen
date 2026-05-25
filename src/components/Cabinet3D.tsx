@@ -150,20 +150,40 @@ export function Cabinet3D({ block, defaultColor, marbleColor, marbleTextureId }:
         });
       })()}
 
-      {/* رخامة للوحدات السفلية */}
+      {/* رخامة للوحدات السفلية مع حافة أمامية وباكسبلاش خلفي */}
       {block.placement === "base" && (
-          <mesh position={[0, H / 2 + 1.5, FRONT_INSET / 2 + zFightGap]}>
-          <boxGeometry args={[W + 2, 3, D + FRONT_INSET]} />
-            <TexturedMaterial textureId={marbleTextureId} surfaceWidthCm={W + 2} surfaceHeightCm={D + FRONT_INSET} fallbackColor={marbleColor || "#d8cfbf"} roughness={0.4} metalness={0.05} />
-        </mesh>
+        <>
+          {/* السطح الرئيسي للرخامة */}
+          <mesh position={[0, H / 2 + 1.5, FRONT_INSET / 2 + zFightGap]} castShadow receiveShadow>
+            <boxGeometry args={[W + 2, 3, D + FRONT_INSET]} />
+            <TexturedMaterial textureId={marbleTextureId} surfaceWidthCm={W + 2} surfaceHeightCm={D + FRONT_INSET} fallbackColor={marbleColor || "#d8cfbf"} roughness={0.35} metalness={0.06} />
+          </mesh>
+          {/* حافة أمامية بارزة (Bullnose) */}
+          <mesh position={[0, H / 2 - 0.5, D / 2 + FRONT_INSET + zFightGap]}>
+            <boxGeometry args={[W + 2, 1.2, 0.6]} />
+            <TexturedMaterial textureId={marbleTextureId} surfaceWidthCm={W + 2} surfaceHeightCm={1.2} fallbackColor={marbleColor || "#d8cfbf"} roughness={0.35} metalness={0.06} />
+          </mesh>
+          {/* باكسبلاش خلفي صغير */}
+          <mesh position={[0, H / 2 + 4 + zFightGap, -D / 2 + 1]}>
+            <boxGeometry args={[W + 2, 7, 1.2]} />
+            <TexturedMaterial textureId={marbleTextureId} surfaceWidthCm={W + 2} surfaceHeightCm={7} fallbackColor={marbleColor || "#d8cfbf"} roughness={0.35} metalness={0.06} />
+          </mesh>
+        </>
       )}
 
-      {/* قاعدة للوحدات السفلية */}
+      {/* قاعدة (Toe-kick) للوحدات السفلية */}
       {block.placement === "base" && (
+        <>
           <mesh position={[0, -H / 2 + 5, D / 2 - 2 - zFightGap]}>
-          <boxGeometry args={[W, 10, 4]} />
-            <meshStandardMaterial color="#211b16" roughness={1} />
-        </mesh>
+            <boxGeometry args={[W, 10, 4]} />
+            <meshStandardMaterial color="#0f0c0a" roughness={1} />
+          </mesh>
+          {/* خط ظل خفيف فوق التو-كيك */}
+          <mesh position={[0, -H / 2 + 10.2, D / 2 + 0.05]}>
+            <boxGeometry args={[W - 1, 0.3, 0.3]} />
+            <meshStandardMaterial color="#000000" roughness={1} />
+          </mesh>
+        </>
       )}
     </group>
   );

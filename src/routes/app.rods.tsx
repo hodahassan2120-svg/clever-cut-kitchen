@@ -61,16 +61,22 @@ function RodsPage() {
           {!useInventory && (
             <div className="rounded-2xl border border-border/60 bg-card/50 p-5">
               <h2 className="font-semibold mb-3">الأعواد المتوفرة (سم)</h2>
-              <div className="space-y-2">
-                {manualStocks.length === 0 && <div className="rounded-xl border border-dashed border-border/70 bg-muted/20 p-4 text-center text-sm text-muted-foreground">أضف مقاس العود بدون بيانات تجريبية.</div>}
-                {manualStocks.map((s, i) => (
-                  <div key={s.id} className="grid grid-cols-2 md:grid-cols-12 gap-2 items-end rounded-xl border border-border/40 p-2">
-                    <div className="col-span-2 md:col-span-4"><Label className="text-xs">الاسم</Label><Input className="h-11 text-base" value={s.name} onChange={(e) => updStock(i, { name: e.target.value })} /></div>
-                    <div className="md:col-span-4"><Label className="text-xs">الطول</Label><Input className="h-11 text-base tabular-nums" inputMode="decimal" type="number" min="0" placeholder="0" value={s.length || ""} onChange={(e) => updStock(i, { length: +e.target.value })} /></div>
-                    <div className="md:col-span-3"><Label className="text-xs">الكمية</Label><Input className="h-11 text-base tabular-nums" inputMode="numeric" type="number" min="1" placeholder="1" value={s.quantity || ""} onChange={(e) => updStock(i, { quantity: +e.target.value })} /></div>
-                    <div className="md:col-span-1"><Button size="icon" variant="ghost" className="h-11 w-11" onClick={() => setManualStocks(manualStocks.filter((_, j) => j !== i))}><Trash2 className="size-4 text-destructive" /></Button></div>
-                  </div>
-                ))}
+              <div className="rounded-xl border border-border/50 overflow-hidden">
+                <Table>
+                  <TableHeader><TableRow><TableHead className="text-right min-w-28">الاسم</TableHead><TableHead className="text-right min-w-24">الطول</TableHead><TableHead className="text-right min-w-20">العرض</TableHead><TableHead className="text-right min-w-20">العدد</TableHead><TableHead className="w-12" /></TableRow></TableHeader>
+                  <TableBody>
+                    {manualStocks.length === 0 && <TableRow><TableCell colSpan={5} className="h-20 text-center text-sm text-muted-foreground">أضف مقاس العود بدون بيانات تجريبية.</TableCell></TableRow>}
+                    {manualStocks.map((s, i) => (
+                      <TableRow key={s.id}>
+                        <TableCell><Input className="h-10 min-w-28" value={s.name} onChange={(e) => updStock(i, { name: e.target.value })} /></TableCell>
+                        <TableCell><Input className="h-10 min-w-24 text-base tabular-nums" inputMode="decimal" type="number" min="0" placeholder="0" value={s.length || ""} onChange={(e) => updStock(i, { length: +e.target.value })} /></TableCell>
+                        <TableCell><Input className="h-10 min-w-20 text-base tabular-nums" inputMode="decimal" type="number" min="0" placeholder="0" disabled value="—" /></TableCell>
+                        <TableCell><Input className="h-10 min-w-20 text-base tabular-nums" inputMode="numeric" type="number" min="1" placeholder="1" value={s.quantity || ""} onChange={(e) => updStock(i, { quantity: +e.target.value })} /></TableCell>
+                        <TableCell><Button size="icon" variant="ghost" className="h-10 w-10" onClick={() => setManualStocks(manualStocks.filter((_, j) => j !== i))}><Trash2 className="size-4 text-destructive" /></Button></TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
               <Button onClick={() => setManualStocks([...manualStocks, { id: crypto.randomUUID(), name: `عود ${manualStocks.length + 1}`, length: 0, quantity: 1 }])} variant="outline" size="sm" className="mt-3"><Plus className="size-3.5" /> إضافة عود</Button>
             </div>
@@ -78,17 +84,23 @@ function RodsPage() {
 
           <div className="rounded-2xl border border-border/60 bg-card/50 p-5">
             <h2 className="font-semibold mb-3">القطع المطلوبة (سم)</h2>
-              <div className="space-y-2">
-                {pieces.length === 0 && <div className="rounded-xl border border-dashed border-border/70 bg-muted/20 p-4 text-center text-sm text-muted-foreground">أضف القطع المطلوبة للبدء.</div>}
-              {pieces.map((p, i) => (
-                  <div key={p.id} className="grid grid-cols-2 md:grid-cols-12 gap-2 items-end rounded-xl border border-border/40 p-2">
-                    <div className="col-span-2 md:col-span-4"><Label className="text-xs">الاسم</Label><Input className="h-11 text-base" value={p.label} onChange={(e) => setPieces(pieces.map((x, j) => j === i ? { ...x, label: e.target.value } : x))} /></div>
-                    <div className="md:col-span-4"><Label className="text-xs">الطول</Label><Input className="h-11 text-base tabular-nums" inputMode="decimal" type="number" min="0" placeholder="0" value={p.length || ""} onChange={(e) => setPieces(pieces.map((x, j) => j === i ? { ...x, length: +e.target.value } : x))} /></div>
-                    <div className="md:col-span-3"><Label className="text-xs">الكمية</Label><Input className="h-11 text-base tabular-nums" inputMode="numeric" type="number" min="1" placeholder="1" value={p.quantity || ""} onChange={(e) => setPieces(pieces.map((x, j) => j === i ? { ...x, quantity: +e.target.value } : x))} /></div>
-                    <div className="md:col-span-1"><Button size="icon" variant="ghost" className="h-11 w-11" onClick={() => setPieces(pieces.filter((_, j) => j !== i))}><Trash2 className="size-4 text-destructive" /></Button></div>
-                </div>
-              ))}
-            </div>
+              <div className="rounded-xl border border-border/50 overflow-hidden">
+                <Table>
+                  <TableHeader><TableRow><TableHead className="text-right min-w-28">الاسم</TableHead><TableHead className="text-right min-w-24">الطول</TableHead><TableHead className="text-right min-w-20">العرض</TableHead><TableHead className="text-right min-w-20">العدد</TableHead><TableHead className="w-12" /></TableRow></TableHeader>
+                  <TableBody>
+                    {pieces.length === 0 && <TableRow><TableCell colSpan={5} className="h-20 text-center text-sm text-muted-foreground">أضف القطع المطلوبة للبدء.</TableCell></TableRow>}
+                    {pieces.map((p, i) => (
+                      <TableRow key={p.id}>
+                        <TableCell><Input className="h-10 min-w-28" value={p.label} onChange={(e) => updPiece(i, { label: e.target.value })} /></TableCell>
+                        <TableCell><Input className="h-10 min-w-24 text-base tabular-nums" inputMode="decimal" type="number" min="0" placeholder="0" value={p.length || ""} onChange={(e) => updPiece(i, { length: +e.target.value })} /></TableCell>
+                        <TableCell><Input className="h-10 min-w-20 text-base tabular-nums" inputMode="decimal" type="number" min="0" placeholder="0" disabled value="—" /></TableCell>
+                        <TableCell><Input className="h-10 min-w-20 text-base tabular-nums" inputMode="numeric" type="number" min="1" placeholder="1" value={p.quantity || ""} onChange={(e) => updPiece(i, { quantity: +e.target.value })} /></TableCell>
+                        <TableCell><Button size="icon" variant="ghost" className="h-10 w-10" onClick={() => setPieces(pieces.filter((_, j) => j !== i))}><Trash2 className="size-4 text-destructive" /></Button></TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             <Button onClick={() => setPieces([...pieces, { id: crypto.randomUUID(), label: `قطعة ${pieces.length + 1}`, length: 0, quantity: 1 }])} variant="outline" size="sm" className="mt-3"><Plus className="size-3.5" /> إضافة قطعة</Button>
             <Button onClick={run} className="w-full mt-4 bg-gradient-primary shadow-glow"><Scissors className="size-4" /> حساب التقطيع</Button>
           </div>

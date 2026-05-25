@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { InterstitialAd } from "@/components/InterstitialAd";
 
 export const Route = createFileRoute("/app")({ component: AppLayout });
 
@@ -102,6 +103,7 @@ function AppLayout() {
       <main className="flex-1 overflow-auto pb-16 md:pb-0">
         <Outlet />
       </main>
+      <InterstitialAd />
 
       {/* Mobile bottom nav */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border/60 bg-sidebar/95 backdrop-blur grid grid-cols-6 h-14">

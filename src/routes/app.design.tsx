@@ -755,6 +755,39 @@ function DesignEditor() {
           setSelectedId(placed.id);
         }}
       />
+
+      {/* تعديل وحدة موجودة */}
+      <Dialog open={!!editingId} onOpenChange={(o) => !o && setEditingId(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>تعديل الوحدة</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <Label className="text-xs">العرض ({unit})</Label>
+                <Input type="number" value={editDims.width} onChange={(e) => setEditDims({ ...editDims, width: e.target.value })} autoFocus />
+              </div>
+              <div>
+                <Label className="text-xs">العمق ({unit})</Label>
+                <Input type="number" value={editDims.depth} onChange={(e) => setEditDims({ ...editDims, depth: e.target.value })} />
+              </div>
+              <div>
+                <Label className="text-xs">الارتفاع ({unit})</Label>
+                <Input type="number" value={editDims.height} onChange={(e) => setEditDims({ ...editDims, height: e.target.value })} />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">تفاصيل إضافية</Label>
+              <Textarea value={editDims.notes} onChange={(e) => setEditDims({ ...editDims, notes: e.target.value })} rows={2} />
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setEditingId(null)}>إلغاء</Button>
+            <Button onClick={confirmEdit} className="bg-gradient-primary">حفظ التعديلات</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

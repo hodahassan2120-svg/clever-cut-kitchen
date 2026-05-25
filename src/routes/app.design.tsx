@@ -707,9 +707,9 @@ function DesignEditor() {
                 </Layer>
               </Stage>
             </div>
-            {/* شريط أدوات عائم للوحدة المحددة */}
+        {/* شريط أدوات عائم للوحدة المحددة — أسفل اللوحة حتى لا يحجب التصميم */}
             {selected && (
-              <div className="absolute top-2 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-card/95 backdrop-blur border border-border/60 rounded-xl shadow-glow p-1.5 z-10">
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-card/95 backdrop-blur border border-border/60 rounded-xl shadow-glow p-1.5 z-10 max-w-[calc(100%-1rem)] overflow-x-auto">
                 <span className="text-xs font-bold px-2 truncate max-w-[120px]">{selected.name}</span>
                 <Button size="sm" variant="outline" className="h-8 px-2 gap-1" onClick={() => rotateBlock(selected.id, -15)} title="تدوير -15°">
                   <RotateCw className="size-3.5 -scale-x-100" /> <span className="text-[10px]">15°</span>
@@ -771,18 +771,18 @@ function DesignEditor() {
               <directionalLight position={[doc.roomWidth, 520, doc.roomDepth]} intensity={0.65} />
               <mesh rotation={[-Math.PI / 2, 0, 0]} position={[doc.roomWidth / 2, -0.6, doc.roomDepth / 2]}>
                 <planeGeometry args={[doc.roomWidth, doc.roomDepth]} />
-                <meshStandardMaterial color="#d9cec0" roughness={0.92} />
+                <meshStandardMaterial color={doc.floorColor || "#d9cec0"} roughness={0.92} />
               </mesh>
               <mesh position={[doc.roomWidth / 2, 130, -5]}>
                 <boxGeometry args={[doc.roomWidth, 260, 8]} />
-                <meshStandardMaterial color="#efe7da" roughness={0.98} />
+                <meshStandardMaterial color={doc.wallColor || "#efe7da"} roughness={0.98} />
               </mesh>
               <mesh position={[-5, 130, doc.roomDepth / 2]}>
                 <boxGeometry args={[8, 260, doc.roomDepth]} />
-                <meshStandardMaterial color="#efe7da" roughness={0.98} />
+                <meshStandardMaterial color={doc.wallColor || "#efe7da"} roughness={0.98} />
               </mesh>
               {doc.blocks.map((b) => (
-                <Cabinet3D key={b.id} block={b} defaultColor={isPaintableBlock(b) ? (doc.globalColor || b.color) : b.color} />
+                <Cabinet3D key={b.id} block={b} defaultColor={isPaintableBlock(b) ? (doc.globalColor || b.color) : b.color} marbleColor={doc.marbleColor} />
               ))}
               <OrbitControls target={[doc.roomWidth / 2, 80, doc.roomDepth / 2]} maxPolarAngle={Math.PI / 2.05} makeDefault enabled={view3d === "perspective"} />
             </Canvas>

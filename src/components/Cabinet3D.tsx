@@ -20,6 +20,24 @@ const APPLIANCE_TYPES = new Set([
   "tall_oven_micro", "base_oven_integrated",
 ]);
 
+const READY_CABINET_SPECS: Record<string, { placement: "base" | "wall" | "tall"; doors?: number; drawers?: number; glass?: boolean }> = {
+  base_1door: { placement: "base", doors: 1 },
+  base_2door: { placement: "base", doors: 2 },
+  base_door_drawer: { placement: "base", doors: 1, drawers: 1 },
+  base_3drawer: { placement: "base", drawers: 3 },
+  base_4drawer: { placement: "base", drawers: 4 },
+  base_corner: { placement: "base", doors: 2 },
+  special_island: { placement: "base", doors: 2, drawers: 2 },
+  wall_1door: { placement: "wall", doors: 1 },
+  wall_2door: { placement: "wall", doors: 2 },
+  wall_glass: { placement: "wall", doors: 1, glass: true },
+  wall_lift: { placement: "wall", drawers: 1 },
+  tall_pantry: { placement: "tall", doors: 2 },
+  tall_oven: { placement: "tall", doors: 2 },
+};
+
+const getCabinetSpec = (block: PlacedBlock) => READY_CABINET_SPECS[block.type];
+
 export function Cabinet3D({ block, defaultColor, marbleColor, marbleTextureId }: Props) {
   if (APPLIANCE_TYPES.has(block.type)) {
     return <Appliance3D block={block} defaultColor={defaultColor} marbleColor={marbleColor} marbleTextureId={marbleTextureId} />;

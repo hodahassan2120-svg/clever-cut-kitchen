@@ -136,6 +136,7 @@ function RootComponent() {
       <AuthProvider>
         <AuthInvalidator />
         <MonetagSW />
+        <MonetagAutoAds />
         <Outlet />
         <Toaster richColors position="top-center" dir="rtl" theme="dark" />
       </AuthProvider>

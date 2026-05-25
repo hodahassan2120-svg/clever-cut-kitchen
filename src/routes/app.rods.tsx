@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cutRods, type RodStock, type RodPiece, type RodResult } from "@/lib/cutting";
 import { Plus, Trash2, Scissors, FileDown } from "lucide-react";
 import { toast } from "sonner";
@@ -41,6 +42,9 @@ function RodsPage() {
   };
 
   const updStock = (i: number, patch: Partial<RodStock>) => setManualStocks(manualStocks.map((s, idx) => idx === i ? { ...s, ...patch } : s));
+  const updPiece = (i: number, patch: Partial<RodPiece>) => setPieces(pieces.map((p, idx) => idx === i ? { ...p, ...patch } : p));
+  const totalRods = result?.assignments.length ?? 0;
+  const totalPieces = pieces.reduce((sum, p) => sum + (Number(p.quantity) || 0), 0);
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto">

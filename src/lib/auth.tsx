@@ -37,11 +37,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const refresh = async () => {
-    const { data } = await supabase.auth.getSession();
-    setSession(data.session);
-    setUser(data.session?.user ?? null);
-    if (data.session?.user) await loadUserMeta(data.session.user.id);
-    setLoading(false);
+    try {
+      const { data } = await supabase.auth.getSession();
+      setSession(data.session);
+      setUser(data.session?.user ?? null);
+      if (data.session?.user) {
+        await loadUserMeta(data.session.user.id);
+      } else {
+        setIsAdmin(false);
+        setSubscription(null);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -54,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsAdmin(false);
         setSubscription(null);
       }
+      setLoading(false);
     });
     refresh();
     return () => sub.unsubscribe();

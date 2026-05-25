@@ -6,6 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -71,9 +82,7 @@ function AppLayout() {
           <div className="flex items-center gap-1.5 text-gold font-semibold mb-1"><Sparkles className="size-3" /> {subscription?.activated_until ? "اشتراك مفعل" : "تجربة مجانية"}</div>
           <div className="text-muted-foreground">متبقي {daysLeft} يوم</div>
         </div>
-        <Button onClick={signOut} variant="ghost" className="mt-3 justify-start text-muted-foreground">
-          <LogOut className="size-4" /> خروج
-        </Button>
+        <ConfirmSignOutButton onConfirm={signOut} className="mt-3 justify-start text-muted-foreground" />
       </aside>
 
       {/* Mobile top bar */}
@@ -86,9 +95,7 @@ function AppLayout() {
         </Link>
         <div className="flex items-center gap-2">
           <span className="text-[10px] text-gold">متبقي {daysLeft}ي</span>
-          <Button onClick={signOut} variant="ghost" size="icon" className="size-8">
-            <LogOut className="size-4" />
-          </Button>
+          <ConfirmSignOutButton onConfirm={signOut} iconOnly className="size-8" />
         </div>
       </header>
 
@@ -112,6 +119,29 @@ function AppLayout() {
         ))}
       </nav>
     </div>
+  );
+}
+
+function ConfirmSignOutButton({ onConfirm, iconOnly = false, className }: { onConfirm: () => void | Promise<void>; iconOnly?: boolean; className?: string }) {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="ghost" size={iconOnly ? "icon" : "default"} className={className} aria-label="تسجيل خروج">
+          <LogOut className="size-4" />
+          {!iconOnly && "خروج"}
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent dir="rtl" className="max-w-sm">
+        <AlertDialogHeader>
+          <AlertDialogTitle>تأكيد تسجيل الخروج</AlertDialogTitle>
+          <AlertDialogDescription>هل تريد تسجيل الخروج من الحساب الحالي؟</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>إلغاء</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>تسجيل خروج</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
@@ -218,7 +248,7 @@ function TrialExpired({ onSignOut, userId }: { onSignOut: () => void; userId: st
           </div>
         )}
 
-        <Button onClick={onSignOut} variant="ghost" className="mt-4 w-full text-xs">تسجيل خروج</Button>
+        <ConfirmSignOutButton onConfirm={onSignOut} className="mt-4 w-full text-xs" />
       </div>
     </div>
   );

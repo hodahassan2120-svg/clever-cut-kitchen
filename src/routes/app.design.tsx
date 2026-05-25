@@ -691,13 +691,36 @@ function DesignEditor() {
               </div>
             )}
           </TabsContent>
-          <TabsContent value="3d" className="flex-1 m-0 bg-gradient-to-b from-zinc-900 to-black min-h-0">
+          <TabsContent value="3d" className="flex-1 m-0 bg-gradient-to-b from-zinc-900 to-black min-h-0 relative" data-design-3d>
+            <div className="absolute top-2 left-2 right-2 z-10 flex flex-wrap items-center gap-1.5 rounded-xl border border-border/60 bg-card/90 p-1.5 shadow-card backdrop-blur">
+              {([
+                ["perspective", "منظور"],
+                ["top", "علوي"],
+                ["front", "أمامي"],
+                ["right", "يمين"],
+                ["left", "يسار"],
+              ] as const).map(([value, label]) => (
+                <Button key={value} size="sm" variant={view3d === value ? "default" : "outline"} className="h-8 px-2 text-xs" onClick={() => setView3d(value)}>{label}</Button>
+              ))}
+              <div className="ms-auto flex flex-wrap gap-1">
+                {([
+                  ["perspective", "منظور"],
+                  ["top", "علوي"],
+                  ["front", "أمامي"],
+                  ["right", "يمين"],
+                  ["left", "يسار"],
+                ] as const).map(([value, label]) => (
+                  <Button key={`shot-${value}`} size="sm" variant="outline" className="h-8 px-2 text-xs" onClick={() => download3DView(value, label)}>سكرين {label}</Button>
+                ))}
+              </div>
+            </div>
             <Canvas
               camera={{ position: [doc.roomWidth, doc.roomDepth * 1.2, doc.roomDepth * 1.4], fov: 45 }}
               dpr={[1, 1.5]}
-              gl={{ antialias: false, powerPreference: "default", preserveDrawingBuffer: false, alpha: false }}
+              gl={{ antialias: true, powerPreference: "default", preserveDrawingBuffer: true, alpha: false }}
               frameloop="demand"
             >
+              <SceneCamera view={view3d} roomWidth={doc.roomWidth} roomDepth={doc.roomDepth} />
               <color attach="background" args={["#1a1208"]} />
               <ambientLight intensity={0.8} />
               <directionalLight position={[doc.roomWidth, 600, doc.roomDepth]} intensity={0.9} />
@@ -717,7 +740,7 @@ function DesignEditor() {
               {doc.blocks.map((b) => (
                 <Cabinet3D key={b.id} block={b} defaultColor={isPaintableBlock(b) ? (doc.globalColor || b.color) : b.color} />
               ))}
-              <OrbitControls target={[doc.roomWidth / 2, 80, doc.roomDepth / 2]} maxPolarAngle={Math.PI / 2.05} makeDefault />
+              <OrbitControls target={[doc.roomWidth / 2, 80, doc.roomDepth / 2]} maxPolarAngle={Math.PI / 2.05} makeDefault enabled={view3d === "perspective"} />
             </Canvas>
           </TabsContent>
 

@@ -344,6 +344,93 @@ function DesignEditor() {
     </>
   );
 
+  if (id && !editorStarted) {
+    return <div className="p-6 text-center text-sm text-muted-foreground">جاري فتح التصميم...</div>;
+  }
+
+  if (!editorStarted) {
+    return (
+      <div className="min-h-[calc(100dvh-6rem)] p-4 md:p-8">
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-[1.1fr_0.9fr] gap-5 items-start">
+          <section className="border border-border/60 bg-card/60 rounded-2xl p-5 md:p-6 shadow-card">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="size-11 rounded-xl bg-primary/10 text-primary grid place-items-center"><Ruler className="size-5" /></div>
+              <div>
+                <h1 className="text-2xl font-bold">تصميم جديد</h1>
+                <p className="text-sm text-muted-foreground">اكتب مقاسات الغرفة وحدد شكلها قبل فتح مساحة التصميم.</p>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <Label className="text-xs">اسم التصميم</Label>
+                <Input value={setupRoom.name} onChange={(e) => setSetupRoom({ ...setupRoom, name: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">عرض الغرفة ({unit})</Label>
+                  <Input type="number" value={setupRoom.width} onChange={(e) => setSetupRoom({ ...setupRoom, width: e.target.value })} />
+                </div>
+                <div>
+                  <Label className="text-xs">عمق الغرفة ({unit})</Label>
+                  <Input type="number" value={setupRoom.depth} onChange={(e) => setSetupRoom({ ...setupRoom, depth: e.target.value })} />
+                </div>
+              </div>
+              <div className="flex items-center gap-1">
+                <Button size="sm" variant={unit === "cm" ? "default" : "outline"} onClick={() => setUnit("cm")}>سم</Button>
+                <Button size="sm" variant={unit === "m" ? "default" : "outline"} onClick={() => setUnit("m")}>م</Button>
+              </div>
+              <div>
+                <Label className="text-xs mb-2 block">شكل الغرفة</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button onClick={() => setSetupRoom({ ...setupRoom, shape: "rectangle" })} className={`p-3 rounded-xl border text-sm font-semibold ${setupRoom.shape === "rectangle" ? "border-primary bg-primary/10 text-primary" : "border-border/60 bg-muted/20"}`}>مستطيلة</button>
+                  <button onClick={() => setSetupRoom({ ...setupRoom, shape: "l_shape" })} className={`p-3 rounded-xl border text-sm font-semibold ${setupRoom.shape === "l_shape" ? "border-primary bg-primary/10 text-primary" : "border-border/60 bg-muted/20"}`}>غير منتظمة L</button>
+                </div>
+              </div>
+              {setupRoom.shape === "l_shape" && (
+                <div className="grid grid-cols-2 gap-3 p-3 rounded-xl border border-border/50 bg-muted/20">
+                  <div>
+                    <Label className="text-xs">عرض الجزء الناقص ({unit})</Label>
+                    <Input type="number" value={setupRoom.cutoutWidth} onChange={(e) => setSetupRoom({ ...setupRoom, cutoutWidth: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">عمق الجزء الناقص ({unit})</Label>
+                    <Input type="number" value={setupRoom.cutoutDepth} onChange={(e) => setSetupRoom({ ...setupRoom, cutoutDepth: e.target.value })} />
+                  </div>
+                </div>
+              )}
+              <Button onClick={startNewDesign} className="w-full bg-gradient-primary shadow-glow"><PenLine className="size-4" /> ابدأ التصميم</Button>
+            </div>
+          </section>
+
+          <section className="border border-border/60 bg-card/60 rounded-2xl p-5 md:p-6 shadow-card">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="size-11 rounded-xl bg-primary/10 text-primary grid place-items-center"><FolderOpen className="size-5" /></div>
+              <div>
+                <h2 className="text-xl font-bold">تعديل تصميم محفوظ</h2>
+                <p className="text-sm text-muted-foreground">افتح تصميم سابق واستكمل عليه.</p>
+              </div>
+            </div>
+            {savedRows.length === 0 ? (
+              <div className="rounded-xl border border-border/50 bg-muted/20 p-6 text-center text-sm text-muted-foreground">لا توجد تصميمات محفوظة بعد.</div>
+            ) : (
+              <div className="space-y-2 max-h-[420px] overflow-auto pr-1">
+                {savedRows.map((r) => (
+                  <Link key={r.id} to="/app/design" search={{ id: r.id }} className="flex items-center justify-between gap-3 rounded-xl border border-border/50 bg-muted/20 p-3 hover:border-primary/60 transition">
+                    <div className="min-w-0">
+                      <div className="font-semibold truncate">{r.name}</div>
+                      <div className="text-xs text-muted-foreground">{new Date(r.updated_at).toLocaleDateString("ar-EG")}</div>
+                    </div>
+                    <FolderOpen className="size-4 text-primary shrink-0" />
+                  </Link>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col md:flex-row h-[calc(100dvh-6.5rem)] md:h-screen">
       {/* Desktop: blocks library */}

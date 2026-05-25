@@ -508,6 +508,8 @@ function DesignEditor() {
           })}
         </div>
       </div>
+      </div>
+
 
 
 

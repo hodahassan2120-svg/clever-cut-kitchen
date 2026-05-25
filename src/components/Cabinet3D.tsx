@@ -102,7 +102,7 @@ export function Cabinet3D({ block, defaultColor }: Props) {
           // المقبض في الجانب الداخلي للضلفة (تجاه مركز الوحدة)
           const handleX = i < doors / 2 ? eachW / 2 - 2.5 : -eachW / 2 + 2.5;
           return (
-            <group key={`dr${i}`} position={[x, yBase, D / 2 + DOOR_T / 2]}>
+            <group key={`door${i}`} position={[x, yBase, D / 2 + DOOR_T / 2]}>
               <mesh>
                 <boxGeometry args={[eachW, totalDoorH - GAP, DOOR_T]} />
                 {isGlass ? (

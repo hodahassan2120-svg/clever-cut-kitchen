@@ -1,20 +1,39 @@
-import { useTexture } from "@react-three/drei";
 import * as THREE from "three";
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import { getTexture } from "@/lib/textures";
 
 interface Props {
   textureId?: string;
-  /** أبعاد السطح بالسم (لحساب التكرار) */
   surfaceWidthCm: number;
   surfaceHeightCm: number;
-  /** اللون البديل لو مفيش خامة */
   fallbackColor: string;
   roughness?: number;
   metalness?: number;
 }
 
-/** مادة بخامة واقعية (سيراميك/رخام/جرانيت) مع تبليط تلقائي حسب مقاس البلاطة */
+const cache = new Map<string, THREE.Texture>();
+const loader = new THREE.TextureLoader();
+
+function loadCached(url: string): Promise<THREE.Texture> {
+  const cached = cache.get(url);
+  if (cached) return Promise.resolve(cached);
+  return new Promise((resolve, reject) => {
+    loader.load(
+      url,
+      (tex) => {
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.RepeatWrapping;
+        tex.anisotropy = 8;
+        cache.set(url, tex);
+        resolve(tex);
+      },
+      undefined,
+      reject
+    );
+  });
+}
+
+/** مادة بخامة واقعية (سيراميك/رخام/جرانيت) — لا تستخدم Suspense */
 export function TexturedMaterial({
   textureId,
   surfaceWidthCm,
@@ -24,41 +43,30 @@ export function TexturedMaterial({
   metalness = 0.05,
 }: Props) {
   const tex = getTexture(textureId);
-  if (!tex) {
+  const [map, setMap] = useState<THREE.Texture | null>(() => (tex ? cache.get(tex.url) ?? null : null));
+
+  useEffect(() => {
+    if (!tex) {
+      setMap(null);
+      return;
+    }
+    let cancelled = false;
+    loadCached(tex.url).then((t) => {
+      if (!cancelled) setMap(t);
+    }).catch(() => { /* ignore */ });
+    return () => { cancelled = true; };
+  }, [tex]);
+
+  useEffect(() => {
+    if (!map || !tex) return;
+    const rx = Math.max(1, surfaceWidthCm / tex.realSizeCm);
+    const ry = Math.max(1, surfaceHeightCm / tex.realSizeCm);
+    map.repeat.set(rx, ry);
+    map.needsUpdate = true;
+  }, [map, tex, surfaceWidthCm, surfaceHeightCm]);
+
+  if (!tex || !map) {
     return <meshStandardMaterial color={fallbackColor} roughness={roughness} metalness={metalness} />;
   }
-  return (
-    <TexturedInner
-      url={tex.url}
-      repeatX={Math.max(1, surfaceWidthCm / tex.realSizeCm)}
-      repeatY={Math.max(1, surfaceHeightCm / tex.realSizeCm)}
-      roughness={roughness}
-      metalness={metalness}
-    />
-  );
-}
-
-function TexturedInner({
-  url,
-  repeatX,
-  repeatY,
-  roughness,
-  metalness,
-}: {
-  url: string;
-  repeatX: number;
-  repeatY: number;
-  roughness: number;
-  metalness: number;
-}) {
-  const map = useTexture(url) as THREE.Texture;
-  const mat = useMemo(() => {
-    map.wrapS = THREE.RepeatWrapping;
-    map.wrapT = THREE.RepeatWrapping;
-    map.repeat.set(repeatX, repeatY);
-    map.anisotropy = 8;
-    map.needsUpdate = true;
-    return map;
-  }, [map, repeatX, repeatY]);
-  return <meshStandardMaterial map={mat} roughness={roughness} metalness={metalness} />;
+  return <meshStandardMaterial map={map} roughness={roughness} metalness={metalness} />;
 }

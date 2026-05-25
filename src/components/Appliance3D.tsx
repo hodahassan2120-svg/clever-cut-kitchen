@@ -165,7 +165,7 @@ function HoodFlat(W: number, H: number, D: number) {
       <mesh position={[0, -H / 2 - 0.05, 0]}><boxGeometry args={[W - 2, 0.4, D - 2]} /><meshStandardMaterial color="#2a2c30" roughness={0.7} metalness={0.4} /></mesh>
       {/* أزرار */}
       {[-1, 0, 1].map((i) => (
-        <mesh key={i} position={[i * 5, 0, D / 2 + 0.1]}><cylinderGeometry args={[0.6, 0.6, 0.2, 16]} rotation={[Math.PI / 2, 0, 0]} /><meshStandardMaterial color={STEEL_DARK} metalness={0.7} /></mesh>
+        <mesh key={i} position={[i * 5, 0, D / 2 + 0.1]} rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[0.6, 0.6, 0.2, 16]} /><meshStandardMaterial color={STEEL_DARK} metalness={0.7} /></mesh>
       ))}
     </group>
   );

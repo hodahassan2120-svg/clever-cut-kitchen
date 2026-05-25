@@ -12,10 +12,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { CustomUnitBuilder } from "@/components/CustomUnitBuilder";
+import { Cabinet3D } from "@/components/Cabinet3D";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { Save, Plus, Trash2, LayoutGrid, Settings2 } from "lucide-react";
+import { Save, Plus, Trash2, LayoutGrid, Settings2, Wand2, Palette } from "lucide-react";
 import type Konva from "konva";
 
 export const Route = createFileRoute("/app/design")({

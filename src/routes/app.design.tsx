@@ -23,6 +23,8 @@ import { Save, Plus, Trash2, LayoutGrid, Settings2, Wand2, Palette, FolderOpen, 
 import type Konva from "konva";
 import { useServerFn } from "@tanstack/react-start";
 import { renderRealistic } from "@/lib/render.functions";
+import { RewardedAdModal } from "@/components/RewardedAdModal";
+import { Gift } from "lucide-react";
 
 export const Route = createFileRoute("/app/design")({
   component: DesignEditor,
@@ -70,7 +72,15 @@ function DesignEditor() {
   const [stageSize, setStageSize] = useState({ w: 360, h: 400 });
   const [aiRendering, setAiRendering] = useState(false);
   const [aiResultUrl, setAiResultUrl] = useState<string | null>(null);
+  const [aiCredits, setAiCredits] = useState<number | null>(null);
+  const [adModalOpen, setAdModalOpen] = useState(false);
   const callRender = useServerFn(renderRealistic);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("subscriptions").select("ai_credits").eq("user_id", user.id).maybeSingle()
+      .then(({ data }) => setAiCredits(data?.ai_credits ?? 0));
+  }, [user]);
 
 
   useEffect(() => {
@@ -239,6 +249,12 @@ function DesignEditor() {
   };
 
   const generateRealisticRender = async () => {
+    // gate: need at least 1 credit (admin bypass handled server-side)
+    if (aiCredits !== null && aiCredits <= 0) {
+      setAdModalOpen(true);
+      toast.info("نفذ رصيدك — شاهد إعلان للحصول على كريديت مجاني");
+      return;
+    }
     setView3d("perspective");
     await new Promise((r) => setTimeout(r, 220));
     const canvas = document.querySelector<HTMLCanvasElement>("[data-design-3d] canvas");
@@ -249,12 +265,17 @@ function DesignEditor() {
     try {
       const res = await callRender({ data: { imageDataUrl: dataUrl } });
       setAiResultUrl(res.imageDataUrl);
-      toast.success("تم توليد الصورة الواقعية");
+      setAiCredits(res.creditsRemaining);
+      toast.success(`تم توليد الصورة! المتبقي: ${res.creditsRemaining} كريديت`);
     } catch (err) {
       console.error("[ai render] failed", err);
       const msg = err instanceof Error ? err.message : "";
-      if (msg.includes("RATE_LIMIT")) toast.error("تم تجاوز الحد المسموح، حاول بعد قليل");
-      else if (msg.includes("NO_CREDITS")) toast.error("نفذت الرصيد الذكاء الاصطناعي، يرجى التواصل مع الأدمن");
+      if (msg.includes("NO_AI_CREDITS")) {
+        setAiCredits(0);
+        setAdModalOpen(true);
+        toast.info("نفذ رصيدك — شاهد إعلان للحصول على كريديت مجاني");
+      } else if (msg.includes("RATE_LIMIT")) toast.error("تم تجاوز الحد المسموح، حاول بعد قليل");
+      else if (msg.includes("NO_CREDITS")) toast.error("نفذ رصيد الذكاء الاصطناعي للخدمة، يرجى التواصل مع الأدمن");
       else toast.error("تعذر توليد الصورة، حاول مرة أخرى");
     } finally {
       setAiRendering(false);
@@ -789,7 +810,10 @@ function DesignEditor() {
               </DropdownMenu>
               <Button size="sm" disabled={aiRendering} onClick={generateRealisticRender} className="h-8 px-2 text-xs gap-1 bg-gradient-primary shadow-glow">
                 {aiRendering ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
-                صورة واقعية AI
+                صورة واقعية AI{aiCredits !== null ? ` (${aiCredits})` : ""}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setAdModalOpen(true)} className="h-8 px-2 text-xs gap-1" title="احصل على كريديت مجاني بمشاهدة إعلان">
+                <Gift className="size-3.5 text-gold" />
               </Button>
             </div>
             <Canvas
@@ -940,6 +964,12 @@ function DesignEditor() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <RewardedAdModal
+        open={adModalOpen}
+        onOpenChange={setAdModalOpen}
+        onCreditGranted={(bal) => setAiCredits(bal)}
+      />
     </div>
   );
 }

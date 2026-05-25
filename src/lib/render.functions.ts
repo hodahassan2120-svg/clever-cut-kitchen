@@ -10,7 +10,20 @@ const Input = z.object({
 export const renderRealistic = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => Input.parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    // 1) Consume one AI credit atomically (admins bypass via the RPC)
+    const { data: consumed, error: consumeErr } = await supabase.rpc("consume_ai_credit", { _user_id: userId });
+    if (consumeErr) {
+      console.error("[renderRealistic] consume_ai_credit error", consumeErr);
+      throw new Error("CREDIT_ERROR");
+    }
+    const consumedObj = consumed as { ok: boolean; reason?: string; credits?: number } | null;
+    if (!consumedObj?.ok) {
+      throw new Error("NO_AI_CREDITS");
+    }
+
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("LOVABLE_API_KEY missing");
 
@@ -42,6 +55,11 @@ export const renderRealistic = createServerFn({ method: "POST" })
     if (!res.ok) {
       const text = await res.text().catch(() => "");
       console.error("[renderRealistic] gateway error", res.status, text);
+      // Refund the credit on gateway failures (best-effort, ignore admins)
+      await supabase
+        .from("subscriptions")
+        .update({ ai_credits: (consumedObj.credits ?? 0) + 1 })
+        .eq("user_id", userId);
       if (res.status === 429) throw new Error("RATE_LIMIT");
       if (res.status === 402) throw new Error("NO_CREDITS");
       throw new Error("GATEWAY_ERROR");
@@ -50,6 +68,12 @@ export const renderRealistic = createServerFn({ method: "POST" })
       choices?: { message?: { images?: { image_url?: { url?: string } }[] } }[];
     };
     const url = json.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-    if (!url) throw new Error("NO_IMAGE_RETURNED");
-    return { imageDataUrl: url };
+    if (!url) {
+      await supabase
+        .from("subscriptions")
+        .update({ ai_credits: (consumedObj.credits ?? 0) + 1 })
+        .eq("user_id", userId);
+      throw new Error("NO_IMAGE_RETURNED");
+    }
+    return { imageDataUrl: url, creditsRemaining: consumedObj.credits ?? 0 };
   });

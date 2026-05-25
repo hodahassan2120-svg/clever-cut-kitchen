@@ -455,6 +455,18 @@ function DesignEditor() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* منشئ الوحدة المخصصة */}
+      <CustomUnitBuilder
+        open={builderOpen}
+        onClose={() => setBuilderOpen(false)}
+        unit={unit}
+        defaultColor={doc.globalColor || "#b88858"}
+        onAdd={(block) => {
+          setDoc({ ...doc, blocks: [...doc.blocks, block] });
+          setSelectedId(block.id);
+        }}
+      />
     </div>
   );
 }

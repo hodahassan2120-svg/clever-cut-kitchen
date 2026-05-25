@@ -30,7 +30,7 @@ function Login() {
     if (error) return toast.error("بيانات الدخول غير صحيحة");
     await refresh();
     toast.success("تم الدخول بنجاح");
-    navigate({ to: "/app/design" });
+    navigate({ to: "/app" });
   };
 
   return (

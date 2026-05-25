@@ -4,9 +4,10 @@ import type { PlacedBlock } from "@/lib/blocks";
 interface Props {
   block: PlacedBlock;
   defaultColor: string;
+  marbleColor?: string;
 }
 
-export function Cabinet3D({ block, defaultColor }: Props) {
+export function Cabinet3D({ block, defaultColor, marbleColor }: Props) {
   const color = block.customColor ? block.color : (defaultColor || block.color);
   const { width: W, depth: D, height: H } = block;
   const bodyColor = color;
@@ -138,7 +139,7 @@ export function Cabinet3D({ block, defaultColor }: Props) {
       {block.placement === "base" && (
           <mesh position={[0, H / 2 + 1.5, FRONT_INSET / 2 + zFightGap]}>
           <boxGeometry args={[W + 2, 3, D + FRONT_INSET]} />
-            <meshStandardMaterial color="#d8cfbf" roughness={0.55} metalness={0.02} />
+            <meshStandardMaterial color={marbleColor || "#d8cfbf"} roughness={0.45} metalness={0.04} />
         </mesh>
       )}
 

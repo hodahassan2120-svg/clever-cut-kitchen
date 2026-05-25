@@ -82,12 +82,15 @@ export interface Wall {
 export interface DesignDoc {
   roomWidth: number;
   roomDepth: number;
-  roomShape?: "rectangle" | "l_shape"; // مستطيلة أو غير منتظمة على شكل L
-  cutoutWidth?: number;  // cm — الجزء المقتطع من الركن العلوي الأيمن
-  cutoutDepth?: number;  // cm
+  roomShape?: "rectangle" | "l_shape";
+  cutoutWidth?: number;
+  cutoutDepth?: number;
   walls: Wall[];
   blocks: PlacedBlock[];
-  globalColor?: string;  // اللون العام لكل الوحدات
+  globalColor?: string;
+  floorColor?: string;
+  wallColor?: string;
+  marbleColor?: string;
 }
 
 export const DEFAULT_DESIGN: DesignDoc = {
@@ -99,4 +102,7 @@ export const DEFAULT_DESIGN: DesignDoc = {
   walls: [],
   blocks: [],
   globalColor: "#b88858",
+  floorColor: "#d9cec0",
+  wallColor: "#efe7da",
+  marbleColor: "#d8cfbf",
 };

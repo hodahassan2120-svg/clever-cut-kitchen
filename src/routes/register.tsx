@@ -40,7 +40,7 @@ function Register() {
     }
     await refresh();
     toast.success("تم إنشاء حسابك! تجربة مجانية 7 أيام");
-    navigate({ to: "/app/design" });
+    navigate({ to: "/app" });
   };
 
   return (

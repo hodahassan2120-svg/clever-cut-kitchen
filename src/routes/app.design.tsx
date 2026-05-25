@@ -19,8 +19,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { Slider } from "@/components/ui/slider";
-import { Save, Plus, Trash2, LayoutGrid, Settings2, Wand2, Palette, FolderOpen, Ruler, PenLine, RotateCw, Pencil, X, Camera, ChevronDown } from "lucide-react";
+import { Save, Plus, Trash2, LayoutGrid, Settings2, Wand2, Palette, FolderOpen, Ruler, PenLine, RotateCw, Pencil, X, Camera, ChevronDown, Sparkles, Download, Loader2 } from "lucide-react";
 import type Konva from "konva";
+import { useServerFn } from "@tanstack/react-start";
+import { renderRealistic } from "@/lib/render.functions";
 
 export const Route = createFileRoute("/app/design")({
   component: DesignEditor,
@@ -66,6 +68,10 @@ function DesignEditor() {
   const [view3d, setView3d] = useState<"perspective" | "top" | "front" | "right" | "left">("perspective");
   const stageWrapRef = useRef<HTMLDivElement>(null);
   const [stageSize, setStageSize] = useState({ w: 360, h: 400 });
+  const [aiRendering, setAiRendering] = useState(false);
+  const [aiResultUrl, setAiResultUrl] = useState<string | null>(null);
+  const callRender = useServerFn(renderRealistic);
+
 
   useEffect(() => {
     if (!id || !user) return;
@@ -232,6 +238,29 @@ function DesignEditor() {
     }, 180);
   };
 
+  const generateRealisticRender = async () => {
+    setView3d("perspective");
+    await new Promise((r) => setTimeout(r, 220));
+    const canvas = document.querySelector<HTMLCanvasElement>("[data-design-3d] canvas");
+    if (!canvas) return toast.error("تعذر التقاط لقطة 3D");
+    const dataUrl = canvas.toDataURL("image/png");
+    setAiRendering(true);
+    setAiResultUrl(null);
+    try {
+      const res = await callRender({ data: { imageDataUrl: dataUrl } });
+      setAiResultUrl(res.imageDataUrl);
+      toast.success("تم توليد الصورة الواقعية");
+    } catch (err) {
+      console.error("[ai render] failed", err);
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.includes("RATE_LIMIT")) toast.error("تم تجاوز الحد المسموح، حاول بعد قليل");
+      else if (msg.includes("NO_CREDITS")) toast.error("نفذت الرصيد الذكاء الاصطناعي، يرجى التواصل مع الأدمن");
+      else toast.error("تعذر توليد الصورة، حاول مرة أخرى");
+    } finally {
+      setAiRendering(false);
+    }
+  };
+
   const toUnit = (cm: number) => (unit === "m" ? (cm / 100).toFixed(2) : cm.toString());
   const fromUnit = (v: string) => (unit === "m" ? parseFloat(v) * 100 : parseFloat(v));
   const isPaintableBlock = (b: PlacedBlock) => !!b.placement || b.type.startsWith("base_") || b.type.startsWith("wall_") || b.type.startsWith("tall_") || b.type === "special_island";
@@ -369,12 +398,37 @@ function DesignEditor() {
 
       {/* اللون العام لكل الوحدات */}
       <div className="space-y-2 mb-6 pb-4 border-b border-border/40">
-        <h4 className="text-sm font-semibold flex items-center gap-1.5"><Palette className="size-3.5 text-primary" /> اللون العام</h4>
+        <h4 className="text-sm font-semibold flex items-center gap-1.5"><Palette className="size-3.5 text-primary" /> اللون العام للوحدات</h4>
         <div className="flex items-center gap-2">
           <input type="color" value={doc.globalColor || "#b88858"} onChange={(e) => setDoc({ ...doc, globalColor: e.target.value })} className="h-9 w-14 rounded cursor-pointer bg-transparent border border-border/60" />
           <Input value={doc.globalColor || "#b88858"} onChange={(e) => setDoc({ ...doc, globalColor: e.target.value })} className="flex-1 font-mono text-xs h-9" />
         </div>
         <p className="text-[10px] text-muted-foreground">يطبَّق على كل الوحدات التي ليس لها لون مخصص.</p>
+
+        <h4 className="text-sm font-semibold flex items-center gap-1.5 pt-2"><Palette className="size-3.5 text-primary" /> ألوان الغرفة</h4>
+        <div className="space-y-2">
+          <div>
+            <Label className="text-[11px] text-muted-foreground">لون الأرضية</Label>
+            <div className="flex items-center gap-2">
+              <input type="color" value={doc.floorColor || "#d9cec0"} onChange={(e) => setDoc({ ...doc, floorColor: e.target.value })} className="h-8 w-12 rounded cursor-pointer bg-transparent border border-border/60" />
+              <Input value={doc.floorColor || "#d9cec0"} onChange={(e) => setDoc({ ...doc, floorColor: e.target.value })} className="flex-1 font-mono text-xs h-8" />
+            </div>
+          </div>
+          <div>
+            <Label className="text-[11px] text-muted-foreground">لون الحوائط</Label>
+            <div className="flex items-center gap-2">
+              <input type="color" value={doc.wallColor || "#efe7da"} onChange={(e) => setDoc({ ...doc, wallColor: e.target.value })} className="h-8 w-12 rounded cursor-pointer bg-transparent border border-border/60" />
+              <Input value={doc.wallColor || "#efe7da"} onChange={(e) => setDoc({ ...doc, wallColor: e.target.value })} className="flex-1 font-mono text-xs h-8" />
+            </div>
+          </div>
+          <div>
+            <Label className="text-[11px] text-muted-foreground">لون الرخام</Label>
+            <div className="flex items-center gap-2">
+              <input type="color" value={doc.marbleColor || "#d8cfbf"} onChange={(e) => setDoc({ ...doc, marbleColor: e.target.value })} className="h-8 w-12 rounded cursor-pointer bg-transparent border border-border/60" />
+              <Input value={doc.marbleColor || "#d8cfbf"} onChange={(e) => setDoc({ ...doc, marbleColor: e.target.value })} className="flex-1 font-mono text-xs h-8" />
+            </div>
+          </div>
+        </div>
       </div>
 
       {selected ? (
@@ -682,9 +736,9 @@ function DesignEditor() {
                 </Layer>
               </Stage>
             </div>
-            {/* شريط أدوات عائم للوحدة المحددة */}
+        {/* شريط أدوات عائم للوحدة المحددة — أسفل اللوحة حتى لا يحجب التصميم */}
             {selected && (
-              <div className="absolute top-2 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-card/95 backdrop-blur border border-border/60 rounded-xl shadow-glow p-1.5 z-10">
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-card/95 backdrop-blur border border-border/60 rounded-xl shadow-glow p-1.5 z-10 max-w-[calc(100%-1rem)] overflow-x-auto">
                 <span className="text-xs font-bold px-2 truncate max-w-[120px]">{selected.name}</span>
                 <Button size="sm" variant="outline" className="h-8 px-2 gap-1" onClick={() => rotateBlock(selected.id, -15)} title="تدوير -15°">
                   <RotateCw className="size-3.5 -scale-x-100" /> <span className="text-[10px]">15°</span>
@@ -733,6 +787,10 @@ function DesignEditor() {
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
+              <Button size="sm" disabled={aiRendering} onClick={generateRealisticRender} className="h-8 px-2 text-xs gap-1 bg-gradient-primary shadow-glow">
+                {aiRendering ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
+                صورة واقعية AI
+              </Button>
             </div>
             <Canvas
               camera={{ position: [doc.roomWidth, doc.roomDepth * 1.2, doc.roomDepth * 1.4], fov: 45 }}
@@ -746,18 +804,18 @@ function DesignEditor() {
               <directionalLight position={[doc.roomWidth, 520, doc.roomDepth]} intensity={0.65} />
               <mesh rotation={[-Math.PI / 2, 0, 0]} position={[doc.roomWidth / 2, -0.6, doc.roomDepth / 2]}>
                 <planeGeometry args={[doc.roomWidth, doc.roomDepth]} />
-                <meshStandardMaterial color="#d9cec0" roughness={0.92} />
+                <meshStandardMaterial color={doc.floorColor || "#d9cec0"} roughness={0.92} />
               </mesh>
               <mesh position={[doc.roomWidth / 2, 130, -5]}>
                 <boxGeometry args={[doc.roomWidth, 260, 8]} />
-                <meshStandardMaterial color="#efe7da" roughness={0.98} />
+                <meshStandardMaterial color={doc.wallColor || "#efe7da"} roughness={0.98} />
               </mesh>
               <mesh position={[-5, 130, doc.roomDepth / 2]}>
                 <boxGeometry args={[8, 260, doc.roomDepth]} />
-                <meshStandardMaterial color="#efe7da" roughness={0.98} />
+                <meshStandardMaterial color={doc.wallColor || "#efe7da"} roughness={0.98} />
               </mesh>
               {doc.blocks.map((b) => (
-                <Cabinet3D key={b.id} block={b} defaultColor={isPaintableBlock(b) ? (doc.globalColor || b.color) : b.color} />
+                <Cabinet3D key={b.id} block={b} defaultColor={isPaintableBlock(b) ? (doc.globalColor || b.color) : b.color} marbleColor={doc.marbleColor} />
               ))}
               <OrbitControls target={[doc.roomWidth / 2, 80, doc.roomDepth / 2]} maxPolarAngle={Math.PI / 2.05} makeDefault enabled={view3d === "perspective"} />
             </Canvas>
@@ -856,6 +914,29 @@ function DesignEditor() {
           <DialogFooter className="gap-2 sm:gap-2">
             <Button variant="outline" onClick={() => setEditingId(null)}>إلغاء</Button>
             <Button onClick={confirmEdit} className="bg-gradient-primary">حفظ التعديلات</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* نتيجة الصورة الواقعية AI */}
+      <Dialog open={!!aiResultUrl} onOpenChange={(o) => !o && setAiResultUrl(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Sparkles className="size-5 text-primary" /> صورة واقعية للتصميم</DialogTitle>
+          </DialogHeader>
+          {aiResultUrl && (
+            <div className="space-y-3">
+              <img src={aiResultUrl} alt="صورة واقعية للمطبخ" className="w-full rounded-xl border border-border/60" />
+              <p className="text-xs text-muted-foreground text-center">صورة توضيحية مولّدة بالذكاء الاصطناعي — قد تختلف بعض التفاصيل عن التصميم الفعلي.</p>
+            </div>
+          )}
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setAiResultUrl(null)}>إغلاق</Button>
+            {aiResultUrl && (
+              <a href={aiResultUrl} download={`${name.trim() || "kitchen"}-realistic.png`}>
+                <Button className="bg-gradient-primary"><Download className="size-4" /> تحميل</Button>
+              </a>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

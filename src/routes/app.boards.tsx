@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cutBoards, type BoardStock, type BoardPiece, type BoardResult } from "@/lib/cutting";
 import { Plus, Trash2, Scissors, FileDown } from "lucide-react";
 import { toast } from "sonner";
@@ -38,6 +39,8 @@ function BoardsPage() {
   const addStock = () => setManualStocks([...manualStocks, { id: crypto.randomUUID(), name: `لوح ${manualStocks.length + 1}`, width: 0, length: 0, quantity: 1 }]);
   const updStock = (i: number, patch: Partial<BoardStock>) => setManualStocks(manualStocks.map((s, idx) => idx === i ? { ...s, ...patch } : s));
   const rmStock = (i: number) => setManualStocks(manualStocks.filter((_, idx) => idx !== i));
+  const totalBoards = result?.assignments.length ?? 0;
+  const totalPieces = pieces.reduce((sum, p) => sum + (Number(p.quantity) || 0), 0);
 
   const run = () => {
     const validStocks = stocks.filter((s) => s.width > 0 && s.length > 0 && s.quantity > 0);

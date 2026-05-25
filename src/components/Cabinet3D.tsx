@@ -35,20 +35,37 @@ export function Cabinet3D({ block, defaultColor }: Props) {
 
   // تقسيم الواجهة عمودياً: الأدراج في الأعلى (إن وجدت بدون ضلف) أو الأسفل
   // إذا الاثنان موجودان: أدراج فوق + ضلف تحت (نمط شائع)
-  const FRONT_INSET = 1.5;          // إنزال الواجهة قليلاً للداخل
+  const FRONT_INSET = 1.5;          // بروز الرخامة للأمام
   const GAP = 0.4;                  // فجوة بين الأبواب/الأدراج
   const HANDLE_T = 1.2;             // سُمك المقبض
   const DOOR_T = 1.8;               // سُمك الضلفة
+  const PANEL_T = 1.6;              // سُمك ألواح جسم الوحدة
 
   const drawerH = drawers > 0 ? Math.min(H * 0.4, 25 * drawers) : 0;
   const doorH = H - drawerH;
 
   return (
     <group position={[cx, cy, cz]} rotation={rotation}>
-      {/* جسم الوحدة (carcass) — لون داكن خلفي */}
-      <mesh>
-        <boxGeometry args={[W, H, D]} />
-        <meshStandardMaterial color={carcassColor} roughness={0.9} />
+      {/* جسم الوحدة كألواح منفصلة بدون واجهة أمامية — يمنع تداخل الألوان مع الضلف */}
+      <mesh position={[0, 0, -D / 2 + PANEL_T / 2]}>
+        <boxGeometry args={[W, H, PANEL_T]} />
+        <meshStandardMaterial color="#2b241f" roughness={0.92} />
+      </mesh>
+      <mesh position={[-W / 2 + PANEL_T / 2, 0, 0]}>
+        <boxGeometry args={[PANEL_T, H, D]} />
+        <meshStandardMaterial color={carcassColor} roughness={0.78} />
+      </mesh>
+      <mesh position={[W / 2 - PANEL_T / 2, 0, 0]}>
+        <boxGeometry args={[PANEL_T, H, D]} />
+        <meshStandardMaterial color={carcassColor} roughness={0.78} />
+      </mesh>
+      <mesh position={[0, H / 2 - PANEL_T / 2, 0]}>
+        <boxGeometry args={[W, PANEL_T, D]} />
+        <meshStandardMaterial color={carcassColor} roughness={0.78} />
+      </mesh>
+      <mesh position={[0, -H / 2 + PANEL_T / 2, 0]}>
+        <boxGeometry args={[W, PANEL_T, D]} />
+        <meshStandardMaterial color={carcassColor} roughness={0.78} />
       </mesh>
 
       {/* الأدراج (في الأعلى إن وُجدت مع ضلف، أو كامل الوحدة إن لم يوجد ضلف) */}

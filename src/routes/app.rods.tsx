@@ -110,14 +110,18 @@ function RodsPage() {
           <h2 className="font-semibold mb-3">النتيجة</h2>
           {!result ? <p className="text-sm text-muted-foreground">اضغط "حساب التقطيع" لعرض النتائج.</p> : (
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="text-sm">الهدر: <span className="text-gold font-bold">{result.totalWaste.toFixed(1)} سم</span></div>
+              <div className="grid grid-cols-3 gap-2 text-sm">
+                <div className="rounded-lg bg-muted/30 p-2">عدد الأعواد: <span className="text-gold font-bold">{totalRods}</span></div>
+                <div className="rounded-lg bg-muted/30 p-2">عدد القطع: <span className="font-bold">{totalPieces}</span></div>
+                <div className="rounded-lg bg-muted/30 p-2">الهدر: <span className="text-gold font-bold">{result.totalWaste.toFixed(1)} سم</span></div>
+              </div>
+              <div className="flex justify-end">
                 <Button size="sm" variant="outline" onClick={() => exportRodsPDF(result)}><FileDown className="size-3.5" /> PDF</Button>
               </div>
               {result.unfulfilled.length > 0 && <div className="text-sm text-destructive">قطع لم تتسع: {result.unfulfilled.map(u => `${u.label}(×${u.quantity})`).join(", ")}</div>}
               {result.assignments.map((a, idx) => (
                 <div key={idx} className="rounded-lg border border-border/40 p-3">
-                  <div className="text-sm font-semibold mb-2">{a.stockName} #{a.index} — {a.stockLength} سم</div>
+                  <div className="text-sm font-semibold mb-2">{a.stockName} #{a.index} — {a.stockLength}{a.stockWidth ? `×${a.stockWidth}` : ""} سم</div>
                   <div className="flex h-8 rounded overflow-hidden border border-border bg-background" dir="ltr">
                     {a.cuts.map((c, j) => (
                       <div key={j} style={{ width: `${(c.length / a.stockLength) * 100}%` }} className="bg-primary border-l border-black flex items-center justify-center text-[10px] text-primary-foreground font-semibold">

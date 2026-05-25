@@ -16,6 +16,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { CustomUnitBuilder } from "@/components/CustomUnitBuilder";
 import { Cabinet3D } from "@/components/Cabinet3D";
+import { TexturedMaterial } from "@/components/TexturedMaterial";
+import { TEXTURES } from "@/lib/textures";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";

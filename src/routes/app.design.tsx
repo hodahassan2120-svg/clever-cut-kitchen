@@ -577,20 +577,15 @@ function DesignEditor() {
                   {/* مقابض سحب الجدران (مستطيلة فقط) */}
                   {(doc.roomShape || "rectangle") === "rectangle" && (
                     <>
-                      <Rect x={PAD + (doc.roomWidth * scale) / 2 - 14} y={PAD - 6} width={28} height={12} fill="#f59e0b" cornerRadius={6} draggable
-                        dragBoundFunc={(pos) => ({ x: pos.x, y: PAD - 6 })}
-                        onDragMove={(e) => setDoc({ ...doc, roomDepth: Math.max(150, doc.roomDepth) })}
+                      {/* مقبض الحائط السفلي — لتغيير العمق */}
+                      <Rect x={PAD + (doc.roomWidth * scale) / 2 - 18} y={PAD + doc.roomDepth * scale - 6} width={36} height={12} fill="#f59e0b" cornerRadius={6} draggable
+                        dragBoundFunc={(pos) => ({ x: PAD + (doc.roomWidth * scale) / 2 - 18, y: pos.y })}
+                        onDragEnd={(e) => { const newY = e.target.y() + 6; const newDepth = Math.max(150, Math.round((newY - PAD) / scale / 10) * 10); setDoc({ ...doc, roomDepth: newDepth }); e.target.position({ x: PAD + (doc.roomWidth * scale) / 2 - 18, y: PAD + newDepth * scale - 6 }); }}
                       />
-                      <Rect x={PAD + (doc.roomWidth * scale) / 2 - 14} y={PAD + doc.roomDepth * scale - 6} width={28} height={12} fill="#f59e0b" cornerRadius={6} draggable
-                        dragBoundFunc={(pos) => ({ x: pos.x, y: PAD + doc.roomDepth * scale - 6 })}
-                        onDragEnd={(e) => { const newY = e.target.y() + 6; const newDepth = Math.max(150, Math.round((newY - PAD) / scale / 10) * 10); setDoc({ ...doc, roomDepth: newDepth }); }}
-                      />
-                      <Rect x={PAD - 6} y={PAD + (doc.roomDepth * scale) / 2 - 14} width={12} height={28} fill="#f59e0b" cornerRadius={6} draggable
-                        dragBoundFunc={(pos) => ({ x: PAD - 6, y: pos.y })}
-                      />
-                      <Rect x={PAD + doc.roomWidth * scale - 6} y={PAD + (doc.roomDepth * scale) / 2 - 14} width={12} height={28} fill="#f59e0b" cornerRadius={6} draggable
-                        dragBoundFunc={(pos) => ({ x: pos.x, y: PAD + (doc.roomDepth * scale) / 2 - 14 })}
-                        onDragEnd={(e) => { const newX = e.target.x() + 6; const newWidth = Math.max(150, Math.round((newX - PAD) / scale / 10) * 10); setDoc({ ...doc, roomWidth: newWidth }); }}
+                      {/* مقبض الحائط الأيمن — لتغيير العرض */}
+                      <Rect x={PAD + doc.roomWidth * scale - 6} y={PAD + (doc.roomDepth * scale) / 2 - 18} width={12} height={36} fill="#f59e0b" cornerRadius={6} draggable
+                        dragBoundFunc={(pos) => ({ x: pos.x, y: PAD + (doc.roomDepth * scale) / 2 - 18 })}
+                        onDragEnd={(e) => { const newX = e.target.x() + 6; const newWidth = Math.max(150, Math.round((newX - PAD) / scale / 10) * 10); setDoc({ ...doc, roomWidth: newWidth }); e.target.position({ x: PAD + newWidth * scale - 6, y: PAD + (doc.roomDepth * scale) / 2 - 18 }); }}
                       />
                     </>
                   )}

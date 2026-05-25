@@ -369,12 +369,37 @@ function DesignEditor() {
 
       {/* اللون العام لكل الوحدات */}
       <div className="space-y-2 mb-6 pb-4 border-b border-border/40">
-        <h4 className="text-sm font-semibold flex items-center gap-1.5"><Palette className="size-3.5 text-primary" /> اللون العام</h4>
+        <h4 className="text-sm font-semibold flex items-center gap-1.5"><Palette className="size-3.5 text-primary" /> اللون العام للوحدات</h4>
         <div className="flex items-center gap-2">
           <input type="color" value={doc.globalColor || "#b88858"} onChange={(e) => setDoc({ ...doc, globalColor: e.target.value })} className="h-9 w-14 rounded cursor-pointer bg-transparent border border-border/60" />
           <Input value={doc.globalColor || "#b88858"} onChange={(e) => setDoc({ ...doc, globalColor: e.target.value })} className="flex-1 font-mono text-xs h-9" />
         </div>
         <p className="text-[10px] text-muted-foreground">يطبَّق على كل الوحدات التي ليس لها لون مخصص.</p>
+
+        <h4 className="text-sm font-semibold flex items-center gap-1.5 pt-2"><Palette className="size-3.5 text-primary" /> ألوان الغرفة</h4>
+        <div className="space-y-2">
+          <div>
+            <Label className="text-[11px] text-muted-foreground">لون الأرضية</Label>
+            <div className="flex items-center gap-2">
+              <input type="color" value={doc.floorColor || "#d9cec0"} onChange={(e) => setDoc({ ...doc, floorColor: e.target.value })} className="h-8 w-12 rounded cursor-pointer bg-transparent border border-border/60" />
+              <Input value={doc.floorColor || "#d9cec0"} onChange={(e) => setDoc({ ...doc, floorColor: e.target.value })} className="flex-1 font-mono text-xs h-8" />
+            </div>
+          </div>
+          <div>
+            <Label className="text-[11px] text-muted-foreground">لون الحوائط</Label>
+            <div className="flex items-center gap-2">
+              <input type="color" value={doc.wallColor || "#efe7da"} onChange={(e) => setDoc({ ...doc, wallColor: e.target.value })} className="h-8 w-12 rounded cursor-pointer bg-transparent border border-border/60" />
+              <Input value={doc.wallColor || "#efe7da"} onChange={(e) => setDoc({ ...doc, wallColor: e.target.value })} className="flex-1 font-mono text-xs h-8" />
+            </div>
+          </div>
+          <div>
+            <Label className="text-[11px] text-muted-foreground">لون الرخام</Label>
+            <div className="flex items-center gap-2">
+              <input type="color" value={doc.marbleColor || "#d8cfbf"} onChange={(e) => setDoc({ ...doc, marbleColor: e.target.value })} className="h-8 w-12 rounded cursor-pointer bg-transparent border border-border/60" />
+              <Input value={doc.marbleColor || "#d8cfbf"} onChange={(e) => setDoc({ ...doc, marbleColor: e.target.value })} className="flex-1 font-mono text-xs h-8" />
+            </div>
+          </div>
+        </div>
       </div>
 
       {selected ? (

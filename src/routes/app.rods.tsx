@@ -105,13 +105,12 @@ function RodsPage() {
             <h2 className="font-semibold mb-3">المقاسات المطلوبة (سم)</h2>
               <div className="rounded-xl border border-border/50 overflow-hidden">
                 <Table>
-                  <TableHeader><TableRow><TableHead className="text-right min-w-24">الطول</TableHead><TableHead className="text-right min-w-20">العرض</TableHead><TableHead className="text-right min-w-20">العدد</TableHead><TableHead className="w-12" /></TableRow></TableHeader>
+                  <TableHeader><TableRow><TableHead className="text-right min-w-24">الطول (سم)</TableHead><TableHead className="text-right min-w-20">العدد</TableHead><TableHead className="w-12" /></TableRow></TableHeader>
                   <TableBody>
-                    {pieces.length === 0 && <TableRow><TableCell colSpan={4} className="h-20 text-center text-sm text-muted-foreground">اضغط "إضافة مقاس" للبدء.</TableCell></TableRow>}
+                    {pieces.length === 0 && <TableRow><TableCell colSpan={3} className="h-20 text-center text-sm text-muted-foreground">اضغط "إضافة مقاس" للبدء.</TableCell></TableRow>}
                     {pieces.map((p, i) => (
                       <TableRow key={p.id}>
                         <TableCell><Input className="h-10 min-w-24 text-base tabular-nums" inputMode="decimal" type="number" min="0" placeholder="0" value={p.length || ""} onChange={(e) => updPiece(i, { length: +e.target.value })} /></TableCell>
-                        <TableCell><Input className="h-10 min-w-20 text-base tabular-nums" inputMode="decimal" type="number" min="0" placeholder="0" value={p.width || ""} onChange={(e) => updPiece(i, { width: +e.target.value })} /></TableCell>
                         <TableCell><Input className="h-10 min-w-20 text-base tabular-nums" inputMode="numeric" type="number" min="0" placeholder="0" value={p.quantity || ""} onChange={(e) => updPiece(i, { quantity: +e.target.value })} /></TableCell>
                         <TableCell><Button size="icon" variant="ghost" className="h-10 w-10" onClick={() => setPieces(pieces.filter((_, j) => j !== i))}><Trash2 className="size-4 text-destructive" /></Button></TableCell>
                       </TableRow>

@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Users, Settings as SettingsIcon, Shield } from "lucide-react";
+import { Users, Settings as SettingsIcon, Shield, Inbox, Check, X, Clock } from "lucide-react";
 
 export const Route = createFileRoute("/app/admin")({ component: Admin });
 

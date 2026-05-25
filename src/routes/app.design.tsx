@@ -77,13 +77,9 @@ function DesignEditor() {
   const [aiCredits, setAiCredits] = useState<number | null>(null);
   const [adModalOpen, setAdModalOpen] = useState(false);
   const [toolbar3dVisible, setToolbar3dVisible] = useState(true);
-  const NUDGE = 5; // cm per click
-  const nudgeSelected = (dx: number, dy: number) => {
-    if (!selectedId) return;
-    const b = doc.blocks.find((x) => x.id === selectedId);
-    if (!b) return;
-    updateBlock(selectedId, { x: b.x + dx, y: b.y + dy });
-  };
+  const orbitRef = useRef<any>(null);
+  const dragRef = useRef<{ id: string; offsetX: number; offsetZ: number; plane: THREE.Plane; moved: boolean } | null>(null);
+  const [isDragging3d, setIsDragging3d] = useState(false);
   const callRender = useServerFn(renderRealistic);
 
   useEffect(() => {

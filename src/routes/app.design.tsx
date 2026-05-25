@@ -38,6 +38,8 @@ function DesignEditor() {
   const [pendingDims, setPendingDims] = useState({ width: "", depth: "", height: "", notes: "" });
   const [builderOpen, setBuilderOpen] = useState(false);
   const [editorStarted, setEditorStarted] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDims, setEditDims] = useState({ width: "", depth: "", height: "", notes: "" });
   const [setupRoom, setSetupRoom] = useState({ name: "تصميم جديد", width: "400", depth: "300", shape: "rectangle" as "rectangle" | "l_shape", cutoutWidth: "100", cutoutDepth: "100" });
   const [savedRows, setSavedRows] = useState<{ id: string; name: string; updated_at: string }[]>([]);
   const stageWrapRef = useRef<HTMLDivElement>(null);

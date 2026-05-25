@@ -342,6 +342,11 @@ function DesignEditor() {
     return clampBlock(b);
   };
 
+  const alignAllBlocks = () => {
+    setDoc((current) => ({ ...current, blocks: current.blocks.map((b) => snapBlockToWall(b, current.blocks)) }));
+    toast.success("تمت محاذاة كل الوحدات على خطوط الحوائط");
+  };
+
   const autoPlaceBlock = (block: PlacedBlock) => {
     const row = doc.blocks.filter((b) => Math.abs(b.y) < 2).sort((a, z) => a.x - z.x);
     const last = row[row.length - 1];
@@ -947,6 +952,8 @@ function DesignEditor() {
                     id: b.id,
                     offsetX: point.x - b.x,
                     offsetZ: point.z - b.y,
+                    currentX: b.x,
+                    currentY: b.y,
                     plane,
                     moved: false,
                   };
@@ -961,10 +968,17 @@ function DesignEditor() {
                   const nx = Math.round(point.x - d.offsetX);
                   const nz = Math.round(point.z - d.offsetZ);
                   d.moved = true;
+                  d.currentX = nx;
+                  d.currentY = nz;
                   updateBlock(b.id, { x: nx, y: nz });
                 };
                 const onUp = (e: ThreeEvent<PointerEvent>) => {
-                  if (dragRef.current?.id === b.id) {
+                  const d = dragRef.current;
+                  if (d?.id === b.id) {
+                    if (d.moved) {
+                      const moved = snapBlockToWall({ ...b, x: d.currentX, y: d.currentY });
+                      setDoc((current) => ({ ...current, blocks: current.blocks.map((item) => (item.id === b.id ? moved : item)) }));
+                    }
                     dragRef.current = null;
                     setIsDragging3d(false);
                     (e.target as Element).releasePointerCapture?.(e.pointerId);

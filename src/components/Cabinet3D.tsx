@@ -1,11 +1,13 @@
 // رسم وحدة مطبخ تفصيلية في 3D — تعرض الجسم + الأبواب + الأدراج + الزجاج + الرخامة
 import type { PlacedBlock } from "@/lib/blocks";
 import { Appliance3D } from "./Appliance3D";
+import { TexturedMaterial } from "./TexturedMaterial";
 
 interface Props {
   block: PlacedBlock;
   defaultColor: string;
   marbleColor?: string;
+  marbleTextureId?: string;
 }
 
 const APPLIANCE_TYPES = new Set([
@@ -18,7 +20,7 @@ const APPLIANCE_TYPES = new Set([
   "tall_oven_micro", "base_oven_integrated",
 ]);
 
-export function Cabinet3D({ block, defaultColor, marbleColor }: Props) {
+export function Cabinet3D({ block, defaultColor, marbleColor, marbleTextureId }: Props) {
   if (APPLIANCE_TYPES.has(block.type)) {
     return <Appliance3D block={block} defaultColor={defaultColor} marbleColor={marbleColor} />;
   }
@@ -152,7 +154,7 @@ export function Cabinet3D({ block, defaultColor, marbleColor }: Props) {
       {block.placement === "base" && (
           <mesh position={[0, H / 2 + 1.5, FRONT_INSET / 2 + zFightGap]}>
           <boxGeometry args={[W + 2, 3, D + FRONT_INSET]} />
-            <meshStandardMaterial color={marbleColor || "#d8cfbf"} roughness={0.45} metalness={0.04} />
+            <TexturedMaterial textureId={marbleTextureId} surfaceWidthCm={W + 2} surfaceHeightCm={D + FRONT_INSET} fallbackColor={marbleColor || "#d8cfbf"} roughness={0.4} metalness={0.05} />
         </mesh>
       )}
 

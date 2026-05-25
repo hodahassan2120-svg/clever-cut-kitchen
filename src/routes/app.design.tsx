@@ -16,6 +16,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { CustomUnitBuilder } from "@/components/CustomUnitBuilder";
 import { Cabinet3D } from "@/components/Cabinet3D";
+import { TexturedMaterial } from "@/components/TexturedMaterial";
+import { TEXTURES } from "@/lib/textures";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
@@ -451,12 +453,66 @@ function DesignEditor() {
           <div>
             <Label className="text-[11px] text-muted-foreground">لون الرخام</Label>
             <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <input type="color" value={doc.marbleColor || "#d8cfbf"} onChange={(e) => setDoc({ ...doc, marbleColor: e.target.value })} className="h-8 w-12 rounded cursor-pointer bg-transparent border border-border/60" />
               <Input value={doc.marbleColor || "#d8cfbf"} onChange={(e) => setDoc({ ...doc, marbleColor: e.target.value })} className="flex-1 font-mono text-xs h-8" />
             </div>
           </div>
         </div>
+
+        {/* مكتبة الخامات الواقعية */}
+        <div className="space-y-3 pt-3 mt-3 border-t border-border/40">
+          <h4 className="text-sm font-semibold flex items-center gap-1.5">
+            <Sparkles className="size-3.5 text-primary" /> خامات واقعية (سيراميك / رخام)
+          </h4>
+          <p className="text-[10px] text-muted-foreground -mt-1">اختر خامة فعلية لتطبيقها في العرض ثلاثي الأبعاد. اضغط مرة ثانية لإلغائها.</p>
+
+          {(["floor","wall","counter"] as const).map((cat) => {
+            const label = cat === "floor" ? "أرضية" : cat === "wall" ? "حوائط" : "رخامة";
+            const currentId = cat === "floor" ? doc.floorTextureId : cat === "wall" ? doc.wallTextureId : doc.marbleTextureId;
+            const setId = (id: string | undefined) =>
+              setDoc({
+                ...doc,
+                ...(cat === "floor" ? { floorTextureId: id } : cat === "wall" ? { wallTextureId: id } : { marbleTextureId: id }),
+              });
+            const items = TEXTURES.filter((t) => t.category === cat);
+            return (
+              <div key={cat} className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label className="text-[11px] text-muted-foreground">{label}</Label>
+                  {currentId && (
+                    <button onClick={() => setId(undefined)} className="text-[10px] text-destructive hover:underline">إزالة</button>
+                  )}
+                </div>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {items.map((t) => {
+                    const active = currentId === t.id;
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => setId(active ? undefined : t.id)}
+                        title={t.name}
+                        className={`relative aspect-square rounded-md overflow-hidden border-2 transition ${active ? "border-primary ring-2 ring-primary/30" : "border-border/40 hover:border-primary/40"}`}
+                      >
+                        <img src={t.url} alt={t.name} loading="lazy" className="w-full h-full object-cover" />
+                        <span className="absolute inset-x-0 bottom-0 bg-black/60 text-white text-[8px] py-0.5 px-1 truncate text-center">
+                          {t.name}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
+      </div>
+
+
+
+
 
       {selected ? (
         <div className="space-y-3">
@@ -865,15 +921,15 @@ function DesignEditor() {
               <directionalLight position={[doc.roomWidth, 520, doc.roomDepth]} intensity={0.65} />
               <mesh rotation={[-Math.PI / 2, 0, 0]} position={[doc.roomWidth / 2, -0.6, doc.roomDepth / 2]}>
                 <planeGeometry args={[doc.roomWidth, doc.roomDepth]} />
-                <meshStandardMaterial color={doc.floorColor || "#d9cec0"} roughness={0.92} />
+                <TexturedMaterial textureId={doc.floorTextureId} surfaceWidthCm={doc.roomWidth} surfaceHeightCm={doc.roomDepth} fallbackColor={doc.floorColor || "#d9cec0"} roughness={0.92} />
               </mesh>
               <mesh position={[doc.roomWidth / 2, 130, -5]}>
                 <boxGeometry args={[doc.roomWidth, 260, 8]} />
-                <meshStandardMaterial color={doc.wallColor || "#efe7da"} roughness={0.98} />
+                <TexturedMaterial textureId={doc.wallTextureId} surfaceWidthCm={doc.roomWidth} surfaceHeightCm={260} fallbackColor={doc.wallColor || "#efe7da"} roughness={0.95} />
               </mesh>
               <mesh position={[-5, 130, doc.roomDepth / 2]}>
                 <boxGeometry args={[8, 260, doc.roomDepth]} />
-                <meshStandardMaterial color={doc.wallColor || "#efe7da"} roughness={0.98} />
+                <TexturedMaterial textureId={doc.wallTextureId} surfaceWidthCm={doc.roomDepth} surfaceHeightCm={260} fallbackColor={doc.wallColor || "#efe7da"} roughness={0.95} />
               </mesh>
               {doc.blocks.map((b) => {
                 const wallMounted = b.placement === "wall" || b.type.startsWith("wall_") || b.type === "appl_hood" || b.type === "appl_hood_chimney" || b.type === "appl_microwave_built" || b.type === "special_window";
@@ -916,7 +972,7 @@ function DesignEditor() {
                 };
                 return (
                   <group key={b.id} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
-                    <Cabinet3D block={b} defaultColor={isPaintableBlock(b) ? (doc.globalColor || b.color) : b.color} marbleColor={doc.marbleColor} />
+                    <Cabinet3D block={b} defaultColor={isPaintableBlock(b) ? (doc.globalColor || b.color) : b.color} marbleColor={doc.marbleColor} marbleTextureId={doc.marbleTextureId} />
                     {isSel && (
                       <mesh position={[b.x + b.width / 2, vy + b.height / 2, b.y + b.depth / 2]} rotation={[0, (-b.rotation * Math.PI) / 180, 0]}>
                         <boxGeometry args={[b.width + 3, b.height + 3, b.depth + 3]} />

@@ -53,7 +53,10 @@ export function RewardedAdModal({
 
   const openAd = () => {
     if (!zone) return;
-    const url = `https://www.profitableratecpm.com/${zone}/`;
+    // Supports full URL (Monetag Direct Link) or legacy numeric zone id
+    const url = /^https?:\/\//i.test(zone)
+      ? zone
+      : `https://www.profitableratecpm.com/${zone}/`;
     window.open(url, "_blank", "noopener,noreferrer,width=900,height=700");
     setOpened(true);
   };

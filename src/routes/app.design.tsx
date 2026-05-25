@@ -23,6 +23,8 @@ import { Save, Plus, Trash2, LayoutGrid, Settings2, Wand2, Palette, FolderOpen, 
 import type Konva from "konva";
 import { useServerFn } from "@tanstack/react-start";
 import { renderRealistic } from "@/lib/render.functions";
+import { RewardedAdModal } from "@/components/RewardedAdModal";
+import { Gift } from "lucide-react";
 
 export const Route = createFileRoute("/app/design")({
   component: DesignEditor,
@@ -70,7 +72,15 @@ function DesignEditor() {
   const [stageSize, setStageSize] = useState({ w: 360, h: 400 });
   const [aiRendering, setAiRendering] = useState(false);
   const [aiResultUrl, setAiResultUrl] = useState<string | null>(null);
+  const [aiCredits, setAiCredits] = useState<number | null>(null);
+  const [adModalOpen, setAdModalOpen] = useState(false);
   const callRender = useServerFn(renderRealistic);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("subscriptions").select("ai_credits").eq("user_id", user.id).maybeSingle()
+      .then(({ data }) => setAiCredits(data?.ai_credits ?? 0));
+  }, [user]);
 
 
   useEffect(() => {

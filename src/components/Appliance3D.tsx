@@ -1,10 +1,12 @@
 // رسم الأجهزة بشكل واقعي قريب من الواقع في الـ 3D
 // يُستدعى من Cabinet3D عند أنواع الأجهزة (appl_*, tall_fridge, base_sink*, …)
 import type { PlacedBlock } from "@/lib/blocks";
+import { TexturedMaterial } from "./TexturedMaterial";
 
 interface Props {
   block: PlacedBlock;
   marbleColor?: string;
+  marbleTextureId?: string;
   defaultColor: string;
 }
 
@@ -13,7 +15,7 @@ const STEEL_DARK = "#8a8f96";
 const BLACK_GLASS = "#0e0f12";
 const DISPLAY = "#1a3a2a";
 
-export function Appliance3D({ block, marbleColor, defaultColor }: Props) {
+export function Appliance3D({ block, marbleColor, marbleTextureId, defaultColor }: Props) {
   const { type, width: W, height: H, depth: D } = block;
   const wallMounted = type === "appl_hood" || type === "appl_hood_chimney" || type === "appl_microwave_built";
   const verticalOffset = wallMounted ? 145 : 0;
@@ -24,7 +26,7 @@ export function Appliance3D({ block, marbleColor, defaultColor }: Props) {
 
   return (
     <group position={[cx, cy, cz]} rotation={rotation}>
-      {renderBody(type, W, H, D, marbleColor, defaultColor, block)}
+      {renderBody(type, W, H, D, marbleColor, marbleTextureId, defaultColor, block)}
     </group>
   );
 }
@@ -35,6 +37,7 @@ function renderBody(
   H: number,
   D: number,
   marbleColor: string | undefined,
+  marbleTextureId: string | undefined,
   defaultColor: string,
   block: PlacedBlock,
 ) {
@@ -67,13 +70,13 @@ function renderBody(
     case "appl_fridge_mini":
       return FridgeMini(W, H, D);
     case "base_sink":
-      return SinkBase(W, H, D, marbleColor, block.customColor ? block.color : defaultColor, 1);
+      return SinkBase(W, H, D, marbleColor, marbleTextureId, block.customColor ? block.color : defaultColor, 1);
     case "base_sink_double":
-      return SinkBase(W, H, D, marbleColor, block.customColor ? block.color : defaultColor, 2);
+      return SinkBase(W, H, D, marbleColor, marbleTextureId, block.customColor ? block.color : defaultColor, 2);
     case "tall_oven_micro":
       return OvenMicroColumn(W, H, D, block.customColor ? block.color : defaultColor);
     case "base_oven_integrated":
-      return BaseWithOven(W, H, D, block.customColor ? block.color : defaultColor, marbleColor);
+      return BaseWithOven(W, H, D, block.customColor ? block.color : defaultColor, marbleColor, marbleTextureId);
     default:
       return (
         <mesh>
@@ -311,7 +314,7 @@ function FridgeMini(W: number, H: number, D: number) {
 }
 
 /* ───── الحوض ───── */
-function SinkBase(W: number, H: number, D: number, marbleColor: string | undefined, doorColor: string, basins: 1 | 2) {
+function SinkBase(W: number, H: number, D: number, marbleColor: string | undefined, marbleTextureId: string | undefined, doorColor: string, basins: 1 | 2) {
   const marble = marbleColor || "#d8cfbf";
   const basinDepth = 8;
   return (
@@ -322,7 +325,7 @@ function SinkBase(W: number, H: number, D: number, marbleColor: string | undefin
       <mesh position={[0, 0, D / 2 + 0.1]}><boxGeometry args={[W - 1, H - 2, 0.5]} /><meshStandardMaterial color={doorColor} roughness={0.6} metalness={0.04} /></mesh>
       <mesh position={[0, -H * 0.3, D / 2 + 0.7]}><boxGeometry args={[W * 0.3, 1, 1.2]} /><meshStandardMaterial color="#c7a15a" metalness={0.4} roughness={0.4} /></mesh>
       {/* الرخامة */}
-      <mesh position={[0, H / 2 + 1.5, 0.5]}><boxGeometry args={[W + 2, 3, D + 1]} /><meshStandardMaterial color={marble} roughness={0.42} metalness={0.05} /></mesh>
+      <mesh position={[0, H / 2 + 1.5, 0.5]}><boxGeometry args={[W + 2, 3, D + 1]} /><TexturedMaterial textureId={marbleTextureId} surfaceWidthCm={W + 2} surfaceHeightCm={D + 1} fallbackColor={marble} roughness={0.42} metalness={0.05} /></mesh>
       {/* الأحواض الستانلس (مفجورة في الرخامة) */}
       {basins === 1 ? (
         <mesh position={[0, H / 2 + 1.5 - basinDepth / 2 - 0.5, 0]}>
@@ -381,7 +384,7 @@ function OvenMicroColumn(W: number, H: number, D: number, color: string) {
 }
 
 /* ───── سفلية مدمج فيها فرن ───── */
-function BaseWithOven(W: number, H: number, D: number, color: string, marbleColor: string | undefined) {
+function BaseWithOven(W: number, H: number, D: number, color: string, marbleColor: string | undefined, marbleTextureId: string | undefined) {
   const marble = marbleColor || "#d8cfbf";
   const ovenH = H * 0.45;
   return (
@@ -397,7 +400,7 @@ function BaseWithOven(W: number, H: number, D: number, color: string, marbleColo
         <mesh position={[0, ovenH * 0.05, 0.7]}><boxGeometry args={[W - 8, 1.3, 1.2]} /><meshStandardMaterial color={STEEL} metalness={0.9} roughness={0.2} /></mesh>
       </group>
       {/* الرخامة */}
-      <mesh position={[0, H / 2 + 1.5, 0.5]}><boxGeometry args={[W + 2, 3, D + 1]} /><meshStandardMaterial color={marble} roughness={0.42} /></mesh>
+      <mesh position={[0, H / 2 + 1.5, 0.5]}><boxGeometry args={[W + 2, 3, D + 1]} /><TexturedMaterial textureId={marbleTextureId} surfaceWidthCm={W + 2} surfaceHeightCm={D + 1} fallbackColor={marble} roughness={0.42} /></mesh>
       <mesh position={[0, -H / 2 + 5, D / 2 - 2]}><boxGeometry args={[W, 10, 4]} /><meshStandardMaterial color="#211b16" /></mesh>
     </group>
   );

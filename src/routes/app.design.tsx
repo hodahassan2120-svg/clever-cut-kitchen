@@ -80,7 +80,7 @@ function DesignEditor() {
   const [adModalOpen, setAdModalOpen] = useState(false);
   const [toolbar3dVisible, setToolbar3dVisible] = useState(true);
   const orbitRef = useRef<any>(null);
-  const dragRef = useRef<{ id: string; offsetX: number; offsetZ: number; plane: THREE.Plane; moved: boolean } | null>(null);
+  const dragRef = useRef<{ id: string; offsetX: number; offsetZ: number; currentX: number; currentY: number; plane: THREE.Plane; moved: boolean } | null>(null);
   const [isDragging3d, setIsDragging3d] = useState(false);
   const callRender = useServerFn(renderRealistic);
 
@@ -186,7 +186,7 @@ function DesignEditor() {
   };
 
   const updateBlock = (id: string, patch: Partial<PlacedBlock>) => {
-    setDoc({ ...doc, blocks: doc.blocks.map((b) => (b.id === id ? clampBlock({ ...b, ...patch }) : b)) });
+    setDoc((current) => ({ ...current, blocks: current.blocks.map((b) => (b.id === id ? clampBlock({ ...b, ...patch }) : b)) }));
   };
   const removeBlock = (id: string) => {
     setDoc({ ...doc, blocks: doc.blocks.filter((b) => b.id !== id) });
@@ -340,6 +340,28 @@ function DesignEditor() {
       }
     }
     return clampBlock(b);
+  };
+
+  const nearestWall = (b: PlacedBlock) => ([
+    { wall: "back" as const, value: b.y },
+    { wall: "left" as const, value: b.x },
+    { wall: "front" as const, value: doc.roomDepth - (b.y + b.depth) },
+    { wall: "right" as const, value: doc.roomWidth - (b.x + b.width) },
+  ].sort((a, z) => a.value - z.value)[0].wall);
+
+  const alignBlockToWall = (block: PlacedBlock, wall: "back" | "front" | "left" | "right") => {
+    const b = clampBlock({ ...block });
+    if (wall === "back") b.y = 0;
+    if (wall === "front") b.y = doc.roomDepth - b.depth;
+    if (wall === "left") b.x = 0;
+    if (wall === "right") b.x = doc.roomWidth - b.width;
+    return clampBlock(b);
+  };
+
+  const alignAllBlocks = () => {
+    const target = selected ? nearestWall(selected) : (doc.blocks[0] ? nearestWall(doc.blocks[0]) : "back");
+    setDoc((current) => ({ ...current, blocks: current.blocks.map((b) => alignBlockToWall(b, target)) }));
+    toast.success("تمت محاذاة كل الوحدات على خط واحد");
   };
 
   const autoPlaceBlock = (block: PlacedBlock) => {
@@ -712,6 +734,9 @@ function DesignEditor() {
             <Button size="sm" variant={unit === "cm" ? "default" : "outline"} onClick={() => setUnit("cm")}>سم</Button>
             <Button size="sm" variant={unit === "m" ? "default" : "outline"} onClick={() => setUnit("m")}>م</Button>
           </div>
+          <Button size="sm" variant="outline" className="h-9 gap-1" onClick={alignAllBlocks} title="محاذاة كل الوحدات على أقرب حائط">
+            <Ruler className="size-4" /> محاذاة
+          </Button>
           <Button onClick={save} size="sm" className="mr-auto bg-gradient-primary shadow-glow"><Save className="size-4" /> حفظ</Button>
         </div>
 
@@ -947,6 +972,8 @@ function DesignEditor() {
                     id: b.id,
                     offsetX: point.x - b.x,
                     offsetZ: point.z - b.y,
+                    currentX: b.x,
+                    currentY: b.y,
                     plane,
                     moved: false,
                   };
@@ -961,10 +988,17 @@ function DesignEditor() {
                   const nx = Math.round(point.x - d.offsetX);
                   const nz = Math.round(point.z - d.offsetZ);
                   d.moved = true;
+                  d.currentX = nx;
+                  d.currentY = nz;
                   updateBlock(b.id, { x: nx, y: nz });
                 };
                 const onUp = (e: ThreeEvent<PointerEvent>) => {
-                  if (dragRef.current?.id === b.id) {
+                  const d = dragRef.current;
+                  if (d?.id === b.id) {
+                    if (d.moved) {
+                      const moved = snapBlockToWall({ ...b, x: d.currentX, y: d.currentY });
+                      setDoc((current) => ({ ...current, blocks: current.blocks.map((item) => (item.id === b.id ? moved : item)) }));
+                    }
                     dragRef.current = null;
                     setIsDragging3d(false);
                     (e.target as Element).releasePointerCapture?.(e.pointerId);

@@ -302,6 +302,13 @@ function DesignEditor() {
 
         {/* Quick-add strip for mobile */}
         <div className="md:hidden flex gap-1.5 overflow-x-auto p-2 border-b border-border/60 bg-card/30 shrink-0">
+          <button
+            onClick={() => setBuilderOpen(true)}
+            className="shrink-0 flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg bg-gradient-primary text-primary-foreground text-[10px] min-w-[72px] shadow-glow font-bold"
+          >
+            <Wand2 className="size-5" />
+            <span>وحدة مخصصة</span>
+          </button>
           {KITCHEN_BLOCKS.slice(0, 8).map((b) => (
             <button
               key={b.type}

@@ -35,6 +35,7 @@ function DesignEditor() {
   const [unit, setUnit] = useState<"cm" | "m">("cm");
   const [pendingBlock, setPendingBlock] = useState<KitchenBlock | null>(null);
   const [pendingDims, setPendingDims] = useState({ width: "", depth: "", height: "", notes: "" });
+  const [builderOpen, setBuilderOpen] = useState(false);
   const stageWrapRef = useRef<HTMLDivElement>(null);
   const [stageSize, setStageSize] = useState({ w: 360, h: 400 });
 

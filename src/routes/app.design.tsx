@@ -172,14 +172,15 @@ function DesignEditor() {
   const selected = doc.blocks.find((b) => b.id === selectedId);
 
   const save = async () => {
-    if (!user) return;
+    if (!user) return toast.error("سجل الدخول أولاً");
+    if (!name.trim()) return toast.error("اكتب اسماً للتصميم");
     if (designId) {
       const { error } = await supabase.from("designs").update({ name, data: doc as any, updated_at: new Date().toISOString() }).eq("id", designId);
-      if (error) return toast.error("تعذر الحفظ");
+      if (error) return toast.error(error.message.includes("subscription") || error.message.includes("policy") ? "انتهت الفترة التجريبية — اطلب تفعيل الحساب" : "تعذر الحفظ: " + error.message);
       toast.success("تم تحديث التصميم");
     } else {
       const { data, error } = await supabase.from("designs").insert({ user_id: user.id, name, data: doc as any }).select("id").single();
-      if (error) return toast.error("تعذر الحفظ");
+      if (error) return toast.error(error.message.includes("subscription") || error.message.includes("policy") ? "انتهت الفترة التجريبية — اطلب تفعيل الحساب" : "تعذر الحفظ: " + error.message);
       setDesignId(data.id);
       toast.success("تم حفظ التصميم");
     }

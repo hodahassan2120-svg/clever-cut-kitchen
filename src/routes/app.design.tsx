@@ -964,6 +964,12 @@ function DesignEditor() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <RewardedAdModal
+        open={adModalOpen}
+        onOpenChange={setAdModalOpen}
+        onCreditGranted={(bal) => setAiCredits(bal)}
+      />
     </div>
   );
 }

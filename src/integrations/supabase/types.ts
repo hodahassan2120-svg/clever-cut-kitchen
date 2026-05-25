@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      activation_requests: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          handled_at: string | null
+          handled_by: string | null
+          id: string
+          note: string | null
+          phone: string
+          status: Database["public"]["Enums"]["activation_status"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          handled_at?: string | null
+          handled_by?: string | null
+          id?: string
+          note?: string | null
+          phone: string
+          status?: Database["public"]["Enums"]["activation_status"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          handled_at?: string | null
+          handled_by?: string | null
+          id?: string
+          note?: string | null
+          phone?: string
+          status?: Database["public"]["Enums"]["activation_status"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           adsense_client: string | null
@@ -209,6 +245,7 @@ export type Database = {
       is_subscription_active: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
+      activation_status: "pending" | "approved" | "rejected"
       app_role: "admin" | "user"
     }
     CompositeTypes: {
@@ -337,6 +374,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      activation_status: ["pending", "approved", "rejected"],
       app_role: ["admin", "user"],
     },
   },

@@ -558,7 +558,7 @@ function DesignEditor() {
             <TabsTrigger value="2d">2D</TabsTrigger>
             <TabsTrigger value="3d">3D</TabsTrigger>
           </TabsList>
-          <TabsContent value="2d" className="flex-1 overflow-hidden bg-muted/20 m-0 min-h-0">
+          <TabsContent value="2d" className="flex-1 overflow-hidden bg-muted/20 m-0 min-h-0 relative">
             <div ref={stageWrapRef} className="w-full h-full">
               <Stage width={stageSize.w} height={stageSize.h} onMouseDown={(e) => { if (e.target === e.target.getStage()) setSelectedId(null); }}>
                 <Layer>
@@ -569,6 +569,31 @@ function DesignEditor() {
                   {Array.from({ length: Math.floor(doc.roomDepth / 50) }).map((_, i) => (
                     <Line key={`h${i}`} points={[PAD, PAD + (i + 1) * 50 * scale, PAD + doc.roomWidth * scale, PAD + (i + 1) * 50 * scale]} stroke="#333" strokeWidth={0.5} />
                   ))}
+                  {/* قياسات الجدران */}
+                  <KText text={`${toUnit(doc.roomWidth)} ${unit}`} fontSize={13} fontStyle="bold" fill="#f59e0b" x={PAD} y={PAD - 18} width={doc.roomWidth * scale} align="center" />
+                  <KText text={`${toUnit(doc.roomWidth)} ${unit}`} fontSize={13} fontStyle="bold" fill="#f59e0b" x={PAD} y={PAD + doc.roomDepth * scale + 4} width={doc.roomWidth * scale} align="center" />
+                  <KText text={`${toUnit(doc.roomDepth)} ${unit}`} fontSize={13} fontStyle="bold" fill="#f59e0b" x={PAD - 38} y={PAD + (doc.roomDepth * scale) / 2 - 7} width={32} align="right" />
+                  <KText text={`${toUnit(doc.roomDepth)} ${unit}`} fontSize={13} fontStyle="bold" fill="#f59e0b" x={PAD + doc.roomWidth * scale + 6} y={PAD + (doc.roomDepth * scale) / 2 - 7} width={50} align="left" />
+                  {/* مقابض سحب الجدران (مستطيلة فقط) */}
+                  {(doc.roomShape || "rectangle") === "rectangle" && (
+                    <>
+                      <Rect x={PAD + (doc.roomWidth * scale) / 2 - 14} y={PAD - 6} width={28} height={12} fill="#f59e0b" cornerRadius={6} draggable
+                        dragBoundFunc={(pos) => ({ x: pos.x, y: PAD - 6 })}
+                        onDragMove={(e) => setDoc({ ...doc, roomDepth: Math.max(150, doc.roomDepth) })}
+                      />
+                      <Rect x={PAD + (doc.roomWidth * scale) / 2 - 14} y={PAD + doc.roomDepth * scale - 6} width={28} height={12} fill="#f59e0b" cornerRadius={6} draggable
+                        dragBoundFunc={(pos) => ({ x: pos.x, y: PAD + doc.roomDepth * scale - 6 })}
+                        onDragEnd={(e) => { const newY = e.target.y() + 6; const newDepth = Math.max(150, Math.round((newY - PAD) / scale / 10) * 10); setDoc({ ...doc, roomDepth: newDepth }); }}
+                      />
+                      <Rect x={PAD - 6} y={PAD + (doc.roomDepth * scale) / 2 - 14} width={12} height={28} fill="#f59e0b" cornerRadius={6} draggable
+                        dragBoundFunc={(pos) => ({ x: PAD - 6, y: pos.y })}
+                      />
+                      <Rect x={PAD + doc.roomWidth * scale - 6} y={PAD + (doc.roomDepth * scale) / 2 - 14} width={12} height={28} fill="#f59e0b" cornerRadius={6} draggable
+                        dragBoundFunc={(pos) => ({ x: pos.x, y: PAD + (doc.roomDepth * scale) / 2 - 14 })}
+                        onDragEnd={(e) => { const newX = e.target.x() + 6; const newWidth = Math.max(150, Math.round((newX - PAD) / scale / 10) * 10); setDoc({ ...doc, roomWidth: newWidth }); }}
+                      />
+                    </>
+                  )}
                   {doc.blocks.map((b) => {
                     const fill = blockColor(b);
                     const W = b.width * scale;

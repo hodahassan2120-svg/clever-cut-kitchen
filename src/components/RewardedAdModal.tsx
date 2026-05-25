@@ -51,13 +51,11 @@ export function RewardedAdModal({
     };
   }, [opened]);
 
-  const openAd = () => {
-    if (!zone) return;
-    // Supports full URL (Monetag Direct Link) or legacy numeric zone id
-    const url = /^https?:\/\//i.test(zone)
-      ? zone
-      : `https://www.profitableratecpm.com/${zone}/`;
-    window.open(url, "_blank", "noopener,noreferrer,width=900,height=700");
+  const adUrl = zone
+    ? (/^https?:\/\//i.test(zone) ? zone : `https://www.profitableratecpm.com/${zone}/`)
+    : null;
+
+  const handleAdClick = () => {
     setOpened(true);
   };
 

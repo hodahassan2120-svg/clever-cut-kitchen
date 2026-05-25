@@ -865,15 +865,15 @@ function DesignEditor() {
               <directionalLight position={[doc.roomWidth, 520, doc.roomDepth]} intensity={0.65} />
               <mesh rotation={[-Math.PI / 2, 0, 0]} position={[doc.roomWidth / 2, -0.6, doc.roomDepth / 2]}>
                 <planeGeometry args={[doc.roomWidth, doc.roomDepth]} />
-                <meshStandardMaterial color={doc.floorColor || "#d9cec0"} roughness={0.92} />
+                <TexturedMaterial textureId={doc.floorTextureId} surfaceWidthCm={doc.roomWidth} surfaceHeightCm={doc.roomDepth} fallbackColor={doc.floorColor || "#d9cec0"} roughness={0.92} />
               </mesh>
               <mesh position={[doc.roomWidth / 2, 130, -5]}>
                 <boxGeometry args={[doc.roomWidth, 260, 8]} />
-                <meshStandardMaterial color={doc.wallColor || "#efe7da"} roughness={0.98} />
+                <TexturedMaterial textureId={doc.wallTextureId} surfaceWidthCm={doc.roomWidth} surfaceHeightCm={260} fallbackColor={doc.wallColor || "#efe7da"} roughness={0.95} />
               </mesh>
               <mesh position={[-5, 130, doc.roomDepth / 2]}>
                 <boxGeometry args={[8, 260, doc.roomDepth]} />
-                <meshStandardMaterial color={doc.wallColor || "#efe7da"} roughness={0.98} />
+                <TexturedMaterial textureId={doc.wallTextureId} surfaceWidthCm={doc.roomDepth} surfaceHeightCm={260} fallbackColor={doc.wallColor || "#efe7da"} roughness={0.95} />
               </mesh>
               {doc.blocks.map((b) => {
                 const wallMounted = b.placement === "wall" || b.type.startsWith("wall_") || b.type === "appl_hood" || b.type === "appl_hood_chimney" || b.type === "appl_microwave_built" || b.type === "special_window";

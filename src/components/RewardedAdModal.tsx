@@ -105,9 +105,15 @@ export function RewardedAdModal({
                 <li>ارجع لهنا واضغط "استلام الكريديت"</li>
               </ol>
             </div>
-            <Button onClick={openAd} className="w-full bg-gradient-primary shadow-glow gap-2">
+            <a
+              href={adUrl ?? "#"}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={handleAdClick}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-gradient-primary shadow-glow h-10 px-4 text-sm font-medium text-primary-foreground"
+            >
               <ExternalLink className="size-4" /> مشاهدة الإعلان
-            </Button>
+            </a>
           </div>
         ) : (
           <div className="space-y-4 py-2 text-center">

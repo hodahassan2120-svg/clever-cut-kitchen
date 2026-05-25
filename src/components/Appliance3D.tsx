@@ -1,10 +1,12 @@
 // رسم الأجهزة بشكل واقعي قريب من الواقع في الـ 3D
 // يُستدعى من Cabinet3D عند أنواع الأجهزة (appl_*, tall_fridge, base_sink*, …)
 import type { PlacedBlock } from "@/lib/blocks";
+import { TexturedMaterial } from "./TexturedMaterial";
 
 interface Props {
   block: PlacedBlock;
   marbleColor?: string;
+  marbleTextureId?: string;
   defaultColor: string;
 }
 
@@ -13,7 +15,7 @@ const STEEL_DARK = "#8a8f96";
 const BLACK_GLASS = "#0e0f12";
 const DISPLAY = "#1a3a2a";
 
-export function Appliance3D({ block, marbleColor, defaultColor }: Props) {
+export function Appliance3D({ block, marbleColor, marbleTextureId, defaultColor }: Props) {
   const { type, width: W, height: H, depth: D } = block;
   const wallMounted = type === "appl_hood" || type === "appl_hood_chimney" || type === "appl_microwave_built";
   const verticalOffset = wallMounted ? 145 : 0;
@@ -24,7 +26,7 @@ export function Appliance3D({ block, marbleColor, defaultColor }: Props) {
 
   return (
     <group position={[cx, cy, cz]} rotation={rotation}>
-      {renderBody(type, W, H, D, marbleColor, defaultColor, block)}
+      {renderBody(type, W, H, D, marbleColor, marbleTextureId, defaultColor, block)}
     </group>
   );
 }
@@ -35,6 +37,7 @@ function renderBody(
   H: number,
   D: number,
   marbleColor: string | undefined,
+  marbleTextureId: string | undefined,
   defaultColor: string,
   block: PlacedBlock,
 ) {
@@ -67,13 +70,13 @@ function renderBody(
     case "appl_fridge_mini":
       return FridgeMini(W, H, D);
     case "base_sink":
-      return SinkBase(W, H, D, marbleColor, block.customColor ? block.color : defaultColor, 1);
+      return SinkBase(W, H, D, marbleColor, marbleTextureId, block.customColor ? block.color : defaultColor, 1);
     case "base_sink_double":
-      return SinkBase(W, H, D, marbleColor, block.customColor ? block.color : defaultColor, 2);
+      return SinkBase(W, H, D, marbleColor, marbleTextureId, block.customColor ? block.color : defaultColor, 2);
     case "tall_oven_micro":
       return OvenMicroColumn(W, H, D, block.customColor ? block.color : defaultColor);
     case "base_oven_integrated":
-      return BaseWithOven(W, H, D, block.customColor ? block.color : defaultColor, marbleColor);
+      return BaseWithOven(W, H, D, block.customColor ? block.color : defaultColor, marbleColor, marbleTextureId);
     default:
       return (
         <mesh>

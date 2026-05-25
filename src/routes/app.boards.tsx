@@ -155,7 +155,7 @@ function BoardsPage() {
                       {a.placed.map((p, j) => (
                         <g key={j}>
                           <rect x={p.x * sx} y={p.y * sy} width={p.w * sx} height={p.h * sy} fill="#c2956b" stroke="#000" />
-                          <text x={p.x * sx + (p.w * sx) / 2} y={p.y * sy + (p.h * sy) / 2} textAnchor="middle" fontSize="9" fill="#000">{p.label}</text>
+                          <text x={p.x * sx + (p.w * sx) / 2} y={p.y * sy + (p.h * sy) / 2} textAnchor="middle" dominantBaseline="middle" fontSize="9" fill="#000">{p.w}×{p.h}</text>
                         </g>
                       ))}
                     </svg>

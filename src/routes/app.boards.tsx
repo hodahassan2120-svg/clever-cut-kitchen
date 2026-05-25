@@ -18,10 +18,8 @@ function BoardsPage() {
   const { user } = useAuth();
   const [useInventory, setUseInventory] = useState(false);
   const [invStocks, setInvStocks] = useState<BoardStock[]>([]);
-  const [manualStocks, setManualStocks] = useState<BoardStock[]>([
-    { id: crypto.randomUUID(), name: "لوح", width: 122, length: 244, quantity: 2 },
-  ]);
-  const [pieces, setPieces] = useState<BoardPiece[]>([{ id: crypto.randomUUID(), label: "قطعة 1", width: 60, length: 80, quantity: 4 }]);
+  const [manualStocks, setManualStocks] = useState<BoardStock[]>([]);
+  const [pieces, setPieces] = useState<BoardPiece[]>([]);
   const [result, setResult] = useState<BoardResult | null>(null);
 
   useEffect(() => {
@@ -33,17 +31,20 @@ function BoardsPage() {
 
   const stocks = useInventory ? invStocks : manualStocks;
 
-  const addPiece = () => setPieces([...pieces, { id: crypto.randomUUID(), label: `قطعة ${pieces.length + 1}`, width: 50, length: 50, quantity: 1 }]);
+  const addPiece = () => setPieces([...pieces, { id: crypto.randomUUID(), label: `قطعة ${pieces.length + 1}`, width: 0, length: 0, quantity: 1 }]);
   const updPiece = (i: number, patch: Partial<BoardPiece>) => setPieces(pieces.map((p, idx) => idx === i ? { ...p, ...patch } : p));
   const rmPiece = (i: number) => setPieces(pieces.filter((_, idx) => idx !== i));
 
-  const addStock = () => setManualStocks([...manualStocks, { id: crypto.randomUUID(), name: `لوح ${manualStocks.length + 1}`, width: 122, length: 244, quantity: 1 }]);
+  const addStock = () => setManualStocks([...manualStocks, { id: crypto.randomUUID(), name: `لوح ${manualStocks.length + 1}`, width: 0, length: 0, quantity: 1 }]);
   const updStock = (i: number, patch: Partial<BoardStock>) => setManualStocks(manualStocks.map((s, idx) => idx === i ? { ...s, ...patch } : s));
   const rmStock = (i: number) => setManualStocks(manualStocks.filter((_, idx) => idx !== i));
 
   const run = () => {
-    if (stocks.length === 0) return toast.error(useInventory ? "لا توجد ألواح في المخزون" : "أضف لوحاً واحداً على الأقل");
-    setResult(cutBoards(stocks, pieces));
+    const validStocks = stocks.filter((s) => s.width > 0 && s.length > 0 && s.quantity > 0);
+    const validPieces = pieces.filter((p) => p.width > 0 && p.length > 0 && p.quantity > 0);
+    if (validStocks.length === 0) return toast.error(useInventory ? "لا توجد ألواح صالحة في المخزون" : "أضف لوحاً واحداً على الأقل");
+    if (validPieces.length === 0) return toast.error("أضف قطعة واحدة على الأقل");
+    setResult(cutBoards(validStocks, validPieces));
     toast.success("تم حساب التقطيع");
   };
 

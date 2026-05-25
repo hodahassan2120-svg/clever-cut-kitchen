@@ -198,11 +198,23 @@ function DesignEditor() {
     if (!name.trim()) return toast.error("اكتب اسماً للتصميم");
     if (designId) {
       const { error } = await supabase.from("designs").update({ name: name.trim(), data: doc as any, updated_at: new Date().toISOString() }).eq("id", designId).eq("user_id", user.id);
-      if (error) return toast.error("تعذر الحفظ: " + error.message);
+      if (error) {
+        console.error("[design save] update failed", error);
+        const msg = /subscription|policy/i.test(error.message)
+          ? "انتهت الفترة التجريبية — يرجى تفعيل الاشتراك للحفظ"
+          : "تعذر حفظ التصميم، يرجى المحاولة مرة أخرى";
+        return toast.error(msg);
+      }
       toast.success("تم تحديث التصميم");
     } else {
       const { data, error } = await supabase.from("designs").insert({ user_id: user.id, name: name.trim(), data: doc as any }).select("id").single();
-      if (error) return toast.error("تعذر الحفظ: " + error.message);
+      if (error) {
+        console.error("[design save] insert failed", error);
+        const msg = /subscription|policy/i.test(error.message)
+          ? "انتهت الفترة التجريبية — يرجى تفعيل الاشتراك للحفظ"
+          : "تعذر حفظ التصميم، يرجى المحاولة مرة أخرى";
+        return toast.error(msg);
+      }
       setDesignId(data.id);
       toast.success("تم حفظ التصميم");
     }

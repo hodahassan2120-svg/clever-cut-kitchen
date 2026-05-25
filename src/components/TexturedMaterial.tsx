@@ -55,6 +55,8 @@ export function TexturedMaterial({
       invalidate();
       return;
     }
+    setMap(null);
+    invalidate();
     let cancelled = false;
     loadCached(tex.url).then((t) => {
       if (cancelled) return;

@@ -52,7 +52,7 @@ export function InterstitialAd() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent dir="rtl" className="max-w-md" hideClose>
+      <DialogContent dir="rtl" className="max-w-md">
         <div className="space-y-4 py-2">
           <h2 className="text-xl font-bold text-center">إعلان قصير 🎬</h2>
           <p className="text-sm text-muted-foreground text-center">

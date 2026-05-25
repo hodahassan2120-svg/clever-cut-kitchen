@@ -1,5 +1,6 @@
 // رسم وحدة مطبخ تفصيلية في 3D — تعرض الجسم + الأبواب + الأدراج + الزجاج + الرخامة
 import type { PlacedBlock } from "@/lib/blocks";
+import { Appliance3D } from "./Appliance3D";
 
 interface Props {
   block: PlacedBlock;
@@ -7,17 +8,28 @@ interface Props {
   marbleColor?: string;
 }
 
+const APPLIANCE_TYPES = new Set([
+  "appl_stove", "appl_stove_5", "appl_cooktop", "appl_oven",
+  "appl_hood", "appl_hood_chimney", "appl_hood_island",
+  "appl_dishwash", "appl_dishwash_integrated", "appl_washer",
+  "appl_microwave", "appl_microwave_built",
+  "tall_fridge", "appl_fridge_side", "appl_fridge_mini",
+  "base_sink", "base_sink_double",
+  "tall_oven_micro", "base_oven_integrated",
+]);
+
 export function Cabinet3D({ block, defaultColor, marbleColor }: Props) {
+  if (APPLIANCE_TYPES.has(block.type)) {
+    return <Appliance3D block={block} defaultColor={defaultColor} marbleColor={marbleColor} />;
+  }
   const color = block.customColor ? block.color : (defaultColor || block.color);
   const { width: W, depth: D, height: H } = block;
   const bodyColor = color;
-  // الجوانب والأعلى والأسفل بنفس لون الجسم — فقط داخل الوحدة (خلف الواجهة) يكون داكنًا
   const carcassColor = bodyColor;
 
   const wallMounted = block.placement === "wall" || block.type.startsWith("wall_") || block.type === "appl_hood" || block.type === "special_window";
   const verticalOffset = wallMounted ? 145 : 0;
 
-  // الإحداثيات: المركز عند (x + W/2, ارتفاع الوحدة/2, y + D/2) مع رفع الوحدات العلوية
   const cx = block.x + W / 2;
   const cy = verticalOffset + H / 2;
   const cz = block.y + D / 2;
@@ -33,6 +45,7 @@ export function Cabinet3D({ block, defaultColor, marbleColor }: Props) {
       </mesh>
     );
   }
+
 
   const doors = Math.max(0, Math.min(4, block.doors || 0));
   const drawers = Math.max(0, Math.min(4, block.drawers || 0));

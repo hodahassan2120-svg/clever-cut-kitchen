@@ -272,6 +272,25 @@ function DesignEditor() {
           <Label className="text-xs">العمق ({unit})</Label>
           <Input type="number" value={toUnit(doc.roomDepth)} onChange={(e) => setDoc({ ...doc, roomDepth: fromUnit(e.target.value) || 0 })} />
         </div>
+        <div>
+          <Label className="text-xs mb-1 block">شكل الغرفة</Label>
+          <div className="grid grid-cols-2 gap-1.5">
+            <Button size="sm" variant={(doc.roomShape || "rectangle") === "rectangle" ? "default" : "outline"} onClick={() => setDoc({ ...doc, roomShape: "rectangle" })}>مستطيلة</Button>
+            <Button size="sm" variant={doc.roomShape === "l_shape" ? "default" : "outline"} onClick={() => setDoc({ ...doc, roomShape: "l_shape", cutoutWidth: doc.cutoutWidth || 100, cutoutDepth: doc.cutoutDepth || 100 })}>شكل L</Button>
+          </div>
+        </div>
+        {doc.roomShape === "l_shape" && (
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label className="text-xs">عرض الجزء الناقص</Label>
+              <Input type="number" value={toUnit(doc.cutoutWidth || 0)} onChange={(e) => setDoc({ ...doc, cutoutWidth: fromUnit(e.target.value) || 0 })} />
+            </div>
+            <div>
+              <Label className="text-xs">عمق الجزء الناقص</Label>
+              <Input type="number" value={toUnit(doc.cutoutDepth || 0)} onChange={(e) => setDoc({ ...doc, cutoutDepth: fromUnit(e.target.value) || 0 })} />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* اللون العام لكل الوحدات */}

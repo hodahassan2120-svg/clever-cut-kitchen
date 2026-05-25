@@ -19,8 +19,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { Slider } from "@/components/ui/slider";
-import { Save, Plus, Trash2, LayoutGrid, Settings2, Wand2, Palette, FolderOpen, Ruler, PenLine, RotateCw, Pencil, X, Camera, ChevronDown } from "lucide-react";
+import { Save, Plus, Trash2, LayoutGrid, Settings2, Wand2, Palette, FolderOpen, Ruler, PenLine, RotateCw, Pencil, X, Camera, ChevronDown, Sparkles, Download, Loader2 } from "lucide-react";
 import type Konva from "konva";
+import { useServerFn } from "@tanstack/react-start";
+import { renderRealistic } from "@/lib/render.functions";
 
 export const Route = createFileRoute("/app/design")({
   component: DesignEditor,

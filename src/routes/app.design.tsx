@@ -12,10 +12,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { CustomUnitBuilder } from "@/components/CustomUnitBuilder";
+import { Cabinet3D } from "@/components/Cabinet3D";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { Save, Plus, Trash2, LayoutGrid, Settings2 } from "lucide-react";
+import { Save, Plus, Trash2, LayoutGrid, Settings2, Wand2, Palette } from "lucide-react";
 import type Konva from "konva";
 
 export const Route = createFileRoute("/app/design")({
@@ -33,6 +35,7 @@ function DesignEditor() {
   const [unit, setUnit] = useState<"cm" | "m">("cm");
   const [pendingBlock, setPendingBlock] = useState<KitchenBlock | null>(null);
   const [pendingDims, setPendingDims] = useState({ width: "", depth: "", height: "", notes: "" });
+  const [builderOpen, setBuilderOpen] = useState(false);
   const stageWrapRef = useRef<HTMLDivElement>(null);
   const [stageSize, setStageSize] = useState({ w: 360, h: 400 });
 
@@ -135,6 +138,16 @@ function DesignEditor() {
 
   const BlocksPanel = (
     <div className="space-y-4">
+      <button
+        onClick={() => setBuilderOpen(true)}
+        className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-gradient-primary text-primary-foreground font-bold text-sm shadow-glow hover:opacity-90 transition"
+      >
+        <Wand2 className="size-4" />
+        إنشاء وحدة مخصصة
+      </button>
+      <div className="text-[10px] text-muted-foreground text-center -mt-2">اختر الضلف، الأدراج، الزجاج، الركنية…</div>
+
+      <div className="text-[11px] font-bold text-muted-foreground px-1 pt-2 border-t border-border/40">أو اختر من القوالب الجاهزة:</div>
       {groupedBlocks.map((g) => (
         <div key={g.cat}>
           <h3 className="text-[11px] font-bold text-muted-foreground mb-2 px-1 sticky top-0 bg-card/80 backdrop-blur py-1">{g.label}</h3>
@@ -173,12 +186,33 @@ function DesignEditor() {
           <Input type="number" value={toUnit(doc.roomDepth)} onChange={(e) => setDoc({ ...doc, roomDepth: fromUnit(e.target.value) || 0 })} />
         </div>
       </div>
+
+      {/* اللون العام لكل الوحدات */}
+      <div className="space-y-2 mb-6 pb-4 border-b border-border/40">
+        <h4 className="text-sm font-semibold flex items-center gap-1.5"><Palette className="size-3.5 text-primary" /> اللون العام</h4>
+        <div className="flex items-center gap-2">
+          <input type="color" value={doc.globalColor || "#b88858"} onChange={(e) => setDoc({ ...doc, globalColor: e.target.value })} className="h-9 w-14 rounded cursor-pointer bg-transparent border border-border/60" />
+          <Input value={doc.globalColor || "#b88858"} onChange={(e) => setDoc({ ...doc, globalColor: e.target.value })} className="flex-1 font-mono text-xs h-9" />
+        </div>
+        <p className="text-[10px] text-muted-foreground">يطبَّق على كل الوحدات التي ليس لها لون مخصص.</p>
+      </div>
+
       {selected ? (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-semibold">{selected.name}</h4>
             <Button size="sm" variant="ghost" onClick={() => removeBlock(selected.id)}><Trash2 className="size-3.5 text-destructive" /></Button>
           </div>
+          {/* ملخص مكونات الوحدة المخصصة */}
+          {selected.placement && (
+            <div className="text-[11px] bg-muted/30 border border-border/40 rounded-lg p-2 space-y-0.5">
+              {selected.cabinet && <div>• دولاب طولي</div>}
+              {!selected.cabinet && <div>• {selected.placement === "base" ? "سفلية" : selected.placement === "wall" ? "علوية" : "طولية"}</div>}
+              {selected.corner && <div>• ركنية</div>}
+              {(selected.doors || 0) > 0 && <div>• {selected.doors} {selected.glass ? "ضلفة زجاج" : "ضلف"}</div>}
+              {(selected.drawers || 0) > 0 && <div>• {selected.drawers} أدراج</div>}
+            </div>
+          )}
           <div>
             <Label className="text-xs">العرض ({unit})</Label>
             <Input type="number" value={toUnit(selected.width)} onChange={(e) => updateBlock(selected.id, { width: fromUnit(e.target.value) || 0 })} />
@@ -194,6 +228,18 @@ function DesignEditor() {
           <div>
             <Label className="text-xs">الدوران (درجة)</Label>
             <Input type="number" value={selected.rotation} onChange={(e) => updateBlock(selected.id, { rotation: parseFloat(e.target.value) || 0 })} />
+          </div>
+          {/* لون خاص للوحدة */}
+          <div className="p-2 rounded-lg border border-border/40 bg-muted/20 space-y-2">
+            <Label className="text-xs flex items-center gap-1.5"><Palette className="size-3" /> لون هذه الوحدة</Label>
+            <div className="flex items-center gap-2">
+              <input type="color" value={selected.color} onChange={(e) => updateBlock(selected.id, { color: e.target.value, customColor: true })} className="h-9 w-14 rounded cursor-pointer bg-transparent border border-border/60" />
+              <Input value={selected.color} onChange={(e) => updateBlock(selected.id, { color: e.target.value, customColor: true })} className="flex-1 font-mono text-xs h-9" />
+            </div>
+            <label className="flex items-center gap-2 text-[11px] cursor-pointer">
+              <input type="checkbox" checked={!!selected.customColor} onChange={(e) => updateBlock(selected.id, { customColor: e.target.checked })} />
+              لون مخصص (لا يتأثر باللون العام)
+            </label>
           </div>
           <div>
             <Label className="text-xs">تفاصيل إضافية</Label>
@@ -256,6 +302,13 @@ function DesignEditor() {
 
         {/* Quick-add strip for mobile */}
         <div className="md:hidden flex gap-1.5 overflow-x-auto p-2 border-b border-border/60 bg-card/30 shrink-0">
+          <button
+            onClick={() => setBuilderOpen(true)}
+            className="shrink-0 flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg bg-gradient-primary text-primary-foreground text-[10px] min-w-[72px] shadow-glow font-bold"
+          >
+            <Wand2 className="size-5" />
+            <span>وحدة مخصصة</span>
+          </button>
           {KITCHEN_BLOCKS.slice(0, 8).map((b) => (
             <button
               key={b.type}
@@ -285,22 +338,46 @@ function DesignEditor() {
                   {Array.from({ length: Math.floor(doc.roomDepth / 50) }).map((_, i) => (
                     <Line key={`h${i}`} points={[PAD, PAD + (i + 1) * 50 * scale, PAD + doc.roomWidth * scale, PAD + (i + 1) * 50 * scale]} stroke="#333" strokeWidth={0.5} />
                   ))}
-                  {doc.blocks.map((b) => (
-                    <Group
-                      key={b.id}
-                      x={PAD + b.x * scale}
-                      y={PAD + b.y * scale}
-                      rotation={b.rotation}
-                      draggable
-                      onClick={() => setSelectedId(b.id)}
-                      onTap={() => setSelectedId(b.id)}
-                      onDragEnd={(e) => updateBlock(b.id, { x: (e.target.x() - PAD) / scale, y: (e.target.y() - PAD) / scale })}
-                    >
-                      <Rect width={b.width * scale} height={b.depth * scale} fill={b.color} stroke={selectedId === b.id ? "#f59e0b" : "#000"} strokeWidth={selectedId === b.id ? 3 : 1} cornerRadius={3} />
-                      <KText text={b.name} fontSize={10} fill="#000" padding={3} width={b.width * scale} align="center" y={Math.max(2, b.depth * scale / 2 - 10)} />
-                      <KText text={`${Math.round(b.width)}×${Math.round(b.depth)}`} fontSize={9} fill="#1a1a1a" padding={2} width={b.width * scale} align="center" y={b.depth * scale - 12} />
-                    </Group>
-                  ))}
+                  {doc.blocks.map((b) => {
+                    const fill = b.customColor ? b.color : (doc.globalColor || b.color);
+                    const W = b.width * scale;
+                    const H = b.depth * scale;
+                    const doors = Math.max(0, Math.min(4, b.doors || 0));
+                    const drawers = Math.max(0, Math.min(4, b.drawers || 0));
+                    return (
+                      <Group
+                        key={b.id}
+                        x={PAD + b.x * scale}
+                        y={PAD + b.y * scale}
+                        rotation={b.rotation}
+                        draggable
+                        onClick={() => setSelectedId(b.id)}
+                        onTap={() => setSelectedId(b.id)}
+                        onDragEnd={(e) => updateBlock(b.id, { x: (e.target.x() - PAD) / scale, y: (e.target.y() - PAD) / scale })}
+                      >
+                        <Rect width={W} height={H} fill={fill} stroke={selectedId === b.id ? "#f59e0b" : "#000"} strokeWidth={selectedId === b.id ? 3 : 1} cornerRadius={3} />
+                        {/* خطوط تقسيم الضلف عمودياً */}
+                        {doors > 1 && Array.from({ length: doors - 1 }).map((_, i) => (
+                          <Line key={`vd${i}`} points={[((i + 1) * W) / doors, drawers > 0 ? H * 0.3 : 0, ((i + 1) * W) / doors, H]} stroke="#000" strokeWidth={0.8} opacity={0.6} />
+                        ))}
+                        {/* خط فاصل بين الأدراج والضلف */}
+                        {drawers > 0 && doors > 0 && <Line points={[0, H * 0.3, W, H * 0.3]} stroke="#000" strokeWidth={1} opacity={0.7} />}
+                        {/* خطوط تقسيم الأدراج أفقياً */}
+                        {drawers > 1 && Array.from({ length: drawers - 1 }).map((_, i) => {
+                          const drawerArea = doors > 0 ? H * 0.3 : H;
+                          return <Line key={`hd${i}`} points={[0, ((i + 1) * drawerArea) / drawers, W, ((i + 1) * drawerArea) / drawers]} stroke="#000" strokeWidth={0.6} opacity={0.5} />;
+                        })}
+                        {/* مؤشر الزجاج */}
+                        {b.glass && doors > 0 && (
+                          <Rect x={W * 0.15} y={drawers > 0 ? H * 0.45 : H * 0.2} width={W * 0.7} height={drawers > 0 ? H * 0.4 : H * 0.6} fill="#a8c5d8" opacity={0.4} cornerRadius={2} />
+                        )}
+                        {/* علامة الركنية */}
+                        {b.corner && <Line points={[0, 0, W * 0.3, 0, 0, H * 0.3]} stroke="#f59e0b" strokeWidth={2} closed fill="#f59e0b" opacity={0.3} />}
+                        <KText text={b.name} fontSize={9} fontStyle="bold" fill="#000" padding={2} width={W} align="center" y={Math.max(2, H / 2 - 6)} />
+                        <KText text={`${Math.round(b.width)}×${Math.round(b.depth)}`} fontSize={8} fill="#1a1a1a" padding={2} width={W} align="center" y={H - 11} />
+                      </Group>
+                    );
+                  })}
                 </Layer>
               </Stage>
             </div>
@@ -329,10 +406,7 @@ function DesignEditor() {
                 <meshStandardMaterial color="#e8dcc8" roughness={0.95} />
               </mesh>
               {doc.blocks.map((b) => (
-                <mesh key={b.id} position={[b.x + b.width / 2, b.height / 2, b.y + b.depth / 2]} rotation={[0, (-b.rotation * Math.PI) / 180, 0]}>
-                  <boxGeometry args={[b.width, b.height, b.depth]} />
-                  <meshStandardMaterial color={b.color} roughness={0.6} />
-                </mesh>
+                <Cabinet3D key={b.id} block={b} defaultColor={doc.globalColor || b.color} />
               ))}
               <OrbitControls target={[doc.roomWidth / 2, 80, doc.roomDepth / 2]} maxPolarAngle={Math.PI / 2.05} makeDefault />
             </Canvas>
@@ -388,6 +462,18 @@ function DesignEditor() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* منشئ الوحدة المخصصة */}
+      <CustomUnitBuilder
+        open={builderOpen}
+        onClose={() => setBuilderOpen(false)}
+        unit={unit}
+        defaultColor={doc.globalColor || "#b88858"}
+        onAdd={(block) => {
+          setDoc({ ...doc, blocks: [...doc.blocks, block] });
+          setSelectedId(block.id);
+        }}
+      />
     </div>
   );
 }

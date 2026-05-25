@@ -917,6 +917,29 @@ function DesignEditor() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* نتيجة الصورة الواقعية AI */}
+      <Dialog open={!!aiResultUrl} onOpenChange={(o) => !o && setAiResultUrl(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Sparkles className="size-5 text-primary" /> صورة واقعية للتصميم</DialogTitle>
+          </DialogHeader>
+          {aiResultUrl && (
+            <div className="space-y-3">
+              <img src={aiResultUrl} alt="صورة واقعية للمطبخ" className="w-full rounded-xl border border-border/60" />
+              <p className="text-xs text-muted-foreground text-center">صورة توضيحية مولّدة بالذكاء الاصطناعي — قد تختلف بعض التفاصيل عن التصميم الفعلي.</p>
+            </div>
+          )}
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setAiResultUrl(null)}>إغلاق</Button>
+            {aiResultUrl && (
+              <a href={aiResultUrl} download={`${name.trim() || "kitchen"}-realistic.png`}>
+                <Button className="bg-gradient-primary"><Download className="size-4" /> تحميل</Button>
+              </a>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

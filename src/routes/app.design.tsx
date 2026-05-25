@@ -162,6 +162,60 @@ function DesignEditor() {
   const toUnit = (cm: number) => (unit === "m" ? (cm / 100).toFixed(2) : cm.toString());
   const fromUnit = (v: string) => (unit === "m" ? parseFloat(v) * 100 : parseFloat(v));
 
+  const roomPolygon = () => {
+    const cw = doc.roomShape === "l_shape" ? Math.max(0, doc.cutoutWidth || 0) : 0;
+    const cd = doc.roomShape === "l_shape" ? Math.max(0, doc.cutoutDepth || 0) : 0;
+    return doc.roomShape === "l_shape" && cw > 0 && cd > 0
+      ? [0, 0, doc.roomWidth - cw, 0, doc.roomWidth - cw, cd, doc.roomWidth, cd, doc.roomWidth, doc.roomDepth, 0, doc.roomDepth]
+      : [0, 0, doc.roomWidth, 0, doc.roomWidth, doc.roomDepth, 0, doc.roomDepth];
+  };
+
+  const clampBlock = (b: PlacedBlock) => ({
+    ...b,
+    x: Math.max(0, Math.min(b.x, doc.roomWidth - b.width)),
+    y: Math.max(0, Math.min(b.y, doc.roomDepth - b.depth)),
+  });
+
+  const snapBlockToWall = (block: PlacedBlock, blocks = doc.blocks) => {
+    const b = clampBlock(block);
+    const distances = [
+      { wall: "back" as const, value: b.y },
+      { wall: "left" as const, value: b.x },
+      { wall: "front" as const, value: doc.roomDepth - (b.y + b.depth) },
+      { wall: "right" as const, value: doc.roomWidth - (b.x + b.width) },
+    ].sort((a, z) => a.value - z.value);
+    const wall = distances[0].wall;
+    if (wall === "back") b.y = 0;
+    if (wall === "front") b.y = doc.roomDepth - b.depth;
+    if (wall === "left") b.x = 0;
+    if (wall === "right") b.x = doc.roomWidth - b.width;
+
+    const sameWall = blocks.filter((o) => o.id !== b.id && (
+      wall === "back" ? Math.abs(o.y) < 2 :
+      wall === "front" ? Math.abs(o.y + o.depth - doc.roomDepth) < 2 :
+      wall === "left" ? Math.abs(o.x) < 2 :
+      Math.abs(o.x + o.width - doc.roomWidth) < 2
+    ));
+    const SNAP = 18;
+    for (const o of sameWall) {
+      if (wall === "back" || wall === "front") {
+        if (Math.abs(b.x - (o.x + o.width)) <= SNAP) b.x = o.x + o.width;
+        if (Math.abs((b.x + b.width) - o.x) <= SNAP) b.x = o.x - b.width;
+      } else {
+        if (Math.abs(b.y - (o.y + o.depth)) <= SNAP) b.y = o.y + o.depth;
+        if (Math.abs((b.y + b.depth) - o.y) <= SNAP) b.y = o.y - b.depth;
+      }
+    }
+    return clampBlock(b);
+  };
+
+  const autoPlaceBlock = (block: PlacedBlock) => {
+    const row = doc.blocks.filter((b) => Math.abs(b.y) < 2).sort((a, z) => a.x - z.x);
+    const last = row[row.length - 1];
+    const nextX = last ? last.x + last.width : 0;
+    return snapBlockToWall({ ...block, x: nextX + block.width <= doc.roomWidth ? nextX : 0, y: 0, rotation: 0 }, doc.blocks);
+  };
+
   const groupedBlocks = (["base", "wall", "tall", "appliance", "special"] as const).map((cat) => ({
     cat,
     label: CATEGORY_LABELS[cat],

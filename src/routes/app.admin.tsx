@@ -96,17 +96,75 @@ function Admin() {
         <h1 className="text-2xl font-bold">لوحة الأدمن</h1>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <StatCard label="إجمالي المستخدمين" value={stats.users} />
         <StatCard label="اشتراكات نشطة" value={stats.active} />
         <StatCard label="إجمالي التصميمات" value={stats.designs} />
+        <StatCard label="طلبات تفعيل معلقة" value={stats.pending} highlight={stats.pending > 0} />
       </div>
 
-      <Tabs defaultValue="users">
-        <TabsList>
+      <Tabs defaultValue={stats.pending > 0 ? "requests" : "users"}>
+        <TabsList className="flex-wrap h-auto">
+          <TabsTrigger value="requests" className="relative">
+            <Inbox className="size-4" /> طلبات التفعيل
+            {stats.pending > 0 && <Badge className="ms-2 bg-gold text-background h-5 px-1.5">{stats.pending}</Badge>}
+          </TabsTrigger>
           <TabsTrigger value="users"><Users className="size-4" /> المستخدمون</TabsTrigger>
           <TabsTrigger value="settings"><SettingsIcon className="size-4" /> الإعدادات</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="requests" className="mt-4">
+          <div className="rounded-2xl border border-border/60 bg-card/50 p-4 space-y-3">
+            {requests.length === 0 && (
+              <div className="text-center text-muted-foreground py-8 text-sm">لا توجد طلبات تفعيل حتى الآن</div>
+            )}
+            {requests.map((r) => {
+              const userSub = users.find((u) => u.id === r.user_id);
+              return (
+                <div key={r.id} className="rounded-xl border border-border/40 bg-background/40 p-4">
+                  <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className="font-semibold">{r.full_name || "—"}</span>
+                        <span className="text-sm text-muted-foreground" dir="ltr">{r.phone}</span>
+                        {r.status === "pending" && <Badge variant="outline" className="border-gold/40 text-gold"><Clock className="size-3 me-1" />قيد المراجعة</Badge>}
+                        {r.status === "approved" && <Badge className="bg-emerald-500/20 text-emerald-500 border-emerald-500/30"><Check className="size-3 me-1" />مقبول</Badge>}
+                        {r.status === "rejected" && <Badge variant="destructive"><X className="size-3 me-1" />مرفوض</Badge>}
+                      </div>
+                      <div className="text-xs text-muted-foreground space-y-0.5">
+                        <div>تاريخ الطلب: {new Date(r.created_at).toLocaleString("ar-EG")}</div>
+                        {userSub && (
+                          <div>انتهاء التجربة: {userSub.trial_ends_at ? new Date(userSub.trial_ends_at).toLocaleDateString("ar-EG") : "—"} • مفعل حتى: {userSub.activated_until ? new Date(userSub.activated_until).toLocaleDateString("ar-EG") : "—"}</div>
+                        )}
+                        {r.handled_at && <div>تمت المعالجة: {new Date(r.handled_at).toLocaleString("ar-EG")}</div>}
+                      </div>
+                      {r.note && (
+                        <div className="mt-2 text-sm bg-muted/30 rounded-lg p-2 border border-border/30">
+                          <span className="text-xs text-muted-foreground">ملاحظة العميل: </span>{r.note}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-2 flex-wrap">
+                    {r.status === "pending" && (
+                      <>
+                        <Button size="sm" className="bg-gradient-primary shadow-glow" onClick={() => approveRequest(r, 30)}><Check className="size-3.5 me-1" />قبول + 30 يوم</Button>
+                        <Button size="sm" className="bg-gradient-primary shadow-glow" onClick={() => approveRequest(r, 365)}><Check className="size-3.5 me-1" />قبول + سنة</Button>
+                        <Button size="sm" variant="destructive" onClick={() => rejectRequest(r)}><X className="size-3.5 me-1" />رفض</Button>
+                      </>
+                    )}
+                    <a
+                      href={`https://wa.me/${r.phone.replace(/\D/g, "")}?text=${encodeURIComponent("بخصوص طلب تفعيل اشتراك كيتشن برو")}`}
+                      target="_blank" rel="noreferrer"
+                      className="inline-flex items-center text-xs text-gold hover:underline px-2 py-1"
+                    >تواصل واتساب</a>
+                    <Button size="sm" variant="ghost" onClick={() => deleteRequest(r.id)} className="text-xs text-muted-foreground hover:text-destructive ms-auto">حذف</Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </TabsContent>
 
         <TabsContent value="users" className="mt-4">
           <div className="rounded-2xl border border-border/60 bg-card/50 p-4 overflow-auto">

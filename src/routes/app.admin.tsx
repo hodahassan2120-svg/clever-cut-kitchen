@@ -78,6 +78,17 @@ function Admin() {
     load();
   };
 
+  const toggle = async (userId: string, active: boolean) => {
+    await supabase.from("subscriptions").update({ is_active: active }).eq("user_id", userId);
+    load();
+  };
+
+  const saveSettings = async () => {
+    const { error } = await supabase.from("app_settings").update(settings).eq("id", 1);
+    if (error) return toast.error("تعذر الحفظ");
+    toast.success("تم حفظ الإعدادات");
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex items-center gap-2 mb-6">

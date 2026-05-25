@@ -342,9 +342,26 @@ function DesignEditor() {
     return clampBlock(b);
   };
 
+  const nearestWall = (b: PlacedBlock) => ([
+    { wall: "back" as const, value: b.y },
+    { wall: "left" as const, value: b.x },
+    { wall: "front" as const, value: doc.roomDepth - (b.y + b.depth) },
+    { wall: "right" as const, value: doc.roomWidth - (b.x + b.width) },
+  ].sort((a, z) => a.value - z.value)[0].wall);
+
+  const alignBlockToWall = (block: PlacedBlock, wall: "back" | "front" | "left" | "right") => {
+    const b = clampBlock({ ...block });
+    if (wall === "back") b.y = 0;
+    if (wall === "front") b.y = doc.roomDepth - b.depth;
+    if (wall === "left") b.x = 0;
+    if (wall === "right") b.x = doc.roomWidth - b.width;
+    return clampBlock(b);
+  };
+
   const alignAllBlocks = () => {
-    setDoc((current) => ({ ...current, blocks: current.blocks.map((b) => snapBlockToWall(b, current.blocks)) }));
-    toast.success("تمت محاذاة كل الوحدات على خطوط الحوائط");
+    const target = selected ? nearestWall(selected) : (doc.blocks[0] ? nearestWall(doc.blocks[0]) : "back");
+    setDoc((current) => ({ ...current, blocks: current.blocks.map((b) => alignBlockToWall(b, target)) }));
+    toast.success("تمت محاذاة كل الوحدات على خط واحد");
   };
 
   const autoPlaceBlock = (block: PlacedBlock) => {

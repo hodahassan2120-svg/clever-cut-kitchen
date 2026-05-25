@@ -717,6 +717,9 @@ function DesignEditor() {
             <Button size="sm" variant={unit === "cm" ? "default" : "outline"} onClick={() => setUnit("cm")}>سم</Button>
             <Button size="sm" variant={unit === "m" ? "default" : "outline"} onClick={() => setUnit("m")}>م</Button>
           </div>
+          <Button size="sm" variant="outline" className="h-9 gap-1" onClick={alignAllBlocks} title="محاذاة كل الوحدات على أقرب حائط">
+            <Ruler className="size-4" /> محاذاة
+          </Button>
           <Button onClick={save} size="sm" className="mr-auto bg-gradient-primary shadow-glow"><Save className="size-4" /> حفظ</Button>
         </div>
 

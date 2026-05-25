@@ -9,7 +9,7 @@ interface Props {
 export function Cabinet3D({ block, defaultColor }: Props) {
   const color = block.customColor ? block.color : (defaultColor || block.color);
   const { width: W, depth: D, height: H } = block;
-  const bodyColor = block.placement ? color : block.color;
+  const bodyColor = color;
   const carcassColor = block.placement ? "#2f261c" : color;
 
   // الإحداثيات: المركز عند (x + W/2, H/2, y + D/2)

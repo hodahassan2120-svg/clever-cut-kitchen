@@ -453,17 +453,19 @@ function DesignEditor() {
           <div>
             <Label className="text-[11px] text-muted-foreground">لون الرخام</Label>
             <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <input type="color" value={doc.marbleColor || "#d8cfbf"} onChange={(e) => setDoc({ ...doc, marbleColor: e.target.value })} className="h-8 w-12 rounded cursor-pointer bg-transparent border border-border/60" />
               <Input value={doc.marbleColor || "#d8cfbf"} onChange={(e) => setDoc({ ...doc, marbleColor: e.target.value })} className="flex-1 font-mono text-xs h-8" />
+            </div>
           </div>
         </div>
 
         {/* مكتبة الخامات الواقعية */}
-        <div className="space-y-3 pt-3 border-t border-border/40">
+        <div className="space-y-3 pt-3 mt-3 border-t border-border/40">
           <h4 className="text-sm font-semibold flex items-center gap-1.5">
             <Sparkles className="size-3.5 text-primary" /> خامات واقعية (سيراميك / رخام)
           </h4>
-          <p className="text-[10px] text-muted-foreground -mt-1">اختر خامة فعلية لتطبيقها في العرض ثلاثي الأبعاد. اضغط على الخامة المختارة لإلغائها.</p>
+          <p className="text-[10px] text-muted-foreground -mt-1">اختر خامة فعلية لتطبيقها في العرض ثلاثي الأبعاد. اضغط مرة ثانية لإلغائها.</p>
 
           {(["floor","wall","counter"] as const).map((cat) => {
             const label = cat === "floor" ? "أرضية" : cat === "wall" ? "حوائط" : "رخامة";
@@ -506,7 +508,7 @@ function DesignEditor() {
           })}
         </div>
       </div>
-      </div>
+
 
       {selected ? (
         <div className="space-y-3">

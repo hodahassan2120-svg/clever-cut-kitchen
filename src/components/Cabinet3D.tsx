@@ -13,9 +13,12 @@ export function Cabinet3D({ block, defaultColor }: Props) {
   // الجوانب والأعلى والأسفل بنفس لون الجسم — فقط داخل الوحدة (خلف الواجهة) يكون داكنًا
   const carcassColor = bodyColor;
 
-  // الإحداثيات: المركز عند (x + W/2, H/2, y + D/2)
+  const wallMounted = block.placement === "wall" || block.type.startsWith("wall_") || block.type === "appl_hood" || block.type === "special_window";
+  const verticalOffset = wallMounted ? 145 : 0;
+
+  // الإحداثيات: المركز عند (x + W/2, ارتفاع الوحدة/2, y + D/2) مع رفع الوحدات العلوية
   const cx = block.x + W / 2;
-  const cy = H / 2;
+  const cy = verticalOffset + H / 2;
   const cz = block.y + D / 2;
   const rotation: [number, number, number] = [0, (-block.rotation * Math.PI) / 180, 0];
 

@@ -19,7 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { Slider } from "@/components/ui/slider";
-import { Save, Plus, Trash2, LayoutGrid, Settings2, Wand2, Palette, FolderOpen, Ruler, PenLine, RotateCw, Pencil, X, Camera, ChevronDown, Sparkles, Download, Loader2 } from "lucide-react";
+import { Save, Plus, Trash2, LayoutGrid, Settings2, Wand2, Palette, FolderOpen, Ruler, PenLine, RotateCw, Pencil, X, Camera, ChevronDown, Sparkles, Download, Loader2, Eye, EyeOff, ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from "lucide-react";
 import type Konva from "konva";
 import { useServerFn } from "@tanstack/react-start";
 import { renderRealistic } from "@/lib/render.functions";
@@ -75,6 +75,14 @@ function DesignEditor() {
   const [aiResultUrl, setAiResultUrl] = useState<string | null>(null);
   const [aiCredits, setAiCredits] = useState<number | null>(null);
   const [adModalOpen, setAdModalOpen] = useState(false);
+  const [toolbar3dVisible, setToolbar3dVisible] = useState(true);
+  const NUDGE = 5; // cm per click
+  const nudgeSelected = (dx: number, dy: number) => {
+    if (!selectedId) return;
+    const b = doc.blocks.find((x) => x.id === selectedId);
+    if (!b) return;
+    updateBlock(selectedId, { x: b.x + dx, y: b.y + dy });
+  };
   const callRender = useServerFn(renderRealistic);
 
   useEffect(() => {
@@ -781,47 +789,85 @@ function DesignEditor() {
             )}
           </TabsContent>
           <TabsContent value="3d" className="flex-1 m-0 bg-background min-h-0 relative" data-design-3d>
-            <div className="absolute top-2 left-2 right-2 z-10 flex flex-wrap items-center gap-1.5 rounded-xl border border-border/60 bg-card/90 p-1.5 shadow-card backdrop-blur">
-              {([
-                ["perspective", "منظور"],
-                ["top", "علوي"],
-                ["front", "أمامي"],
-                ["right", "يمين"],
-                ["left", "يسار"],
-              ] as const).map(([value, label]) => (
-                <Button key={value} size="sm" variant={view3d === value ? "default" : "outline"} className="h-8 px-2 text-xs" onClick={() => setView3d(value)}>{label}</Button>
-              ))}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="sm" variant="outline" className="ms-auto h-8 px-2 text-xs gap-1">
-                    <Camera className="size-3.5" /> الإسكرينات <ChevronDown className="size-3.5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="min-w-40">
-                  {([
-                    ["perspective", "منظور"],
-                    ["top", "علوي"],
-                    ["front", "أمامي"],
-                    ["right", "يمين"],
-                    ["left", "يسار"],
-                  ] as const).map(([value, label]) => (
-                    <DropdownMenuItem key={`shot-${value}`} onClick={() => download3DView(value, label)}>سكرين {label}</DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <Button size="sm" disabled={aiRendering} onClick={generateRealisticRender} className="h-8 px-2 text-xs gap-1 bg-gradient-primary shadow-glow">
-                {aiRendering ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
-                صورة واقعية AI{aiCredits !== null ? ` (${aiCredits})` : ""}
+            {toolbar3dVisible ? (
+              <div className="absolute top-2 left-2 right-2 z-10 flex flex-wrap items-center gap-1.5 rounded-xl border border-border/60 bg-card/90 p-1.5 shadow-card backdrop-blur">
+                {([
+                  ["perspective", "منظور"],
+                  ["top", "علوي"],
+                  ["front", "أمامي"],
+                  ["right", "يمين"],
+                  ["left", "يسار"],
+                ] as const).map(([value, label]) => (
+                  <Button key={value} size="sm" variant={view3d === value ? "default" : "outline"} className="h-8 px-2 text-xs" onClick={() => setView3d(value)}>{label}</Button>
+                ))}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="sm" variant="outline" className="ms-auto h-8 px-2 text-xs gap-1">
+                      <Camera className="size-3.5" /> الإسكرينات <ChevronDown className="size-3.5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="min-w-40">
+                    {([
+                      ["perspective", "منظور"],
+                      ["top", "علوي"],
+                      ["front", "أمامي"],
+                      ["right", "يمين"],
+                      ["left", "يسار"],
+                    ] as const).map(([value, label]) => (
+                      <DropdownMenuItem key={`shot-${value}`} onClick={() => download3DView(value, label)}>سكرين {label}</DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Button size="sm" disabled={aiRendering} onClick={generateRealisticRender} className="h-8 px-2 text-xs gap-1 bg-gradient-primary shadow-glow">
+                  {aiRendering ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
+                  صورة واقعية AI{aiCredits !== null ? ` (${aiCredits})` : ""}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setAdModalOpen(true)} className="h-8 px-2 text-xs gap-1" title="احصل على كريديت مجاني بمشاهدة إعلان">
+                  <Gift className="size-3.5 text-gold" />
+                </Button>
+                <Button size="icon" variant="outline" onClick={() => setToolbar3dVisible(false)} className="h-8 w-8" title="إخفاء الشريط لرؤية أوضح">
+                  <EyeOff className="size-3.5" />
+                </Button>
+              </div>
+            ) : (
+              <Button size="icon" variant="default" onClick={() => setToolbar3dVisible(true)} className="absolute top-2 left-2 z-10 h-9 w-9 bg-card/90 backdrop-blur border border-border/60 shadow-card" title="إظهار الشريط">
+                <Eye className="size-4" />
               </Button>
-              <Button size="sm" variant="outline" onClick={() => setAdModalOpen(true)} className="h-8 px-2 text-xs gap-1" title="احصل على كريديت مجاني بمشاهدة إعلان">
-                <Gift className="size-3.5 text-gold" />
-              </Button>
-            </div>
+            )}
+
+            {/* لوحة تحريك الوحدة المحددة في الـ 3D */}
+            {selected && (
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 bg-card/95 backdrop-blur border border-border/60 rounded-xl shadow-glow p-1.5 max-w-[calc(100%-1rem)]">
+                <span className="text-[11px] font-bold px-2 truncate max-w-[100px]">{selected.name}</span>
+                <div className="flex items-center gap-0.5">
+                  <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => nudgeSelected(-NUDGE, 0)} title="يسار"><ArrowLeft className="size-3.5" /></Button>
+                  <div className="flex flex-col gap-0.5">
+                    <Button size="icon" variant="outline" className="h-7 w-8" onClick={() => nudgeSelected(0, -NUDGE)} title="للخلف"><ArrowUp className="size-3.5" /></Button>
+                    <Button size="icon" variant="outline" className="h-7 w-8" onClick={() => nudgeSelected(0, NUDGE)} title="للأمام"><ArrowDown className="size-3.5" /></Button>
+                  </div>
+                  <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => nudgeSelected(NUDGE, 0)} title="يمين"><ArrowRight className="size-3.5" /></Button>
+                </div>
+                <Button size="sm" variant="outline" className="h-8 px-2 gap-1" onClick={() => rotateBlock(selected.id, 90)} title="تدوير 90°">
+                  <RotateCw className="size-3.5" />
+                </Button>
+                <Button size="sm" variant="outline" className="h-8 px-2 gap-1" onClick={() => openEditDialog(selected)}>
+                  <Pencil className="size-3.5" />
+                </Button>
+                <Button size="sm" variant="outline" className="h-8 px-2 text-destructive hover:bg-destructive/10" onClick={() => removeBlock(selected.id)}>
+                  <Trash2 className="size-3.5" />
+                </Button>
+                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setSelectedId(null)}>
+                  <X className="size-3.5" />
+                </Button>
+              </div>
+            )}
+
             <Canvas
               camera={{ position: [doc.roomWidth, doc.roomDepth * 1.2, doc.roomDepth * 1.4], fov: 45 }}
               dpr={[1, 1.5]}
               gl={{ antialias: true, powerPreference: "default", preserveDrawingBuffer: true, alpha: false }}
               frameloop="demand"
+              onPointerMissed={() => setSelectedId(null)}
             >
               <SceneCamera view={view3d} roomWidth={doc.roomWidth} roomDepth={doc.roomDepth} />
               <color attach="background" args={["#f3eee6"]} />
@@ -839,9 +885,22 @@ function DesignEditor() {
                 <boxGeometry args={[8, 260, doc.roomDepth]} />
                 <meshStandardMaterial color={doc.wallColor || "#efe7da"} roughness={0.98} />
               </mesh>
-              {doc.blocks.map((b) => (
-                <Cabinet3D key={b.id} block={b} defaultColor={isPaintableBlock(b) ? (doc.globalColor || b.color) : b.color} marbleColor={doc.marbleColor} />
-              ))}
+              {doc.blocks.map((b) => {
+                const wallMounted = b.placement === "wall" || b.type.startsWith("wall_") || b.type === "appl_hood" || b.type === "appl_hood_chimney" || b.type === "appl_microwave_built" || b.type === "special_window";
+                const vy = wallMounted ? 145 : 0;
+                const isSel = selectedId === b.id;
+                return (
+                  <group key={b.id} onPointerDown={(e) => { e.stopPropagation(); setSelectedId(b.id); }}>
+                    <Cabinet3D block={b} defaultColor={isPaintableBlock(b) ? (doc.globalColor || b.color) : b.color} marbleColor={doc.marbleColor} />
+                    {isSel && (
+                      <mesh position={[b.x + b.width / 2, vy + b.height / 2, b.y + b.depth / 2]} rotation={[0, (-b.rotation * Math.PI) / 180, 0]}>
+                        <boxGeometry args={[b.width + 3, b.height + 3, b.depth + 3]} />
+                        <meshBasicMaterial color="#f59e0b" wireframe />
+                      </mesh>
+                    )}
+                  </group>
+                );
+              })}
               <OrbitControls target={[doc.roomWidth / 2, 80, doc.roomDepth / 2]} maxPolarAngle={Math.PI / 2.05} makeDefault enabled={view3d === "perspective"} />
             </Canvas>
           </TabsContent>
@@ -849,6 +908,7 @@ function DesignEditor() {
 
         </Tabs>
       </div>
+
 
       {/* Desktop: properties */}
       <aside className="hidden md:block w-72 border-r border-border/60 bg-card/50 p-4 overflow-auto">

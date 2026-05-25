@@ -359,8 +359,19 @@ function DesignEditor() {
             <Input type="number" value={toUnit(selected.height)} onChange={(e) => updateBlock(selected.id, { height: fromUnit(e.target.value) || 0 })} />
           </div>
           <div>
-            <Label className="text-xs">الدوران (درجة)</Label>
-            <Input type="number" value={selected.rotation} onChange={(e) => updateBlock(selected.id, { rotation: parseFloat(e.target.value) || 0 })} />
+            <Label className="text-xs flex items-center justify-between">
+              <span>الدوران: {Math.round(selected.rotation)}°</span>
+              <span className="flex gap-1">
+                <Button size="sm" variant="outline" className="h-6 px-1.5 text-[10px]" onClick={() => rotateBlock(selected.id, -15)}>-15°</Button>
+                <Button size="sm" variant="outline" className="h-6 px-1.5 text-[10px]" onClick={() => rotateBlock(selected.id, 90)}>+90°</Button>
+              </span>
+            </Label>
+            <Slider
+              value={[((selected.rotation % 360) + 360) % 360]}
+              min={0} max={360} step={1}
+              onValueChange={(v) => updateBlock(selected.id, { rotation: v[0] })}
+              className="mt-2"
+            />
           </div>
           {/* لون خاص للوحدة */}
           <div className="p-2 rounded-lg border border-border/40 bg-muted/20 space-y-2">

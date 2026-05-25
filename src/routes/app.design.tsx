@@ -787,6 +787,10 @@ function DesignEditor() {
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
+              <Button size="sm" disabled={aiRendering} onClick={generateRealisticRender} className="h-8 px-2 text-xs gap-1 bg-gradient-primary shadow-glow">
+                {aiRendering ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
+                صورة واقعية AI
+              </Button>
             </div>
             <Canvas
               camera={{ position: [doc.roomWidth, doc.roomDepth * 1.2, doc.roomDepth * 1.4], fov: 45 }}

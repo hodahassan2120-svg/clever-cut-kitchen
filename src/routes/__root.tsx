@@ -97,11 +97,13 @@ function AuthInvalidator() {
   return null;
 }
 
-function MonetagSW() {
+function UnregisterOldSW() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (!("serviceWorker" in navigator)) return;
-    navigator.serviceWorker.register("/sw.js").catch((e) => console.warn("[sw] register failed", e));
+    navigator.serviceWorker.getRegistrations?.().then((regs) => {
+      regs.forEach((r) => r.unregister().catch(() => {}));
+    }).catch(() => {});
   }, []);
   return null;
 }
@@ -116,7 +118,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <AuthInvalidator />
-        <MonetagSW />
+        <UnregisterOldSW />
 
         <Outlet />
         <Toaster richColors position="top-center" dir="rtl" theme="dark" />

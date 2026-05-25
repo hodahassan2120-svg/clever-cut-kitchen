@@ -186,12 +186,33 @@ function DesignEditor() {
           <Input type="number" value={toUnit(doc.roomDepth)} onChange={(e) => setDoc({ ...doc, roomDepth: fromUnit(e.target.value) || 0 })} />
         </div>
       </div>
+
+      {/* اللون العام لكل الوحدات */}
+      <div className="space-y-2 mb-6 pb-4 border-b border-border/40">
+        <h4 className="text-sm font-semibold flex items-center gap-1.5"><Palette className="size-3.5 text-primary" /> اللون العام</h4>
+        <div className="flex items-center gap-2">
+          <input type="color" value={doc.globalColor || "#b88858"} onChange={(e) => setDoc({ ...doc, globalColor: e.target.value })} className="h-9 w-14 rounded cursor-pointer bg-transparent border border-border/60" />
+          <Input value={doc.globalColor || "#b88858"} onChange={(e) => setDoc({ ...doc, globalColor: e.target.value })} className="flex-1 font-mono text-xs h-9" />
+        </div>
+        <p className="text-[10px] text-muted-foreground">يطبَّق على كل الوحدات التي ليس لها لون مخصص.</p>
+      </div>
+
       {selected ? (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-semibold">{selected.name}</h4>
             <Button size="sm" variant="ghost" onClick={() => removeBlock(selected.id)}><Trash2 className="size-3.5 text-destructive" /></Button>
           </div>
+          {/* ملخص مكونات الوحدة المخصصة */}
+          {selected.placement && (
+            <div className="text-[11px] bg-muted/30 border border-border/40 rounded-lg p-2 space-y-0.5">
+              {selected.cabinet && <div>• دولاب طولي</div>}
+              {!selected.cabinet && <div>• {selected.placement === "base" ? "سفلية" : selected.placement === "wall" ? "علوية" : "طولية"}</div>}
+              {selected.corner && <div>• ركنية</div>}
+              {(selected.doors || 0) > 0 && <div>• {selected.doors} {selected.glass ? "ضلفة زجاج" : "ضلف"}</div>}
+              {(selected.drawers || 0) > 0 && <div>• {selected.drawers} أدراج</div>}
+            </div>
+          )}
           <div>
             <Label className="text-xs">العرض ({unit})</Label>
             <Input type="number" value={toUnit(selected.width)} onChange={(e) => updateBlock(selected.id, { width: fromUnit(e.target.value) || 0 })} />
@@ -207,6 +228,18 @@ function DesignEditor() {
           <div>
             <Label className="text-xs">الدوران (درجة)</Label>
             <Input type="number" value={selected.rotation} onChange={(e) => updateBlock(selected.id, { rotation: parseFloat(e.target.value) || 0 })} />
+          </div>
+          {/* لون خاص للوحدة */}
+          <div className="p-2 rounded-lg border border-border/40 bg-muted/20 space-y-2">
+            <Label className="text-xs flex items-center gap-1.5"><Palette className="size-3" /> لون هذه الوحدة</Label>
+            <div className="flex items-center gap-2">
+              <input type="color" value={selected.color} onChange={(e) => updateBlock(selected.id, { color: e.target.value, customColor: true })} className="h-9 w-14 rounded cursor-pointer bg-transparent border border-border/60" />
+              <Input value={selected.color} onChange={(e) => updateBlock(selected.id, { color: e.target.value, customColor: true })} className="flex-1 font-mono text-xs h-9" />
+            </div>
+            <label className="flex items-center gap-2 text-[11px] cursor-pointer">
+              <input type="checkbox" checked={!!selected.customColor} onChange={(e) => updateBlock(selected.id, { customColor: e.target.checked })} />
+              لون مخصص (لا يتأثر باللون العام)
+            </label>
           </div>
           <div>
             <Label className="text-xs">تفاصيل إضافية</Label>

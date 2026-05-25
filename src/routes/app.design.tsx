@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Stage, Layer, Rect, Line, Text as KText, Group } from "react-konva";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls, Grid } from "@react-three/drei";
 import { KITCHEN_BLOCKS, CATEGORY_LABELS, DEFAULT_DESIGN, type DesignDoc, type KitchenBlock, type PlacedBlock } from "@/lib/blocks";
 import { BlockIcon } from "@/components/BlockIcon";
@@ -42,6 +42,7 @@ function DesignEditor() {
   const [editDims, setEditDims] = useState({ width: "", depth: "", height: "", notes: "" });
   const [setupRoom, setSetupRoom] = useState({ name: "تصميم جديد", width: "400", depth: "300", shape: "rectangle" as "rectangle" | "l_shape", cutoutWidth: "100", cutoutDepth: "100" });
   const [savedRows, setSavedRows] = useState<{ id: string; name: string; updated_at: string }[]>([]);
+  const [view3d, setView3d] = useState<"perspective" | "top" | "front" | "right" | "left">("perspective");
   const stageWrapRef = useRef<HTMLDivElement>(null);
   const [stageSize, setStageSize] = useState({ w: 360, h: 400 });
 
@@ -175,15 +176,27 @@ function DesignEditor() {
     if (!user) return toast.error("سجل الدخول أولاً");
     if (!name.trim()) return toast.error("اكتب اسماً للتصميم");
     if (designId) {
-      const { error } = await supabase.from("designs").update({ name, data: doc as any, updated_at: new Date().toISOString() }).eq("id", designId);
-      if (error) return toast.error(error.message.includes("subscription") || error.message.includes("policy") ? "انتهت الفترة التجريبية — اطلب تفعيل الحساب" : "تعذر الحفظ: " + error.message);
+      const { error } = await supabase.from("designs").update({ name: name.trim(), data: doc as any, updated_at: new Date().toISOString() }).eq("id", designId).eq("user_id", user.id);
+      if (error) return toast.error("تعذر الحفظ: " + error.message);
       toast.success("تم تحديث التصميم");
     } else {
-      const { data, error } = await supabase.from("designs").insert({ user_id: user.id, name, data: doc as any }).select("id").single();
-      if (error) return toast.error(error.message.includes("subscription") || error.message.includes("policy") ? "انتهت الفترة التجريبية — اطلب تفعيل الحساب" : "تعذر الحفظ: " + error.message);
+      const { data, error } = await supabase.from("designs").insert({ user_id: user.id, name: name.trim(), data: doc as any }).select("id").single();
+      if (error) return toast.error("تعذر الحفظ: " + error.message);
       setDesignId(data.id);
       toast.success("تم حفظ التصميم");
     }
+  };
+
+  const download3DView = (view: typeof view3d, label: string) => {
+    setView3d(view);
+    window.setTimeout(() => {
+      const canvas = document.querySelector<HTMLCanvasElement>("[data-design-3d] canvas");
+      if (!canvas) return toast.error("تعذر التقاط صورة 3D");
+      const a = document.createElement("a");
+      a.href = canvas.toDataURL("image/png");
+      a.download = `${name.trim() || "design"}-${label}.png`;
+      a.click();
+    }, 180);
   };
 
   const toUnit = (cm: number) => (unit === "m" ? (cm / 100).toFixed(2) : cm.toString());

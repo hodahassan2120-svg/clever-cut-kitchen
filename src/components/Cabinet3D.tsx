@@ -13,9 +13,12 @@ export function Cabinet3D({ block, defaultColor }: Props) {
   // الجوانب والأعلى والأسفل بنفس لون الجسم — فقط داخل الوحدة (خلف الواجهة) يكون داكنًا
   const carcassColor = bodyColor;
 
-  // الإحداثيات: المركز عند (x + W/2, H/2, y + D/2)
+  const wallMounted = block.placement === "wall" || block.type.startsWith("wall_") || block.type === "appl_hood" || block.type === "special_window";
+  const verticalOffset = wallMounted ? 145 : 0;
+
+  // الإحداثيات: المركز عند (x + W/2, ارتفاع الوحدة/2, y + D/2) مع رفع الوحدات العلوية
   const cx = block.x + W / 2;
-  const cy = H / 2;
+  const cy = verticalOffset + H / 2;
   const cz = block.y + D / 2;
   const rotation: [number, number, number] = [0, (-block.rotation * Math.PI) / 180, 0];
 
@@ -35,20 +38,37 @@ export function Cabinet3D({ block, defaultColor }: Props) {
 
   // تقسيم الواجهة عمودياً: الأدراج في الأعلى (إن وجدت بدون ضلف) أو الأسفل
   // إذا الاثنان موجودان: أدراج فوق + ضلف تحت (نمط شائع)
-  const FRONT_INSET = 1.5;          // إنزال الواجهة قليلاً للداخل
+  const FRONT_INSET = 1.5;          // بروز الرخامة للأمام
   const GAP = 0.4;                  // فجوة بين الأبواب/الأدراج
   const HANDLE_T = 1.2;             // سُمك المقبض
   const DOOR_T = 1.8;               // سُمك الضلفة
+  const PANEL_T = 1.6;              // سُمك ألواح جسم الوحدة
 
   const drawerH = drawers > 0 ? Math.min(H * 0.4, 25 * drawers) : 0;
   const doorH = H - drawerH;
 
   return (
     <group position={[cx, cy, cz]} rotation={rotation}>
-      {/* جسم الوحدة (carcass) — لون داكن خلفي */}
-      <mesh>
-        <boxGeometry args={[W, H, D]} />
-        <meshStandardMaterial color={carcassColor} roughness={0.9} />
+      {/* جسم الوحدة كألواح منفصلة بدون واجهة أمامية — يمنع تداخل الألوان مع الضلف */}
+      <mesh position={[0, 0, -D / 2 + PANEL_T / 2]}>
+        <boxGeometry args={[W, H, PANEL_T]} />
+        <meshStandardMaterial color="#2b241f" roughness={0.92} />
+      </mesh>
+      <mesh position={[-W / 2 + PANEL_T / 2, 0, 0]}>
+        <boxGeometry args={[PANEL_T, H, D]} />
+        <meshStandardMaterial color={carcassColor} roughness={0.78} />
+      </mesh>
+      <mesh position={[W / 2 - PANEL_T / 2, 0, 0]}>
+        <boxGeometry args={[PANEL_T, H, D]} />
+        <meshStandardMaterial color={carcassColor} roughness={0.78} />
+      </mesh>
+      <mesh position={[0, H / 2 - PANEL_T / 2, 0]}>
+        <boxGeometry args={[W, PANEL_T, D]} />
+        <meshStandardMaterial color={carcassColor} roughness={0.78} />
+      </mesh>
+      <mesh position={[0, -H / 2 + PANEL_T / 2, 0]}>
+        <boxGeometry args={[W, PANEL_T, D]} />
+        <meshStandardMaterial color={carcassColor} roughness={0.78} />
       </mesh>
 
       {/* الأدراج (في الأعلى إن وُجدت مع ضلف، أو كامل الوحدة إن لم يوجد ضلف) */}
@@ -85,7 +105,7 @@ export function Cabinet3D({ block, defaultColor }: Props) {
           // المقبض في الجانب الداخلي للضلفة (تجاه مركز الوحدة)
           const handleX = i < doors / 2 ? eachW / 2 - 2.5 : -eachW / 2 + 2.5;
           return (
-            <group key={`dr${i}`} position={[x, yBase, D / 2 + DOOR_T / 2]}>
+            <group key={`door${i}`} position={[x, yBase, D / 2 + DOOR_T / 2]}>
               <mesh>
                 <boxGeometry args={[eachW, totalDoorH - GAP, DOOR_T]} />
                 {isGlass ? (

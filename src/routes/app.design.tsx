@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Stage, Layer, Rect, Line, Text as KText, Group } from "react-konva";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls, Grid } from "@react-three/drei";
 import { KITCHEN_BLOCKS, CATEGORY_LABELS, DEFAULT_DESIGN, type DesignDoc, type KitchenBlock, type PlacedBlock } from "@/lib/blocks";
 import { BlockIcon } from "@/components/BlockIcon";
@@ -26,6 +26,26 @@ export const Route = createFileRoute("/app/design")({
   validateSearch: (s: Record<string, unknown>) => ({ id: typeof s.id === "string" ? s.id : undefined }),
 });
 
+function SceneCamera({ view, roomWidth, roomDepth }: { view: "perspective" | "top" | "front" | "right" | "left"; roomWidth: number; roomDepth: number }) {
+  const { camera, invalidate } = useThree();
+  useEffect(() => {
+    const target: [number, number, number] = [roomWidth / 2, 80, roomDepth / 2];
+    const maxDim = Math.max(roomWidth, roomDepth, 260);
+    const positions: Record<typeof view, [number, number, number]> = {
+      perspective: [roomWidth, roomDepth * 1.2, roomDepth * 1.4],
+      top: [roomWidth / 2, maxDim * 1.8, roomDepth / 2 + 0.01],
+      front: [roomWidth / 2, 130, -maxDim * 1.4],
+      right: [roomWidth + maxDim * 1.2, 130, roomDepth / 2],
+      left: [-maxDim * 1.2, 130, roomDepth / 2],
+    };
+    camera.position.set(...positions[view]);
+    camera.lookAt(...target);
+    camera.updateProjectionMatrix();
+    invalidate();
+  }, [camera, invalidate, roomDepth, roomWidth, view]);
+  return null;
+}
+
 function DesignEditor() {
   const { user } = useAuth();
   const { id } = Route.useSearch();
@@ -42,6 +62,7 @@ function DesignEditor() {
   const [editDims, setEditDims] = useState({ width: "", depth: "", height: "", notes: "" });
   const [setupRoom, setSetupRoom] = useState({ name: "تصميم جديد", width: "400", depth: "300", shape: "rectangle" as "rectangle" | "l_shape", cutoutWidth: "100", cutoutDepth: "100" });
   const [savedRows, setSavedRows] = useState<{ id: string; name: string; updated_at: string }[]>([]);
+  const [view3d, setView3d] = useState<"perspective" | "top" | "front" | "right" | "left">("perspective");
   const stageWrapRef = useRef<HTMLDivElement>(null);
   const [stageSize, setStageSize] = useState({ w: 360, h: 400 });
 
@@ -175,15 +196,27 @@ function DesignEditor() {
     if (!user) return toast.error("سجل الدخول أولاً");
     if (!name.trim()) return toast.error("اكتب اسماً للتصميم");
     if (designId) {
-      const { error } = await supabase.from("designs").update({ name, data: doc as any, updated_at: new Date().toISOString() }).eq("id", designId);
-      if (error) return toast.error(error.message.includes("subscription") || error.message.includes("policy") ? "انتهت الفترة التجريبية — اطلب تفعيل الحساب" : "تعذر الحفظ: " + error.message);
+      const { error } = await supabase.from("designs").update({ name: name.trim(), data: doc as any, updated_at: new Date().toISOString() }).eq("id", designId).eq("user_id", user.id);
+      if (error) return toast.error("تعذر الحفظ: " + error.message);
       toast.success("تم تحديث التصميم");
     } else {
-      const { data, error } = await supabase.from("designs").insert({ user_id: user.id, name, data: doc as any }).select("id").single();
-      if (error) return toast.error(error.message.includes("subscription") || error.message.includes("policy") ? "انتهت الفترة التجريبية — اطلب تفعيل الحساب" : "تعذر الحفظ: " + error.message);
+      const { data, error } = await supabase.from("designs").insert({ user_id: user.id, name: name.trim(), data: doc as any }).select("id").single();
+      if (error) return toast.error("تعذر الحفظ: " + error.message);
       setDesignId(data.id);
       toast.success("تم حفظ التصميم");
     }
+  };
+
+  const download3DView = (view: typeof view3d, label: string) => {
+    setView3d(view);
+    window.setTimeout(() => {
+      const canvas = document.querySelector<HTMLCanvasElement>("[data-design-3d] canvas");
+      if (!canvas) return toast.error("تعذر التقاط صورة 3D");
+      const a = document.createElement("a");
+      a.href = canvas.toDataURL("image/png");
+      a.download = `${name.trim() || "design"}-${label}.png`;
+      a.click();
+    }, 180);
   };
 
   const toUnit = (cm: number) => (unit === "m" ? (cm / 100).toFixed(2) : cm.toString());
@@ -658,13 +691,36 @@ function DesignEditor() {
               </div>
             )}
           </TabsContent>
-          <TabsContent value="3d" className="flex-1 m-0 bg-gradient-to-b from-zinc-900 to-black min-h-0">
+          <TabsContent value="3d" className="flex-1 m-0 bg-gradient-to-b from-zinc-900 to-black min-h-0 relative" data-design-3d>
+            <div className="absolute top-2 left-2 right-2 z-10 flex flex-wrap items-center gap-1.5 rounded-xl border border-border/60 bg-card/90 p-1.5 shadow-card backdrop-blur">
+              {([
+                ["perspective", "منظور"],
+                ["top", "علوي"],
+                ["front", "أمامي"],
+                ["right", "يمين"],
+                ["left", "يسار"],
+              ] as const).map(([value, label]) => (
+                <Button key={value} size="sm" variant={view3d === value ? "default" : "outline"} className="h-8 px-2 text-xs" onClick={() => setView3d(value)}>{label}</Button>
+              ))}
+              <div className="ms-auto flex flex-wrap gap-1">
+                {([
+                  ["perspective", "منظور"],
+                  ["top", "علوي"],
+                  ["front", "أمامي"],
+                  ["right", "يمين"],
+                  ["left", "يسار"],
+                ] as const).map(([value, label]) => (
+                  <Button key={`shot-${value}`} size="sm" variant="outline" className="h-8 px-2 text-xs" onClick={() => download3DView(value, label)}>سكرين {label}</Button>
+                ))}
+              </div>
+            </div>
             <Canvas
               camera={{ position: [doc.roomWidth, doc.roomDepth * 1.2, doc.roomDepth * 1.4], fov: 45 }}
               dpr={[1, 1.5]}
-              gl={{ antialias: false, powerPreference: "default", preserveDrawingBuffer: false, alpha: false }}
+              gl={{ antialias: true, powerPreference: "default", preserveDrawingBuffer: true, alpha: false }}
               frameloop="demand"
             >
+              <SceneCamera view={view3d} roomWidth={doc.roomWidth} roomDepth={doc.roomDepth} />
               <color attach="background" args={["#1a1208"]} />
               <ambientLight intensity={0.8} />
               <directionalLight position={[doc.roomWidth, 600, doc.roomDepth]} intensity={0.9} />
@@ -684,7 +740,7 @@ function DesignEditor() {
               {doc.blocks.map((b) => (
                 <Cabinet3D key={b.id} block={b} defaultColor={isPaintableBlock(b) ? (doc.globalColor || b.color) : b.color} />
               ))}
-              <OrbitControls target={[doc.roomWidth / 2, 80, doc.roomDepth / 2]} maxPolarAngle={Math.PI / 2.05} makeDefault />
+              <OrbitControls target={[doc.roomWidth / 2, 80, doc.roomDepth / 2]} maxPolarAngle={Math.PI / 2.05} makeDefault enabled={view3d === "perspective"} />
             </Canvas>
           </TabsContent>
 

@@ -18,10 +18,8 @@ function RodsPage() {
   const { user } = useAuth();
   const [useInventory, setUseInventory] = useState(false);
   const [invStocks, setInvStocks] = useState<RodStock[]>([]);
-  const [manualStocks, setManualStocks] = useState<RodStock[]>([
-    { id: crypto.randomUUID(), name: "عود", length: 600, quantity: 3 },
-  ]);
-  const [pieces, setPieces] = useState<RodPiece[]>([{ id: crypto.randomUUID(), label: "قطعة 1", length: 120, quantity: 3 }]);
+  const [manualStocks, setManualStocks] = useState<RodStock[]>([]);
+  const [pieces, setPieces] = useState<RodPiece[]>([]);
   const [result, setResult] = useState<RodResult | null>(null);
 
   useEffect(() => {
@@ -34,8 +32,11 @@ function RodsPage() {
   const stocks = useInventory ? invStocks : manualStocks;
 
   const run = () => {
-    if (stocks.length === 0) return toast.error(useInventory ? "لا توجد أعواد في المخزون" : "أضف عوداً واحداً على الأقل");
-    setResult(cutRods(stocks, pieces));
+    const validStocks = stocks.filter((s) => s.length > 0 && s.quantity > 0);
+    const validPieces = pieces.filter((p) => p.length > 0 && p.quantity > 0);
+    if (validStocks.length === 0) return toast.error(useInventory ? "لا توجد أعواد صالحة في المخزون" : "أضف عوداً واحداً على الأقل");
+    if (validPieces.length === 0) return toast.error("أضف قطعة واحدة على الأقل");
+    setResult(cutRods(validStocks, validPieces));
     toast.success("تم حساب التقطيع");
   };
 
@@ -57,32 +58,34 @@ function RodsPage() {
             <div className="rounded-2xl border border-border/60 bg-card/50 p-5">
               <h2 className="font-semibold mb-3">الأعواد المتوفرة (سم)</h2>
               <div className="space-y-2">
+                {manualStocks.length === 0 && <div className="rounded-xl border border-dashed border-border/70 bg-muted/20 p-4 text-center text-sm text-muted-foreground">أضف مقاس العود بدون بيانات تجريبية.</div>}
                 {manualStocks.map((s, i) => (
-                  <div key={s.id} className="grid grid-cols-12 gap-2 items-end">
-                    <div className="col-span-4"><Label className="text-xs">الاسم</Label><Input value={s.name} onChange={(e) => updStock(i, { name: e.target.value })} /></div>
-                    <div className="col-span-3"><Label className="text-xs">الطول</Label><Input type="number" value={s.length} onChange={(e) => updStock(i, { length: +e.target.value })} /></div>
-                    <div className="col-span-3"><Label className="text-xs">الكمية</Label><Input type="number" value={s.quantity} onChange={(e) => updStock(i, { quantity: +e.target.value })} /></div>
-                    <div className="col-span-2"><Button size="sm" variant="ghost" onClick={() => setManualStocks(manualStocks.filter((_, j) => j !== i))}><Trash2 className="size-3.5 text-destructive" /></Button></div>
+                  <div key={s.id} className="grid grid-cols-2 md:grid-cols-12 gap-2 items-end rounded-xl border border-border/40 p-2">
+                    <div className="col-span-2 md:col-span-4"><Label className="text-xs">الاسم</Label><Input className="h-11 text-base" value={s.name} onChange={(e) => updStock(i, { name: e.target.value })} /></div>
+                    <div className="md:col-span-4"><Label className="text-xs">الطول</Label><Input className="h-11 text-base tabular-nums" inputMode="decimal" type="number" min="0" placeholder="0" value={s.length || ""} onChange={(e) => updStock(i, { length: +e.target.value })} /></div>
+                    <div className="md:col-span-3"><Label className="text-xs">الكمية</Label><Input className="h-11 text-base tabular-nums" inputMode="numeric" type="number" min="1" placeholder="1" value={s.quantity || ""} onChange={(e) => updStock(i, { quantity: +e.target.value })} /></div>
+                    <div className="md:col-span-1"><Button size="icon" variant="ghost" className="h-11 w-11" onClick={() => setManualStocks(manualStocks.filter((_, j) => j !== i))}><Trash2 className="size-4 text-destructive" /></Button></div>
                   </div>
                 ))}
               </div>
-              <Button onClick={() => setManualStocks([...manualStocks, { id: crypto.randomUUID(), name: `عود ${manualStocks.length + 1}`, length: 600, quantity: 1 }])} variant="outline" size="sm" className="mt-3"><Plus className="size-3.5" /> إضافة عود</Button>
+              <Button onClick={() => setManualStocks([...manualStocks, { id: crypto.randomUUID(), name: `عود ${manualStocks.length + 1}`, length: 0, quantity: 1 }])} variant="outline" size="sm" className="mt-3"><Plus className="size-3.5" /> إضافة عود</Button>
             </div>
           )}
 
           <div className="rounded-2xl border border-border/60 bg-card/50 p-5">
             <h2 className="font-semibold mb-3">القطع المطلوبة (سم)</h2>
-            <div className="space-y-2">
+              <div className="space-y-2">
+                {pieces.length === 0 && <div className="rounded-xl border border-dashed border-border/70 bg-muted/20 p-4 text-center text-sm text-muted-foreground">أضف القطع المطلوبة للبدء.</div>}
               {pieces.map((p, i) => (
-                <div key={p.id} className="grid grid-cols-12 gap-2 items-end">
-                  <div className="col-span-4"><Label className="text-xs">الاسم</Label><Input value={p.label} onChange={(e) => setPieces(pieces.map((x, j) => j === i ? { ...x, label: e.target.value } : x))} /></div>
-                  <div className="col-span-3"><Label className="text-xs">الطول</Label><Input type="number" value={p.length} onChange={(e) => setPieces(pieces.map((x, j) => j === i ? { ...x, length: +e.target.value } : x))} /></div>
-                  <div className="col-span-3"><Label className="text-xs">الكمية</Label><Input type="number" value={p.quantity} onChange={(e) => setPieces(pieces.map((x, j) => j === i ? { ...x, quantity: +e.target.value } : x))} /></div>
-                  <div className="col-span-2"><Button size="sm" variant="ghost" onClick={() => setPieces(pieces.filter((_, j) => j !== i))}><Trash2 className="size-3.5 text-destructive" /></Button></div>
+                  <div key={p.id} className="grid grid-cols-2 md:grid-cols-12 gap-2 items-end rounded-xl border border-border/40 p-2">
+                    <div className="col-span-2 md:col-span-4"><Label className="text-xs">الاسم</Label><Input className="h-11 text-base" value={p.label} onChange={(e) => setPieces(pieces.map((x, j) => j === i ? { ...x, label: e.target.value } : x))} /></div>
+                    <div className="md:col-span-4"><Label className="text-xs">الطول</Label><Input className="h-11 text-base tabular-nums" inputMode="decimal" type="number" min="0" placeholder="0" value={p.length || ""} onChange={(e) => setPieces(pieces.map((x, j) => j === i ? { ...x, length: +e.target.value } : x))} /></div>
+                    <div className="md:col-span-3"><Label className="text-xs">الكمية</Label><Input className="h-11 text-base tabular-nums" inputMode="numeric" type="number" min="1" placeholder="1" value={p.quantity || ""} onChange={(e) => setPieces(pieces.map((x, j) => j === i ? { ...x, quantity: +e.target.value } : x))} /></div>
+                    <div className="md:col-span-1"><Button size="icon" variant="ghost" className="h-11 w-11" onClick={() => setPieces(pieces.filter((_, j) => j !== i))}><Trash2 className="size-4 text-destructive" /></Button></div>
                 </div>
               ))}
             </div>
-            <Button onClick={() => setPieces([...pieces, { id: crypto.randomUUID(), label: `قطعة ${pieces.length + 1}`, length: 100, quantity: 1 }])} variant="outline" size="sm" className="mt-3"><Plus className="size-3.5" /> إضافة قطعة</Button>
+            <Button onClick={() => setPieces([...pieces, { id: crypto.randomUUID(), label: `قطعة ${pieces.length + 1}`, length: 0, quantity: 1 }])} variant="outline" size="sm" className="mt-3"><Plus className="size-3.5" /> إضافة قطعة</Button>
             <Button onClick={run} className="w-full mt-4 bg-gradient-primary shadow-glow"><Scissors className="size-4" /> حساب التقطيع</Button>
           </div>
         </div>

@@ -399,10 +399,7 @@ function DesignEditor() {
                 <meshStandardMaterial color="#e8dcc8" roughness={0.95} />
               </mesh>
               {doc.blocks.map((b) => (
-                <mesh key={b.id} position={[b.x + b.width / 2, b.height / 2, b.y + b.depth / 2]} rotation={[0, (-b.rotation * Math.PI) / 180, 0]}>
-                  <boxGeometry args={[b.width, b.height, b.depth]} />
-                  <meshStandardMaterial color={b.color} roughness={0.6} />
-                </mesh>
+                <Cabinet3D key={b.id} block={b} defaultColor={doc.globalColor || b.color} />
               ))}
               <OrbitControls target={[doc.roomWidth / 2, 80, doc.roomDepth / 2]} maxPolarAngle={Math.PI / 2.05} makeDefault />
             </Canvas>

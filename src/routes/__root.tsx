@@ -106,28 +106,9 @@ function MonetagSW() {
   return null;
 }
 
-function MonetagAutoAds() {
-  const { isAdmin } = useAuth();
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (isAdmin) return;
-    if (document.getElementById("monetag-inpage-push")) return;
+// Monetag auto-ads (popup/vignette) removed by user request.
+// External ads now only trigger from the AI realistic render action via RewardedAdModal.
 
-    const s1 = document.createElement("script");
-    s1.id = "monetag-inpage-push";
-    s1.src = "https://5gvci.com/act/files/tag.min.js?z=11054013";
-    s1.async = true;
-    s1.setAttribute("data-cfasync", "false");
-    document.body.appendChild(s1);
-
-    const s2 = document.createElement("script");
-    s2.id = "monetag-vignette";
-    s2.dataset.zone = "11054017";
-    s2.src = "https://al5sm.com/tag.min.js";
-    document.body.appendChild(s2);
-  }, [isAdmin]);
-  return null;
-}
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
@@ -136,7 +117,7 @@ function RootComponent() {
       <AuthProvider>
         <AuthInvalidator />
         <MonetagSW />
-        <MonetagAutoAds />
+
         <Outlet />
         <Toaster richColors position="top-center" dir="rtl" theme="dark" />
       </AuthProvider>

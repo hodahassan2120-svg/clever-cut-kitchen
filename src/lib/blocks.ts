@@ -105,6 +105,9 @@ export interface DesignDoc {
   floorColor?: string;
   wallColor?: string;
   marbleColor?: string;
+  floorTextureId?: string;
+  wallTextureId?: string;
+  marbleTextureId?: string;
 }
 
 export const DEFAULT_DESIGN: DesignDoc = {

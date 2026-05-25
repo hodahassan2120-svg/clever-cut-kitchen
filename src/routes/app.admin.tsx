@@ -212,11 +212,11 @@ function Admin() {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: number }) {
+function StatCard({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
   return (
-    <div className="rounded-2xl border border-border/60 bg-card/50 p-5">
+    <div className={`rounded-2xl border p-5 ${highlight ? "border-gold/60 bg-gold/5 shadow-gold" : "border-border/60 bg-card/50"}`}>
       <div className="text-xs text-muted-foreground mb-1">{label}</div>
-      <div className="text-3xl font-bold text-gradient">{value}</div>
+      <div className={`text-3xl font-bold ${highlight ? "text-gold" : "text-gradient"}`}>{value}</div>
     </div>
   );
 }

@@ -24,6 +24,8 @@ function loadCached(url: string): Promise<THREE.Texture> {
         tex.wrapS = THREE.RepeatWrapping;
         tex.wrapT = THREE.RepeatWrapping;
         tex.anisotropy = 8;
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.needsUpdate = true;
         cache.set(url, tex);
         resolve(tex);
       },

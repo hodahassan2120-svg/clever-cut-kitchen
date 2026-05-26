@@ -27,6 +27,7 @@ import type Konva from "konva";
 import { useServerFn } from "@tanstack/react-start";
 import { renderRealistic } from "@/lib/render.functions";
 import { RewardedAdModal } from "@/components/RewardedAdModal";
+import { SmartLinkGate } from "@/components/SmartLinkGate";
 
 import { Gift } from "lucide-react";
 

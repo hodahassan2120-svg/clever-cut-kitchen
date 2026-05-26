@@ -78,8 +78,11 @@ export type Database = {
         Row: {
           adsense_client: string | null
           adsense_enabled: boolean
+          adsterra_banner_enabled: boolean | null
+          adsterra_banner_key: string | null
           adsterra_interstitial_zone: string | null
           adsterra_rewarded_zone: string | null
+          adsterra_smart_link: string | null
           credits_per_ad: number
           id: number
           interstitial_ads_enabled: boolean
@@ -92,8 +95,11 @@ export type Database = {
         Insert: {
           adsense_client?: string | null
           adsense_enabled?: boolean
+          adsterra_banner_enabled?: boolean | null
+          adsterra_banner_key?: string | null
           adsterra_interstitial_zone?: string | null
           adsterra_rewarded_zone?: string | null
+          adsterra_smart_link?: string | null
           credits_per_ad?: number
           id?: number
           interstitial_ads_enabled?: boolean
@@ -106,8 +112,11 @@ export type Database = {
         Update: {
           adsense_client?: string | null
           adsense_enabled?: boolean
+          adsterra_banner_enabled?: boolean | null
+          adsterra_banner_key?: string | null
           adsterra_interstitial_zone?: string | null
           adsterra_rewarded_zone?: string | null
+          adsterra_smart_link?: string | null
           credits_per_ad?: number
           id?: number
           interstitial_ads_enabled?: boolean

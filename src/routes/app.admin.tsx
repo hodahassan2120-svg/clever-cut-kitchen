@@ -25,6 +25,8 @@ function Admin() {
   const [settings, setSettings] = useState({
     adsense_client: "", adsense_enabled: false, whatsapp_number: "",
     adsterra_rewarded_zone: "", adsterra_interstitial_zone: "",
+    adsterra_banner_key: "", adsterra_banner_enabled: false,
+    adsterra_smart_link: "",
     rewarded_ads_enabled: false, interstitial_ads_enabled: false,
     credits_per_ad: 1, max_daily_ad_credits: 10,
     splash_ad_enabled: false, splash_ad_frequency: "session" as "session" | "daily" | "always",
@@ -52,6 +54,8 @@ function Admin() {
     if (s) setSettings({
       adsense_client: s.adsense_client ?? "", adsense_enabled: !!s.adsense_enabled, whatsapp_number: s.whatsapp_number ?? "",
       adsterra_rewarded_zone: s.adsterra_rewarded_zone ?? "", adsterra_interstitial_zone: s.adsterra_interstitial_zone ?? "",
+      adsterra_banner_key: s.adsterra_banner_key ?? "", adsterra_banner_enabled: !!s.adsterra_banner_enabled,
+      adsterra_smart_link: s.adsterra_smart_link ?? "",
       rewarded_ads_enabled: !!s.rewarded_ads_enabled, interstitial_ads_enabled: !!s.interstitial_ads_enabled,
       credits_per_ad: s.credits_per_ad ?? 1, max_daily_ad_credits: s.max_daily_ad_credits ?? 10,
       splash_ad_enabled: !!(s as any).splash_ad_enabled, splash_ad_frequency: ((s as any).splash_ad_frequency ?? "session") as "session" | "daily" | "always",
@@ -221,6 +225,26 @@ function Admin() {
               <Label>كود AdSense Client (ca-pub-xxxxx)</Label>
               <Input dir="ltr" placeholder="ca-pub-1234567890" value={settings.adsense_client} onChange={(e) => setSettings({ ...settings, adsense_client: e.target.value })} />
               <p className="text-xs text-muted-foreground mt-1">سيتم عرض الإعلانات داخل التطبيق للمستخدمين العاديين فقط.</p>
+            </div>
+
+            <div className="border-t border-border/40 pt-4 mt-4">
+              <h3 className="font-semibold text-gold mb-3">إعلانات Adsterra (بانر + Smart Link)</h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>تفعيل بانر Adsterra (Sidebar)</Label>
+                  <Switch checked={settings.adsterra_banner_enabled} onCheckedChange={(v) => setSettings({ ...settings, adsterra_banner_enabled: v })} />
+                </div>
+                <div>
+                  <Label>Adsterra Banner Key</Label>
+                  <Input dir="ltr" placeholder="b90be571ea468ef68b7b43420f3b108d" value={settings.adsterra_banner_key} onChange={(e) => setSettings({ ...settings, adsterra_banner_key: e.target.value })} />
+                  <p className="text-xs text-muted-foreground mt-1">الكود الموجود في كود البانر (key) — يظهر في الشريط الجانبي للمستخدمين العاديين.</p>
+                </div>
+                <div>
+                  <Label>Adsterra Smart Link</Label>
+                  <Input dir="ltr" placeholder="https://www.highperformanceformat.com/..." value={settings.adsterra_smart_link} onChange={(e) => setSettings({ ...settings, adsterra_smart_link: e.target.value })} />
+                  <p className="text-xs text-muted-foreground mt-1">لينك السمارت — يُستخدم في أزرار "تصدير مجاني" وغيرها (أعلى ربح).</p>
+                </div>
+              </div>
             </div>
 
             <div className="border-t border-border/40 pt-4 mt-4">

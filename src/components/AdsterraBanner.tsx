@@ -30,8 +30,6 @@ export function AdsterraBanner({ className = "" }: { className?: string }) {
     iframe.style.border = "none";
     iframe.style.overflow = "hidden";
     iframe.scrolling = "no";
-    iframe.frameBorder = "0";
-    iframe.allowTransparency = true;
 
     const scriptContent = `
       atOptions = {

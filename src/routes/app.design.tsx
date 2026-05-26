@@ -22,13 +22,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { Slider } from "@/components/ui/slider";
-import { Save, Plus, Trash2, LayoutGrid, Settings2, Wand2, Palette, FolderOpen, Ruler, PenLine, RotateCw, Pencil, X, Camera, ChevronDown, Sparkles, Download, Loader2, Eye, EyeOff } from "lucide-react";
+import { Save, Plus, Trash2, LayoutGrid, Settings2, Wand2, Palette, FolderOpen, Ruler, PenLine, RotateCw, Pencil, X, Camera, ChevronDown, Sparkles, Download, Loader2, Eye, EyeOff, Images, Layers } from "lucide-react";
 import type Konva from "konva";
 import { useServerFn } from "@tanstack/react-start";
 import { renderRealistic } from "@/lib/render.functions";
 import { RewardedAdModal } from "@/components/RewardedAdModal";
 
 import { Gift } from "lucide-react";
+
+type RenderStyle = "modern" | "classic" | "industrial" | "luxury";
+type ViewAngle = "perspective" | "front" | "top";
+const STYLE_LABELS: Record<RenderStyle, string> = { modern: "مودرن", classic: "كلاسيك", industrial: "صناعي", luxury: "فاخر" };
+const VIEW_LABELS: Record<ViewAngle, string> = { perspective: "منظور", front: "أمامي", top: "علوي" };
 
 export const Route = createFileRoute("/app/design")({
   component: DesignEditor,
@@ -75,10 +80,15 @@ function DesignEditor() {
   const stageWrapRef = useRef<HTMLDivElement>(null);
   const [stageSize, setStageSize] = useState({ w: 360, h: 400 });
   const [aiRendering, setAiRendering] = useState(false);
-  const [aiResultUrl, setAiResultUrl] = useState<string | null>(null);
+  const [aiResultUrls, setAiResultUrls] = useState<string[] | null>(null);
   const [aiCredits, setAiCredits] = useState<number | null>(null);
   const [adModalOpen, setAdModalOpen] = useState(false);
   const [toolbar3dVisible, setToolbar3dVisible] = useState(true);
+  const [renderStyle, setRenderStyle] = useState<RenderStyle>("modern");
+  const [renderMulti, setRenderMulti] = useState(false);
+  const [renderOpen, setRenderOpen] = useState(false);
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [gallery, setGallery] = useState<{ id: string; image_url: string; style: string | null; view_angle: string | null; created_at: string }[]>([]);
   const orbitRef = useRef<any>(null);
   const dragRef = useRef<{ id: string; offsetX: number; offsetZ: number; currentX: number; currentY: number; plane: THREE.Plane; moved: boolean } | null>(null);
   const [isDragging3d, setIsDragging3d] = useState(false);
@@ -256,25 +266,57 @@ function DesignEditor() {
     }, 180);
   };
 
+  const captureView = async (view: ViewAngle): Promise<string | null> => {
+    setView3d(view);
+    await new Promise((r) => setTimeout(r, 260));
+    const canvas = document.querySelector<HTMLCanvasElement>("[data-design-3d] canvas");
+    return canvas ? canvas.toDataURL("image/png") : null;
+  };
+
+  const buildContext = () => {
+    const baseCount = doc.blocks.filter((b) => b.type.startsWith("base_")).length;
+    const wallCount = doc.blocks.filter((b) => b.type.startsWith("wall_")).length;
+    const tallCount = doc.blocks.filter((b) => b.type.startsWith("tall_")).length;
+    const marbleName = doc.marbleTextureId ? TEXTURES.find((t) => t.id === doc.marbleTextureId)?.name : null;
+    const floorName = doc.floorTextureId ? TEXTURES.find((t) => t.id === doc.floorTextureId)?.name : null;
+    const parts = [
+      `أبعاد الغرفة ${doc.roomWidth}×${doc.roomDepth} سم`,
+      `${baseCount} وحدة سفلية، ${wallCount} وحدة علوية، ${tallCount} وحدة طويلة`,
+      doc.globalColor ? `لون الوحدات: ${doc.globalColor}` : "",
+      marbleName ? `الرخامة: ${marbleName}` : "",
+      floorName ? `الأرضية: ${floorName}` : "",
+    ].filter(Boolean);
+    return parts.join("، ");
+  };
+
   const generateRealisticRender = async () => {
-    // gate: need at least 1 credit (admin bypass handled server-side)
     if (aiCredits !== null && aiCredits <= 0) {
       setAdModalOpen(true);
       toast.info("نفذ رصيدك — شاهد إعلان للحصول على كريديت مجاني");
       return;
     }
-    setView3d("perspective");
-    await new Promise((r) => setTimeout(r, 220));
-    const canvas = document.querySelector<HTMLCanvasElement>("[data-design-3d] canvas");
-    if (!canvas) return toast.error("تعذر التقاط لقطة 3D");
-    const dataUrl = canvas.toDataURL("image/png");
+    const angles: ViewAngle[] = renderMulti ? ["perspective", "front", "top"] : ["perspective"];
+    const needed = angles.length;
+    if (aiCredits !== null && aiCredits < needed) {
+      toast.error(`تحتاج ${needed} كريديت — رصيدك الحالي ${aiCredits}`);
+      return;
+    }
     setAiRendering(true);
-    setAiResultUrl(null);
+    setAiResultUrls(null);
+    setRenderOpen(false);
+    const context = buildContext();
+    const results: string[] = [];
     try {
-      const res = await callRender({ data: { imageDataUrl: dataUrl } });
-      setAiResultUrl(res.imageDataUrl);
-      setAiCredits(res.creditsRemaining);
-      toast.success(`تم توليد الصورة! المتبقي: ${res.creditsRemaining} كريديت`);
+      for (const view of angles) {
+        const dataUrl = await captureView(view);
+        if (!dataUrl) { toast.error("تعذر التقاط لقطة 3D"); continue; }
+        const res = await callRender({ data: { imageDataUrl: dataUrl, style: renderStyle, viewAngle: view, designId: designId ?? undefined, contextNote: context } });
+        results.push(res.imageDataUrl);
+        setAiCredits(res.creditsRemaining);
+      }
+      if (results.length === 0) throw new Error("NO_RESULTS");
+      setAiResultUrls(results);
+      toast.success(`تم توليد ${results.length} صورة!`);
     } catch (err) {
       console.error("[ai render] failed", err);
       const msg = err instanceof Error ? err.message : "";
@@ -284,11 +326,25 @@ function DesignEditor() {
         toast.info("نفذ رصيدك — شاهد إعلان للحصول على كريديت مجاني");
       } else if (msg.includes("RATE_LIMIT")) toast.error("تم تجاوز الحد المسموح، حاول بعد قليل");
       else if (msg.includes("NO_CREDITS")) toast.error("نفذ رصيد الذكاء الاصطناعي للخدمة، يرجى التواصل مع الأدمن");
+      else if (results.length > 0) { setAiResultUrls(results); toast.warning("تم توليد بعض الصور فقط"); }
       else toast.error("تعذر توليد الصورة، حاول مرة أخرى");
     } finally {
       setAiRendering(false);
     }
   };
+
+  const loadGallery = async () => {
+    if (!user) return;
+    const { data } = await supabase.from("design_renders").select("id,image_url,style,view_angle,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(60);
+    setGallery(data ?? []);
+  };
+
+  const deleteRender = async (id: string) => {
+    await supabase.from("design_renders").delete().eq("id", id);
+    setGallery((g) => g.filter((r) => r.id !== id));
+    toast.success("تم الحذف");
+  };
+
 
   const toUnit = (cm: number) => (unit === "m" ? (cm / 100).toFixed(2) : cm.toString());
   const fromUnit = (v: string) => (unit === "m" ? parseFloat(v) * 100 : parseFloat(v));
@@ -896,9 +952,12 @@ function DesignEditor() {
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <Button size="sm" disabled={aiRendering} onClick={generateRealisticRender} className="h-8 px-2 text-xs gap-1 bg-gradient-primary shadow-glow">
+                <Button size="sm" disabled={aiRendering} onClick={() => setRenderOpen(true)} className="h-8 px-2 text-xs gap-1 bg-gradient-primary shadow-glow">
                   {aiRendering ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
                   صورة واقعية AI{aiCredits !== null ? ` (${aiCredits})` : ""}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => { setGalleryOpen(true); loadGallery(); }} className="h-8 px-2 text-xs gap-1" title="معرض الصور المولّدة">
+                  <Images className="size-3.5" />
                 </Button>
                 <Button size="sm" variant="outline" onClick={() => setAdModalOpen(true)} className="h-8 px-2 text-xs gap-1" title="احصل على كريديت مجاني بمشاهدة إعلان">
                   <Gift className="size-3.5 text-gold" />
@@ -1119,28 +1178,102 @@ function DesignEditor() {
         </DialogContent>
       </Dialog>
 
-      {/* نتيجة الصورة الواقعية AI */}
-      <Dialog open={!!aiResultUrl} onOpenChange={(o) => !o && setAiResultUrl(null)}>
-        <DialogContent className="max-w-2xl">
+      {/* اختيار ستايل الـ Render */}
+      <Dialog open={renderOpen} onOpenChange={setRenderOpen}>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Sparkles className="size-5 text-primary" /> صورة واقعية للتصميم</DialogTitle>
+            <DialogTitle className="flex items-center gap-2"><Sparkles className="size-5 text-primary" /> صورة واقعية بالذكاء الاصطناعي</DialogTitle>
           </DialogHeader>
-          {aiResultUrl && (
-            <div className="space-y-3">
-              <img src={aiResultUrl} alt="صورة واقعية للمطبخ" className="w-full rounded-xl border border-border/60" />
-              <p className="text-xs text-muted-foreground text-center">صورة توضيحية مولّدة بالذكاء الاصطناعي — قد تختلف بعض التفاصيل عن التصميم الفعلي.</p>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-xs mb-2 block">اختر الستايل</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {(Object.keys(STYLE_LABELS) as RenderStyle[]).map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setRenderStyle(s)}
+                    className={`rounded-lg border-2 p-3 text-sm font-bold transition ${renderStyle === s ? "border-primary bg-primary/10 shadow-glow" : "border-border/60 hover:border-primary/40"}`}
+                  >
+                    {STYLE_LABELS[s]}
+                  </button>
+                ))}
+              </div>
             </div>
-          )}
+            <div>
+              <label className="flex items-center gap-2 cursor-pointer p-3 rounded-lg border border-border/60 hover:border-primary/40 transition">
+                <input type="checkbox" checked={renderMulti} onChange={(e) => setRenderMulti(e.target.checked)} className="size-4" />
+                <Layers className="size-4 text-primary" />
+                <div className="flex-1">
+                  <div className="text-sm font-bold">3 زوايا (منظور + أمامي + علوي)</div>
+                  <div className="text-[11px] text-muted-foreground">يستهلك 3 كريديت</div>
+                </div>
+              </label>
+            </div>
+            <p className="text-xs text-muted-foreground">سيتم استخدام {renderMulti ? 3 : 1} كريديت — رصيدك: {aiCredits ?? "—"}</p>
+          </div>
           <DialogFooter className="gap-2 sm:gap-2">
-            <Button variant="outline" onClick={() => setAiResultUrl(null)}>إغلاق</Button>
-            {aiResultUrl && (
-              <a href={aiResultUrl} download={`${name.trim() || "kitchen"}-realistic.png`}>
-                <Button className="bg-gradient-primary"><Download className="size-4" /> تحميل</Button>
-              </a>
-            )}
+            <Button variant="outline" onClick={() => setRenderOpen(false)}>إلغاء</Button>
+            <Button onClick={generateRealisticRender} className="bg-gradient-primary"><Sparkles className="size-4" /> ابدأ التوليد</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* نتيجة الصور الواقعية AI */}
+      <Dialog open={!!aiResultUrls} onOpenChange={(o) => !o && setAiResultUrls(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Sparkles className="size-5 text-primary" /> صور واقعية للتصميم</DialogTitle>
+          </DialogHeader>
+          {aiResultUrls && (
+            <div className="space-y-3">
+              <div className={`grid gap-3 ${aiResultUrls.length > 1 ? "sm:grid-cols-2" : ""}`}>
+                {aiResultUrls.map((url, i) => (
+                  <div key={i} className="space-y-2">
+                    <img src={url} alt={`صورة واقعية ${i + 1}`} className="w-full rounded-xl border border-border/60" />
+                    <a href={url} download={`${name.trim() || "kitchen"}-${i + 1}.png`} className="block">
+                      <Button size="sm" variant="outline" className="w-full"><Download className="size-3.5" /> تحميل</Button>
+                    </a>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground text-center">صور توضيحية مولّدة بالذكاء الاصطناعي — قد تختلف بعض التفاصيل عن التصميم الفعلي. محفوظة تلقائياً في معرضك.</p>
+            </div>
+          )}
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setAiResultUrls(null)}>إغلاق</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* معرض الصور المولّدة */}
+      <Dialog open={galleryOpen} onOpenChange={setGalleryOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Images className="size-5 text-primary" /> معرض الصور المولّدة</DialogTitle>
+          </DialogHeader>
+          {gallery.length === 0 ? (
+            <div className="py-12 text-center text-muted-foreground text-sm">لا توجد صور بعد — ابدأ بتوليد أول صورة واقعية!</div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {gallery.map((r) => (
+                <div key={r.id} className="group relative rounded-xl border border-border/60 overflow-hidden">
+                  <img src={r.image_url} alt="render" className="w-full aspect-square object-cover" />
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2 opacity-0 group-hover:opacity-100 transition">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-[10px] text-white/90">{STYLE_LABELS[(r.style as RenderStyle) || "modern"] ?? r.style} • {VIEW_LABELS[(r.view_angle as ViewAngle) || "perspective"] ?? r.view_angle}</span>
+                      <div className="flex gap-1">
+                        <a href={r.image_url} download target="_blank" rel="noreferrer"><Button size="icon" variant="ghost" className="h-6 w-6 text-white"><Download className="size-3" /></Button></a>
+                        <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive" onClick={() => deleteRender(r.id)}><Trash2 className="size-3" /></Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
 
       <RewardedAdModal
         open={adModalOpen}

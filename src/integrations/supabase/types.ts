@@ -146,6 +146,47 @@ export type Database = {
         }
         Relationships: []
       }
+      design_renders: {
+        Row: {
+          created_at: string
+          design_id: string | null
+          id: string
+          image_url: string
+          prompt: string | null
+          style: string | null
+          user_id: string
+          view_angle: string | null
+        }
+        Insert: {
+          created_at?: string
+          design_id?: string | null
+          id?: string
+          image_url: string
+          prompt?: string | null
+          style?: string | null
+          user_id: string
+          view_angle?: string | null
+        }
+        Update: {
+          created_at?: string
+          design_id?: string | null
+          id?: string
+          image_url?: string
+          prompt?: string | null
+          style?: string | null
+          user_id?: string
+          view_angle?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "design_renders_design_id_fkey"
+            columns: ["design_id"]
+            isOneToOne: false
+            referencedRelation: "designs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       designs: {
         Row: {
           created_at: string

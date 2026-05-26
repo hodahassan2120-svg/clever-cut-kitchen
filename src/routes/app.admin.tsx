@@ -9,7 +9,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Users, Settings as SettingsIcon, Shield, Inbox, Check, X, Clock } from "lucide-react";
+import { Users, Settings as SettingsIcon, Shield, Inbox, Check, X, Clock, Megaphone } from "lucide-react";
+import { AdsManager } from "@/components/admin/AdsManager";
 
 export const Route = createFileRoute("/app/admin")({ component: Admin });
 
@@ -26,6 +27,7 @@ function Admin() {
     adsterra_rewarded_zone: "", adsterra_interstitial_zone: "",
     rewarded_ads_enabled: false, interstitial_ads_enabled: false,
     credits_per_ad: 1, max_daily_ad_credits: 10,
+    splash_ad_enabled: false, splash_ad_frequency: "session" as "session" | "daily" | "always",
   });
 
   const load = async () => {
@@ -52,6 +54,7 @@ function Admin() {
       adsterra_rewarded_zone: s.adsterra_rewarded_zone ?? "", adsterra_interstitial_zone: s.adsterra_interstitial_zone ?? "",
       rewarded_ads_enabled: !!s.rewarded_ads_enabled, interstitial_ads_enabled: !!s.interstitial_ads_enabled,
       credits_per_ad: s.credits_per_ad ?? 1, max_daily_ad_credits: s.max_daily_ad_credits ?? 10,
+      splash_ad_enabled: !!(s as any).splash_ad_enabled, splash_ad_frequency: ((s as any).splash_ad_frequency ?? "session") as "session" | "daily" | "always",
     });
   };
 
@@ -120,6 +123,7 @@ function Admin() {
             {stats.pending > 0 && <Badge className="ms-2 bg-gold text-background h-5 px-1.5">{stats.pending}</Badge>}
           </TabsTrigger>
           <TabsTrigger value="users"><Users className="size-4" /> المستخدمون</TabsTrigger>
+          <TabsTrigger value="ads"><Megaphone className="size-4" /> الإعلانات المخصصة</TabsTrigger>
           <TabsTrigger value="settings"><SettingsIcon className="size-4" /> الإعدادات</TabsTrigger>
         </TabsList>
 

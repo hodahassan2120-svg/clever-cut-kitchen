@@ -266,25 +266,57 @@ function DesignEditor() {
     }, 180);
   };
 
+  const captureView = async (view: ViewAngle): Promise<string | null> => {
+    setView3d(view);
+    await new Promise((r) => setTimeout(r, 260));
+    const canvas = document.querySelector<HTMLCanvasElement>("[data-design-3d] canvas");
+    return canvas ? canvas.toDataURL("image/png") : null;
+  };
+
+  const buildContext = () => {
+    const baseCount = doc.blocks.filter((b) => b.type.startsWith("base_")).length;
+    const wallCount = doc.blocks.filter((b) => b.type.startsWith("wall_")).length;
+    const tallCount = doc.blocks.filter((b) => b.type.startsWith("tall_")).length;
+    const marbleName = doc.marbleTextureId ? TEXTURES.find((t) => t.id === doc.marbleTextureId)?.name : null;
+    const floorName = doc.floorTextureId ? TEXTURES.find((t) => t.id === doc.floorTextureId)?.name : null;
+    const parts = [
+      `أبعاد الغرفة ${doc.roomWidth}×${doc.roomDepth} سم`,
+      `${baseCount} وحدة سفلية، ${wallCount} وحدة علوية، ${tallCount} وحدة طويلة`,
+      doc.globalColor ? `لون الوحدات: ${doc.globalColor}` : "",
+      marbleName ? `الرخامة: ${marbleName}` : "",
+      floorName ? `الأرضية: ${floorName}` : "",
+    ].filter(Boolean);
+    return parts.join("، ");
+  };
+
   const generateRealisticRender = async () => {
-    // gate: need at least 1 credit (admin bypass handled server-side)
     if (aiCredits !== null && aiCredits <= 0) {
       setAdModalOpen(true);
       toast.info("نفذ رصيدك — شاهد إعلان للحصول على كريديت مجاني");
       return;
     }
-    setView3d("perspective");
-    await new Promise((r) => setTimeout(r, 220));
-    const canvas = document.querySelector<HTMLCanvasElement>("[data-design-3d] canvas");
-    if (!canvas) return toast.error("تعذر التقاط لقطة 3D");
-    const dataUrl = canvas.toDataURL("image/png");
+    const angles: ViewAngle[] = renderMulti ? ["perspective", "front", "top"] : ["perspective"];
+    const needed = angles.length;
+    if (aiCredits !== null && aiCredits < needed) {
+      toast.error(`تحتاج ${needed} كريديت — رصيدك الحالي ${aiCredits}`);
+      return;
+    }
     setAiRendering(true);
-    setAiResultUrl(null);
+    setAiResultUrls(null);
+    setRenderOpen(false);
+    const context = buildContext();
+    const results: string[] = [];
     try {
-      const res = await callRender({ data: { imageDataUrl: dataUrl } });
-      setAiResultUrl(res.imageDataUrl);
-      setAiCredits(res.creditsRemaining);
-      toast.success(`تم توليد الصورة! المتبقي: ${res.creditsRemaining} كريديت`);
+      for (const view of angles) {
+        const dataUrl = await captureView(view);
+        if (!dataUrl) { toast.error("تعذر التقاط لقطة 3D"); continue; }
+        const res = await callRender({ data: { imageDataUrl: dataUrl, style: renderStyle, viewAngle: view, designId: designId ?? undefined, contextNote: context } });
+        results.push(res.imageDataUrl);
+        setAiCredits(res.creditsRemaining);
+      }
+      if (results.length === 0) throw new Error("NO_RESULTS");
+      setAiResultUrls(results);
+      toast.success(`تم توليد ${results.length} صورة!`);
     } catch (err) {
       console.error("[ai render] failed", err);
       const msg = err instanceof Error ? err.message : "";
@@ -294,11 +326,25 @@ function DesignEditor() {
         toast.info("نفذ رصيدك — شاهد إعلان للحصول على كريديت مجاني");
       } else if (msg.includes("RATE_LIMIT")) toast.error("تم تجاوز الحد المسموح، حاول بعد قليل");
       else if (msg.includes("NO_CREDITS")) toast.error("نفذ رصيد الذكاء الاصطناعي للخدمة، يرجى التواصل مع الأدمن");
+      else if (results.length > 0) { setAiResultUrls(results); toast.warning("تم توليد بعض الصور فقط"); }
       else toast.error("تعذر توليد الصورة، حاول مرة أخرى");
     } finally {
       setAiRendering(false);
     }
   };
+
+  const loadGallery = async () => {
+    if (!user) return;
+    const { data } = await supabase.from("design_renders").select("id,image_url,style,view_angle,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(60);
+    setGallery(data ?? []);
+  };
+
+  const deleteRender = async (id: string) => {
+    await supabase.from("design_renders").delete().eq("id", id);
+    setGallery((g) => g.filter((r) => r.id !== id));
+    toast.success("تم الحذف");
+  };
+
 
   const toUnit = (cm: number) => (unit === "m" ? (cm / 100).toFixed(2) : cm.toString());
   const fromUnit = (v: string) => (unit === "m" ? parseFloat(v) * 100 : parseFloat(v));

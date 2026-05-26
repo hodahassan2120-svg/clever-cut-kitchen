@@ -1,0 +1,2 @@
+DROP POLICY IF EXISTS "public read design renders" ON storage.objects;
+CREATE POLICY "users read own renders" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'design-renders' AND (storage.foldername(name))[1] = auth.uid()::text);

@@ -228,6 +228,26 @@ function Admin() {
             </div>
 
             <div className="border-t border-border/40 pt-4 mt-4">
+              <h3 className="font-semibold text-gold mb-3">إعلانات Adsterra (بانر + Smart Link)</h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>تفعيل بانر Adsterra (Sidebar)</Label>
+                  <Switch checked={settings.adsterra_banner_enabled} onCheckedChange={(v) => setSettings({ ...settings, adsterra_banner_enabled: v })} />
+                </div>
+                <div>
+                  <Label>Adsterra Banner Key</Label>
+                  <Input dir="ltr" placeholder="b90be571ea468ef68b7b43420f3b108d" value={settings.adsterra_banner_key} onChange={(e) => setSettings({ ...settings, adsterra_banner_key: e.target.value })} />
+                  <p className="text-xs text-muted-foreground mt-1">الكود الموجود في كود البانر (key) — يظهر في الشريط الجانبي للمستخدمين العاديين.</p>
+                </div>
+                <div>
+                  <Label>Adsterra Smart Link</Label>
+                  <Input dir="ltr" placeholder="https://www.highperformanceformat.com/..." value={settings.adsterra_smart_link} onChange={(e) => setSettings({ ...settings, adsterra_smart_link: e.target.value })} />
+                  <p className="text-xs text-muted-foreground mt-1">لينك السمارت — يُستخدم في أزرار "تصدير مجاني" وغيرها (أعلى ربح).</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-border/40 pt-4 mt-4">
               <h3 className="font-semibold text-gold mb-3">إعلانات Adsterra (Rewarded + Interstitial)</h3>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">

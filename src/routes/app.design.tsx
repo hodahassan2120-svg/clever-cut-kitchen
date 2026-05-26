@@ -1178,28 +1178,102 @@ function DesignEditor() {
         </DialogContent>
       </Dialog>
 
-      {/* نتيجة الصورة الواقعية AI */}
-      <Dialog open={!!aiResultUrl} onOpenChange={(o) => !o && setAiResultUrl(null)}>
-        <DialogContent className="max-w-2xl">
+      {/* اختيار ستايل الـ Render */}
+      <Dialog open={renderOpen} onOpenChange={setRenderOpen}>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Sparkles className="size-5 text-primary" /> صورة واقعية للتصميم</DialogTitle>
+            <DialogTitle className="flex items-center gap-2"><Sparkles className="size-5 text-primary" /> صورة واقعية بالذكاء الاصطناعي</DialogTitle>
           </DialogHeader>
-          {aiResultUrl && (
-            <div className="space-y-3">
-              <img src={aiResultUrl} alt="صورة واقعية للمطبخ" className="w-full rounded-xl border border-border/60" />
-              <p className="text-xs text-muted-foreground text-center">صورة توضيحية مولّدة بالذكاء الاصطناعي — قد تختلف بعض التفاصيل عن التصميم الفعلي.</p>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-xs mb-2 block">اختر الستايل</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {(Object.keys(STYLE_LABELS) as RenderStyle[]).map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setRenderStyle(s)}
+                    className={`rounded-lg border-2 p-3 text-sm font-bold transition ${renderStyle === s ? "border-primary bg-primary/10 shadow-glow" : "border-border/60 hover:border-primary/40"}`}
+                  >
+                    {STYLE_LABELS[s]}
+                  </button>
+                ))}
+              </div>
             </div>
-          )}
+            <div>
+              <label className="flex items-center gap-2 cursor-pointer p-3 rounded-lg border border-border/60 hover:border-primary/40 transition">
+                <input type="checkbox" checked={renderMulti} onChange={(e) => setRenderMulti(e.target.checked)} className="size-4" />
+                <Layers className="size-4 text-primary" />
+                <div className="flex-1">
+                  <div className="text-sm font-bold">3 زوايا (منظور + أمامي + علوي)</div>
+                  <div className="text-[11px] text-muted-foreground">يستهلك 3 كريديت</div>
+                </div>
+              </label>
+            </div>
+            <p className="text-xs text-muted-foreground">سيتم استخدام {renderMulti ? 3 : 1} كريديت — رصيدك: {aiCredits ?? "—"}</p>
+          </div>
           <DialogFooter className="gap-2 sm:gap-2">
-            <Button variant="outline" onClick={() => setAiResultUrl(null)}>إغلاق</Button>
-            {aiResultUrl && (
-              <a href={aiResultUrl} download={`${name.trim() || "kitchen"}-realistic.png`}>
-                <Button className="bg-gradient-primary"><Download className="size-4" /> تحميل</Button>
-              </a>
-            )}
+            <Button variant="outline" onClick={() => setRenderOpen(false)}>إلغاء</Button>
+            <Button onClick={generateRealisticRender} className="bg-gradient-primary"><Sparkles className="size-4" /> ابدأ التوليد</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* نتيجة الصور الواقعية AI */}
+      <Dialog open={!!aiResultUrls} onOpenChange={(o) => !o && setAiResultUrls(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Sparkles className="size-5 text-primary" /> صور واقعية للتصميم</DialogTitle>
+          </DialogHeader>
+          {aiResultUrls && (
+            <div className="space-y-3">
+              <div className={`grid gap-3 ${aiResultUrls.length > 1 ? "sm:grid-cols-2" : ""}`}>
+                {aiResultUrls.map((url, i) => (
+                  <div key={i} className="space-y-2">
+                    <img src={url} alt={`صورة واقعية ${i + 1}`} className="w-full rounded-xl border border-border/60" />
+                    <a href={url} download={`${name.trim() || "kitchen"}-${i + 1}.png`} className="block">
+                      <Button size="sm" variant="outline" className="w-full"><Download className="size-3.5" /> تحميل</Button>
+                    </a>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground text-center">صور توضيحية مولّدة بالذكاء الاصطناعي — قد تختلف بعض التفاصيل عن التصميم الفعلي. محفوظة تلقائياً في معرضك.</p>
+            </div>
+          )}
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setAiResultUrls(null)}>إغلاق</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* معرض الصور المولّدة */}
+      <Dialog open={galleryOpen} onOpenChange={setGalleryOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Images className="size-5 text-primary" /> معرض الصور المولّدة</DialogTitle>
+          </DialogHeader>
+          {gallery.length === 0 ? (
+            <div className="py-12 text-center text-muted-foreground text-sm">لا توجد صور بعد — ابدأ بتوليد أول صورة واقعية!</div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {gallery.map((r) => (
+                <div key={r.id} className="group relative rounded-xl border border-border/60 overflow-hidden">
+                  <img src={r.image_url} alt="render" className="w-full aspect-square object-cover" />
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2 opacity-0 group-hover:opacity-100 transition">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-[10px] text-white/90">{STYLE_LABELS[(r.style as RenderStyle) || "modern"] ?? r.style} • {VIEW_LABELS[(r.view_angle as ViewAngle) || "perspective"] ?? r.view_angle}</span>
+                      <div className="flex gap-1">
+                        <a href={r.image_url} download target="_blank" rel="noreferrer"><Button size="icon" variant="ghost" className="h-6 w-6 text-white"><Download className="size-3" /></Button></a>
+                        <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive" onClick={() => deleteRender(r.id)}><Trash2 className="size-3" /></Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
 
       <RewardedAdModal
         open={adModalOpen}

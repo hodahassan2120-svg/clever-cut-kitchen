@@ -54,6 +54,8 @@ function Admin() {
     if (s) setSettings({
       adsense_client: s.adsense_client ?? "", adsense_enabled: !!s.adsense_enabled, whatsapp_number: s.whatsapp_number ?? "",
       adsterra_rewarded_zone: s.adsterra_rewarded_zone ?? "", adsterra_interstitial_zone: s.adsterra_interstitial_zone ?? "",
+      adsterra_banner_key: s.adsterra_banner_key ?? "", adsterra_banner_enabled: !!s.adsterra_banner_enabled,
+      adsterra_smart_link: s.adsterra_smart_link ?? "",
       rewarded_ads_enabled: !!s.rewarded_ads_enabled, interstitial_ads_enabled: !!s.interstitial_ads_enabled,
       credits_per_ad: s.credits_per_ad ?? 1, max_daily_ad_credits: s.max_daily_ad_credits ?? 10,
       splash_ad_enabled: !!(s as any).splash_ad_enabled, splash_ad_frequency: ((s as any).splash_ad_frequency ?? "session") as "session" | "daily" | "always",

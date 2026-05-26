@@ -12,6 +12,7 @@ import { Plus, Trash2, Scissors, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import { exportBoardsPDF } from "@/lib/pdf";
 import { AdSlot } from "@/components/AdSlot";
+import { SmartLinkPDFExport } from "@/components/SmartLinkGate";
 
 export const Route = createFileRoute("/app/boards")({ component: BoardsPage });
 
@@ -140,7 +141,8 @@ function BoardsPage() {
                 <div className="rounded-lg bg-muted/30 p-2">إجمالي المقاسات: <span className="font-bold">{totalPieces}</span></div>
                 <div className="rounded-lg bg-muted/30 p-2">الهدر: <span className="text-gold font-bold">{(result.totalWaste / 10000).toFixed(2)} م²</span></div>
               </div>
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-2">
+                <SmartLinkPDFExport onExport={() => exportBoardsPDF(result)} />
                 <Button size="sm" variant="outline" onClick={() => exportBoardsPDF(result)}><FileDown className="size-3.5" /> PDF</Button>
               </div>
               {result.unfulfilled.length > 0 && <div className="text-sm text-destructive">مقاسات لم تتسع: {result.unfulfilled.map(u => `${u.label}(×${u.quantity})`).join(", ")}</div>}

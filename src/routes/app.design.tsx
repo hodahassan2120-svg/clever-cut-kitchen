@@ -336,8 +336,16 @@ function DesignEditor() {
   const loadGallery = async () => {
     if (!user) return;
     const { data } = await supabase.from("design_renders").select("id,image_url,style,view_angle,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(60);
-    setGallery(data ?? []);
+    const rows = data ?? [];
+    // image_url may be a storage path (new) or a full URL (legacy). Generate signed URLs for paths.
+    const resolved = await Promise.all(rows.map(async (r) => {
+      if (/^https?:\/\//i.test(r.image_url)) return r;
+      const { data: signed } = await supabase.storage.from("design-renders").createSignedUrl(r.image_url, 60 * 60);
+      return { ...r, image_url: signed?.signedUrl ?? r.image_url };
+    }));
+    setGallery(resolved);
   };
+
 
   const deleteRender = async (id: string) => {
     await supabase.from("design_renders").delete().eq("id", id);

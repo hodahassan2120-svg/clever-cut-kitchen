@@ -80,10 +80,15 @@ function DesignEditor() {
   const stageWrapRef = useRef<HTMLDivElement>(null);
   const [stageSize, setStageSize] = useState({ w: 360, h: 400 });
   const [aiRendering, setAiRendering] = useState(false);
-  const [aiResultUrl, setAiResultUrl] = useState<string | null>(null);
+  const [aiResultUrls, setAiResultUrls] = useState<string[] | null>(null);
   const [aiCredits, setAiCredits] = useState<number | null>(null);
   const [adModalOpen, setAdModalOpen] = useState(false);
   const [toolbar3dVisible, setToolbar3dVisible] = useState(true);
+  const [renderStyle, setRenderStyle] = useState<RenderStyle>("modern");
+  const [renderMulti, setRenderMulti] = useState(false);
+  const [renderOpen, setRenderOpen] = useState(false);
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [gallery, setGallery] = useState<{ id: string; image_url: string; style: string | null; view_angle: string | null; created_at: string }[]>([]);
   const orbitRef = useRef<any>(null);
   const dragRef = useRef<{ id: string; offsetX: number; offsetZ: number; currentX: number; currentY: number; plane: THREE.Plane; moved: boolean } | null>(null);
   const [isDragging3d, setIsDragging3d] = useState(false);

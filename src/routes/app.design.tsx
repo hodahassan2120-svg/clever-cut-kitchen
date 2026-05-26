@@ -968,6 +968,25 @@ function DesignEditor() {
                 <Button size="sm" variant="outline" onClick={() => { setGalleryOpen(true); loadGallery(); }} className="h-8 px-2 text-xs gap-1" title="معرض الصور المولّدة">
                   <Images className="size-3.5" />
                 </Button>
+                <SmartLinkGate
+                  onUnlock={async () => {
+                    if (!user) return;
+                    const { data, error } = await supabase.rpc("grant_rewarded_ad_credit", { _user_id: user.id });
+                    if (error) return toast.error("تعذر منح الكريديت");
+                    const res = data as { ok: boolean; reason?: string; credits?: number; granted?: number } | null;
+                    if (!res?.ok) {
+                      if (res?.reason === "daily_limit") toast.error("وصلت الحد اليومي");
+                      else if (res?.reason === "disabled") toast.error("الإعلانات معطلة");
+                      else toast.error("تعذر منح الكريديت");
+                      return;
+                    }
+                    toast.success(`+${res.granted} كريديت! رصيدك: ${res.credits}`);
+                    setAiCredits(res.credits ?? 0);
+                  }}
+                  label="كريديت إضافي"
+                  unlockedLabel="استلم الكريديت"
+                  className="h-8 px-2 text-xs"
+                />
                 <Button size="sm" variant="outline" onClick={() => setAdModalOpen(true)} className="h-8 px-2 text-xs gap-1" title="احصل على كريديت مجاني بمشاهدة إعلان">
                   <Gift className="size-3.5 text-gold" />
                 </Button>

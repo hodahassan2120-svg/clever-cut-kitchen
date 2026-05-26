@@ -85,6 +85,8 @@ export type Database = {
           interstitial_ads_enabled: boolean
           max_daily_ad_credits: number
           rewarded_ads_enabled: boolean
+          splash_ad_enabled: boolean
+          splash_ad_frequency: string
           whatsapp_number: string | null
         }
         Insert: {
@@ -97,6 +99,8 @@ export type Database = {
           interstitial_ads_enabled?: boolean
           max_daily_ad_credits?: number
           rewarded_ads_enabled?: boolean
+          splash_ad_enabled?: boolean
+          splash_ad_frequency?: string
           whatsapp_number?: string | null
         }
         Update: {
@@ -109,6 +113,8 @@ export type Database = {
           interstitial_ads_enabled?: boolean
           max_daily_ad_credits?: number
           rewarded_ads_enabled?: boolean
+          splash_ad_enabled?: boolean
+          splash_ad_frequency?: string
           whatsapp_number?: string | null
         }
         Relationships: []
@@ -143,6 +149,45 @@ export type Database = {
           thickness_mm?: number | null
           user_id?: string
           width_cm?: number
+        }
+        Relationships: []
+      }
+      custom_ads: {
+        Row: {
+          ad_type: string
+          created_at: string
+          enabled: boolean
+          id: string
+          link_url: string | null
+          media_url: string
+          skip_seconds: number
+          title: string
+          updated_at: string
+          weight: number
+        }
+        Insert: {
+          ad_type: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          link_url?: string | null
+          media_url: string
+          skip_seconds?: number
+          title?: string
+          updated_at?: string
+          weight?: number
+        }
+        Update: {
+          ad_type?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          link_url?: string | null
+          media_url?: string
+          skip_seconds?: number
+          title?: string
+          updated_at?: string
+          weight?: number
         }
         Relationships: []
       }

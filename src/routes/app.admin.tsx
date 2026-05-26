@@ -9,7 +9,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Users, Settings as SettingsIcon, Shield, Inbox, Check, X, Clock } from "lucide-react";
+import { Users, Settings as SettingsIcon, Shield, Inbox, Check, X, Clock, Megaphone } from "lucide-react";
+import { AdsManager } from "@/components/admin/AdsManager";
 
 export const Route = createFileRoute("/app/admin")({ component: Admin });
 
@@ -26,6 +27,7 @@ function Admin() {
     adsterra_rewarded_zone: "", adsterra_interstitial_zone: "",
     rewarded_ads_enabled: false, interstitial_ads_enabled: false,
     credits_per_ad: 1, max_daily_ad_credits: 10,
+    splash_ad_enabled: false, splash_ad_frequency: "session" as "session" | "daily" | "always",
   });
 
   const load = async () => {
@@ -52,6 +54,7 @@ function Admin() {
       adsterra_rewarded_zone: s.adsterra_rewarded_zone ?? "", adsterra_interstitial_zone: s.adsterra_interstitial_zone ?? "",
       rewarded_ads_enabled: !!s.rewarded_ads_enabled, interstitial_ads_enabled: !!s.interstitial_ads_enabled,
       credits_per_ad: s.credits_per_ad ?? 1, max_daily_ad_credits: s.max_daily_ad_credits ?? 10,
+      splash_ad_enabled: !!(s as any).splash_ad_enabled, splash_ad_frequency: ((s as any).splash_ad_frequency ?? "session") as "session" | "daily" | "always",
     });
   };
 
@@ -120,6 +123,7 @@ function Admin() {
             {stats.pending > 0 && <Badge className="ms-2 bg-gold text-background h-5 px-1.5">{stats.pending}</Badge>}
           </TabsTrigger>
           <TabsTrigger value="users"><Users className="size-4" /> المستخدمون</TabsTrigger>
+          <TabsTrigger value="ads"><Megaphone className="size-4" /> الإعلانات المخصصة</TabsTrigger>
           <TabsTrigger value="settings"><SettingsIcon className="size-4" /> الإعدادات</TabsTrigger>
         </TabsList>
 
@@ -199,6 +203,10 @@ function Admin() {
           </div>
         </TabsContent>
 
+        <TabsContent value="ads" className="mt-4">
+          <AdsManager />
+        </TabsContent>
+
         <TabsContent value="settings" className="mt-4">
           <div className="rounded-2xl border border-border/60 bg-card/50 p-6 space-y-4 max-w-xl">
             <div>
@@ -244,6 +252,29 @@ function Admin() {
                   <Label>Adsterra Interstitial Zone ID</Label>
                   <Input dir="ltr" placeholder="xxxxxxxxxxxxxxxxxxxx" value={settings.adsterra_interstitial_zone} onChange={(e) => setSettings({ ...settings, adsterra_interstitial_zone: e.target.value })} />
                   <p className="text-xs text-muted-foreground mt-1">يظهر مرة واحدة يومياً لكل مستخدم عادي (ليس الأدمن).</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-border/40 pt-4 mt-4">
+              <h3 className="font-semibold text-gold mb-3">فيديو ترحيبي عند الدخول (Splash Ad)</h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>تفعيل الفيديو الترحيبي</Label>
+                  <Switch checked={settings.splash_ad_enabled} onCheckedChange={(v) => setSettings({ ...settings, splash_ad_enabled: v })} />
+                </div>
+                <div>
+                  <Label>تكرار الظهور</Label>
+                  <select
+                    className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                    value={settings.splash_ad_frequency}
+                    onChange={(e) => setSettings({ ...settings, splash_ad_frequency: e.target.value as "session" | "daily" | "always" })}
+                  >
+                    <option value="session">مرة واحدة لكل جلسة</option>
+                    <option value="daily">مرة واحدة يومياً</option>
+                    <option value="always">في كل دخول</option>
+                  </select>
+                  <p className="text-xs text-muted-foreground mt-1">أضف فيديوهات من تبويب "الإعلانات المخصصة" — يتم اختيار واحد عشوائياً.</p>
                 </div>
               </div>
             </div>

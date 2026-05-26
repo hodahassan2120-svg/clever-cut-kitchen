@@ -20,6 +20,9 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AdSlot } from "@/components/AdSlot";
+import { CustomBanner } from "@/components/CustomBanner";
+import { SplashAd } from "@/components/SplashAd";
+import { InterstitialAd } from "@/components/InterstitialAd";
 
 export const Route = createFileRoute("/app")({ component: AppLayout });
 
@@ -102,11 +105,14 @@ function AppLayout() {
 
       <main className="flex-1 overflow-auto pb-16 md:pb-0">
         <Outlet />
-        {/* بانر إعلاني سفلي — يظهر في كل صفحات البرنامج بدون التأثير على التخطيط */}
-        <div className="mt-6 px-4 pb-4 md:pb-6">
+        {/* إعلانات سفلية — لا تؤثر على التخطيط */}
+        <div className="mt-6 px-4 pb-4 md:pb-6 space-y-3">
+          <CustomBanner />
           <AdSlot className="min-h-[90px] rounded-lg overflow-hidden" format="auto" />
         </div>
       </main>
+      <SplashAd />
+      <InterstitialAd />
 
 
       {/* Mobile bottom nav */}

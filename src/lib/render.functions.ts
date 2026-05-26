@@ -76,20 +76,20 @@ ${viewText}.
     const url = json.choices?.[0]?.message?.images?.[0]?.image_url?.url;
     if (!url) { await refund(); throw new Error("NO_IMAGE_RETURNED"); }
 
-    // Upload to storage + save row (best-effort)
-    let publicUrl: string | null = null;
+    // Upload to private storage + save row (best-effort). Store path; return signed URL.
+    let signedUrl: string | null = null;
     try {
       const b64 = url.split(",")[1] || url;
       const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
       const filename = `${userId}/${Date.now()}-${data.viewAngle ?? "perspective"}.png`;
       const { error: upErr } = await supabase.storage.from("design-renders").upload(filename, bytes, { contentType: "image/png", upsert: false });
       if (!upErr) {
-        const { data: pub } = supabase.storage.from("design-renders").getPublicUrl(filename);
-        publicUrl = pub.publicUrl;
+        const { data: signed } = await supabase.storage.from("design-renders").createSignedUrl(filename, 60 * 60 * 24 * 7);
+        signedUrl = signed?.signedUrl ?? null;
         await supabase.from("design_renders").insert({
           user_id: userId,
           design_id: data.designId ?? null,
-          image_url: publicUrl,
+          image_url: filename, // store storage path, not public URL
           style: data.style ?? "modern",
           view_angle: data.viewAngle ?? "perspective",
         });
@@ -100,5 +100,6 @@ ${viewText}.
       console.error("[renderRealistic] save error", e);
     }
 
-    return { imageDataUrl: publicUrl ?? url, creditsRemaining: consumedObj.credits ?? 0 };
+    return { imageDataUrl: signedUrl ?? url, creditsRemaining: consumedObj.credits ?? 0 };
   });
+

@@ -25,6 +25,8 @@ function Admin() {
   const [settings, setSettings] = useState({
     adsense_client: "", adsense_enabled: false, whatsapp_number: "",
     adsterra_rewarded_zone: "", adsterra_interstitial_zone: "",
+    adsterra_banner_key: "", adsterra_banner_enabled: false,
+    adsterra_smart_link: "",
     rewarded_ads_enabled: false, interstitial_ads_enabled: false,
     credits_per_ad: 1, max_daily_ad_credits: 10,
     splash_ad_enabled: false, splash_ad_frequency: "session" as "session" | "daily" | "always",

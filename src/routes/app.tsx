@@ -23,6 +23,7 @@ import { AdSlot } from "@/components/AdSlot";
 import { CustomBanner } from "@/components/CustomBanner";
 import { SplashAd } from "@/components/SplashAd";
 import { InterstitialAd } from "@/components/InterstitialAd";
+import { AdsterraBanner } from "@/components/AdsterraBanner";
 
 export const Route = createFileRoute("/app")({ component: AppLayout });
 
@@ -85,6 +86,9 @@ function AppLayout() {
         <div className="mt-4 rounded-lg border border-gold/30 bg-gold/5 p-3 text-xs">
           <div className="flex items-center gap-1.5 text-gold font-semibold mb-1"><Sparkles className="size-3" /> {subscription?.activated_until ? "اشتراك مفعل" : "تجربة مجانية"}</div>
           <div className="text-muted-foreground">متبقي {daysLeft} يوم</div>
+        </div>
+        <div className="mt-3">
+          <AdsterraBanner className="rounded-lg overflow-hidden border border-border/30" />
         </div>
         <ConfirmSignOutButton onConfirm={signOut} className="mt-3 justify-start text-muted-foreground" />
       </aside>

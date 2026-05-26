@@ -952,9 +952,12 @@ function DesignEditor() {
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <Button size="sm" disabled={aiRendering} onClick={generateRealisticRender} className="h-8 px-2 text-xs gap-1 bg-gradient-primary shadow-glow">
+                <Button size="sm" disabled={aiRendering} onClick={() => setRenderOpen(true)} className="h-8 px-2 text-xs gap-1 bg-gradient-primary shadow-glow">
                   {aiRendering ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
                   صورة واقعية AI{aiCredits !== null ? ` (${aiCredits})` : ""}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => { setGalleryOpen(true); loadGallery(); }} className="h-8 px-2 text-xs gap-1" title="معرض الصور المولّدة">
+                  <Images className="size-3.5" />
                 </Button>
                 <Button size="sm" variant="outline" onClick={() => setAdModalOpen(true)} className="h-8 px-2 text-xs gap-1" title="احصل على كريديت مجاني بمشاهدة إعلان">
                   <Gift className="size-3.5 text-gold" />

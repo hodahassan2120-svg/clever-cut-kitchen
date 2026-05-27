@@ -1,5 +1,6 @@
 // رسم الأجهزة بشكل واقعي قريب من الواقع في الـ 3D
 // يُستدعى من Cabinet3D عند أنواع الأجهزة (appl_*, tall_fridge, base_sink*, …)
+import { memo } from "react";
 import type { PlacedBlock } from "@/lib/blocks";
 import { TexturedMaterial } from "./TexturedMaterial";
 

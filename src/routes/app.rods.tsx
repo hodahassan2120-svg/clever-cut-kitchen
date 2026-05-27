@@ -160,7 +160,7 @@ function RodsPage() {
           )}
         </div>
       </div>
-      <div className="mt-6"><AdSlot /></div>
+      
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Stage, Layer, Rect, Line, Text as KText, Group } from "react-konva";
 import { Canvas, useThree, type ThreeEvent } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import { OrbitControls, Environment, ContactShadows, SoftShadows } from "@react-three/drei";
 import * as THREE from "three";
 import { KITCHEN_BLOCKS, CATEGORY_LABELS, DEFAULT_DESIGN, type DesignDoc, type KitchenBlock, type PlacedBlock } from "@/lib/blocks";
 import { BlockIcon } from "@/components/BlockIcon";
@@ -96,6 +96,46 @@ function DesignEditor() {
   const [isDragging3d, setIsDragging3d] = useState(false);
   const [cameraResetKey, setCameraResetKey] = useState(0);
   const callRender = useServerFn(renderRealistic);
+
+  // History stack — Undo/Redo على مستوى المستند بالكامل
+  const historyRef = useRef<{ past: DesignDoc[]; future: DesignDoc[] }>({ past: [], future: [] });
+  const skipHistoryRef = useRef(false);
+  const lastDocRef = useRef<DesignDoc>(doc);
+  useEffect(() => {
+    if (skipHistoryRef.current) { skipHistoryRef.current = false; lastDocRef.current = doc; return; }
+    if (lastDocRef.current !== doc) {
+      historyRef.current.past.push(lastDocRef.current);
+      if (historyRef.current.past.length > 50) historyRef.current.past.shift();
+      historyRef.current.future = [];
+      lastDocRef.current = doc;
+    }
+  }, [doc]);
+  const undo = () => {
+    const h = historyRef.current;
+    if (!h.past.length) return;
+    const prev = h.past.pop()!;
+    h.future.push(lastDocRef.current);
+    skipHistoryRef.current = true;
+    setDoc(prev);
+    toast.info("تم التراجع");
+  };
+  const redo = () => {
+    const h = historyRef.current;
+    if (!h.future.length) return;
+    const next = h.future.pop()!;
+    h.past.push(lastDocRef.current);
+    skipHistoryRef.current = true;
+    setDoc(next);
+    toast.info("تمت الإعادة");
+  };
+  const duplicateBlock = (id: string) => {
+    const b = doc.blocks.find((x) => x.id === id);
+    if (!b) return;
+    const copy: PlacedBlock = { ...b, id: crypto.randomUUID(), x: Math.min(doc.roomWidth - b.width, b.x + 20), y: Math.min(doc.roomDepth - b.depth, b.y + 20) };
+    setDoc({ ...doc, blocks: [...doc.blocks, copy] });
+    setSelectedId(copy.id);
+    toast.success("تم تكرار الوحدة");
+  };
 
   const zoomCamera = (factor: number) => {
     const c = orbitRef.current;
@@ -223,6 +263,21 @@ function DesignEditor() {
     if (!b) return;
     updateBlock(id, { rotation: ((b.rotation || 0) + delta + 360) % 360 });
   };
+
+  // اختصارات لوحة المفاتيح: Ctrl+Z تراجع، Ctrl+Shift+Z / Ctrl+Y إعادة، Delete حذف، Ctrl+D تكرار
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable) return;
+      const ctrl = e.ctrlKey || e.metaKey;
+      if (ctrl && e.key.toLowerCase() === "z" && !e.shiftKey) { e.preventDefault(); undo(); return; }
+      if (ctrl && (e.key.toLowerCase() === "y" || (e.key.toLowerCase() === "z" && e.shiftKey))) { e.preventDefault(); redo(); return; }
+      if (ctrl && e.key.toLowerCase() === "d" && selectedId) { e.preventDefault(); duplicateBlock(selectedId); return; }
+      if ((e.key === "Delete" || e.key === "Backspace") && selectedId) { e.preventDefault(); removeBlock(selectedId); return; }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selectedId, doc]);
   const openEditDialog = (b: PlacedBlock) => {
     setEditingId(b.id);
     setEditDims({
@@ -446,11 +501,11 @@ function DesignEditor() {
     toast.success("تمت محاذاة كل وحدة على أقرب حائط لها");
   };
 
+  // ضع الوحدة في وسط الغرفة بدون التصاق بحائط — المستخدم يحركها يدوياً
   const autoPlaceBlock = (block: PlacedBlock) => {
-    const row = doc.blocks.filter((b) => Math.abs(b.y) < 2).sort((a, z) => a.x - z.x);
-    const last = row[row.length - 1];
-    const nextX = last ? last.x + last.width : 0;
-    return snapBlockToWall({ ...block, x: nextX + block.width <= doc.roomWidth ? nextX : 0, y: 0, rotation: 0 }, doc.blocks);
+    const cx = Math.max(0, Math.round(doc.roomWidth / 2 - block.width / 2));
+    const cy = Math.max(0, Math.round(doc.roomDepth / 2 - block.depth / 2));
+    return clampBlock({ ...block, x: cx, y: cy, rotation: 0 });
   };
 
   const groupedBlocks = (["base", "wall", "tall", "appliance", "special"] as const).map((cat) => ({
@@ -536,7 +591,30 @@ function DesignEditor() {
           <input type="color" value={doc.globalColor || "#b88858"} onChange={(e) => setDoc({ ...doc, globalColor: e.target.value })} className="h-9 w-14 rounded cursor-pointer bg-transparent border border-border/60" />
           <Input value={doc.globalColor || "#b88858"} onChange={(e) => setDoc({ ...doc, globalColor: e.target.value })} className="flex-1 font-mono text-xs h-9" />
         </div>
+        {/* لوحة ألوان واقعية للمطابخ — مستوحاة من تشطيبات حقيقية (HPL/MDF/خشب طبيعي) */}
+        <div className="grid grid-cols-8 gap-1.5 pt-1">
+          {[
+            { name: "أبيض ثلجي", c: "#f5f3ee" }, { name: "كريمي", c: "#e8dcc4" },
+            { name: "بيج رملي", c: "#c9b48c" }, { name: "كابتشينو", c: "#a68763" },
+            { name: "بلوط فاتح", c: "#b88858" }, { name: "بلوط داكن", c: "#7a5a3a" },
+            { name: "جوز", c: "#5a3e2a" }, { name: "ونجي", c: "#2e1d12" },
+            { name: "رمادي فاتح", c: "#c8c3bd" }, { name: "رمادي إسمنتي", c: "#8a8580" },
+            { name: "أنثراسايت", c: "#3a3a3a" }, { name: "أسود مطفي", c: "#1a1a1a" },
+            { name: "زيتي", c: "#5a6a4a" }, { name: "أزرق بحري", c: "#2c4a5c" },
+            { name: "كحلي", c: "#1c2a3e" }, { name: "بورجوندي", c: "#5a2828" },
+          ].map((p) => (
+            <button
+              key={p.c}
+              type="button"
+              onClick={() => setDoc({ ...doc, globalColor: p.c })}
+              title={p.name}
+              className={`h-7 w-full rounded border transition-all hover:scale-110 ${doc.globalColor?.toLowerCase() === p.c.toLowerCase() ? "border-primary ring-2 ring-primary/40" : "border-border/60"}`}
+              style={{ background: p.c }}
+            />
+          ))}
+        </div>
         <p className="text-[10px] text-muted-foreground">يطبَّق على كل الوحدات التي ليس لها لون مخصص.</p>
+
 
         <h4 className="text-sm font-semibold flex items-center gap-1.5 pt-2"><Palette className="size-3.5 text-primary" /> ألوان الغرفة</h4>
         <div className="space-y-2">
@@ -1038,19 +1116,35 @@ function DesignEditor() {
             )}
 
             <Canvas
+              shadows="soft"
               camera={{ position: [doc.roomWidth, doc.roomDepth * 1.2, doc.roomDepth * 1.4], fov: 45 }}
-              dpr={[1, 1.5]}
-              gl={{ antialias: true, powerPreference: "default", preserveDrawingBuffer: true, alpha: false }}
+              dpr={[1, 2]}
+              gl={{ antialias: true, powerPreference: "default", preserveDrawingBuffer: true, alpha: false, toneMappingExposure: 1.05 }}
               frameloop="demand"
               onPointerMissed={() => { if (!dragRef.current) setSelectedId(null); }}
             >
               <SceneCamera view={view3d} roomWidth={doc.roomWidth} roomDepth={doc.roomDepth} resetKey={cameraResetKey} />
               <color attach="background" args={["#f3eee6"]} />
-              <ambientLight intensity={1.25} />
-              <hemisphereLight args={["#ffffff", "#b8a98a", 0.45]} />
-              <directionalLight position={[doc.roomWidth, 520, doc.roomDepth]} intensity={0.75} />
-              <directionalLight position={[-doc.roomWidth * 0.4, 380, -doc.roomDepth * 0.4]} intensity={0.35} />
-              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[doc.roomWidth / 2, -0.6, doc.roomDepth / 2]}>
+              <SoftShadows size={28} samples={12} focus={0.6} />
+              {/* بيئة عاكسة لـ PBR materials — تعطي انعكاسات واقعية على الستانلس/الرخام/الزجاج */}
+              <Environment preset="apartment" environmentIntensity={0.55} />
+              <ambientLight intensity={0.55} />
+              <hemisphereLight args={["#fff5e1", "#a89678", 0.35]} />
+              <directionalLight
+                position={[doc.roomWidth * 0.7, 540, doc.roomDepth * 0.6]}
+                intensity={1.15}
+                castShadow
+                shadow-mapSize={[1024, 1024]}
+                shadow-camera-left={-doc.roomWidth}
+                shadow-camera-right={doc.roomWidth}
+                shadow-camera-top={doc.roomDepth}
+                shadow-camera-bottom={-doc.roomDepth}
+                shadow-bias={-0.0005}
+              />
+              <directionalLight position={[-doc.roomWidth * 0.4, 380, -doc.roomDepth * 0.4]} intensity={0.25} />
+              {/* Contact Shadows تحت الوحدات — يلطف اتصال الأرضية ويضيف عمق */}
+              <ContactShadows position={[doc.roomWidth / 2, 0.2, doc.roomDepth / 2]} scale={Math.max(doc.roomWidth, doc.roomDepth) * 1.5} opacity={0.55} blur={2.4} far={120} resolution={1024} color="#1a1410" />
+              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[doc.roomWidth / 2, -0.6, doc.roomDepth / 2]} receiveShadow>
                 <planeGeometry args={[doc.roomWidth, doc.roomDepth]} />
                 <TexturedMaterial textureId={doc.floorTextureId} surfaceWidthCm={doc.roomWidth} surfaceHeightCm={doc.roomDepth} fallbackColor={doc.floorColor || "#d9cec0"} roughness={0.92} />
               </mesh>

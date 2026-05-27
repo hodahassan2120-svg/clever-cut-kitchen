@@ -97,6 +97,46 @@ function DesignEditor() {
   const [cameraResetKey, setCameraResetKey] = useState(0);
   const callRender = useServerFn(renderRealistic);
 
+  // History stack — Undo/Redo على مستوى المستند بالكامل
+  const historyRef = useRef<{ past: DesignDoc[]; future: DesignDoc[] }>({ past: [], future: [] });
+  const skipHistoryRef = useRef(false);
+  const lastDocRef = useRef<DesignDoc>(doc);
+  useEffect(() => {
+    if (skipHistoryRef.current) { skipHistoryRef.current = false; lastDocRef.current = doc; return; }
+    if (lastDocRef.current !== doc) {
+      historyRef.current.past.push(lastDocRef.current);
+      if (historyRef.current.past.length > 50) historyRef.current.past.shift();
+      historyRef.current.future = [];
+      lastDocRef.current = doc;
+    }
+  }, [doc]);
+  const undo = () => {
+    const h = historyRef.current;
+    if (!h.past.length) return;
+    const prev = h.past.pop()!;
+    h.future.push(lastDocRef.current);
+    skipHistoryRef.current = true;
+    setDoc(prev);
+    toast.info("تم التراجع");
+  };
+  const redo = () => {
+    const h = historyRef.current;
+    if (!h.future.length) return;
+    const next = h.future.pop()!;
+    h.past.push(lastDocRef.current);
+    skipHistoryRef.current = true;
+    setDoc(next);
+    toast.info("تمت الإعادة");
+  };
+  const duplicateBlock = (id: string) => {
+    const b = doc.blocks.find((x) => x.id === id);
+    if (!b) return;
+    const copy: PlacedBlock = { ...b, id: crypto.randomUUID(), x: Math.min(doc.roomWidth - b.width, b.x + 20), y: Math.min(doc.roomDepth - b.depth, b.y + 20) };
+    setDoc({ ...doc, blocks: [...doc.blocks, copy] });
+    setSelectedId(copy.id);
+    toast.success("تم تكرار الوحدة");
+  };
+
   const zoomCamera = (factor: number) => {
     const c = orbitRef.current;
     if (!c) return;

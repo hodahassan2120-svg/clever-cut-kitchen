@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Box, Ruler, Layers, Sparkles, Cuboid, Scissors } from "lucide-react";
+import { Box, Ruler, Layers, Sparkles, Cuboid, Scissors, CheckCircle2, Quote } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AdSlot } from "@/components/AdSlot";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 export const Route = createFileRoute("/")({
   component: Landing,

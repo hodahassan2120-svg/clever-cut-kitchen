@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { AdSlot } from "@/components/AdSlot";
 import { CustomBanner } from "@/components/CustomBanner";
 import { SplashAd } from "@/components/SplashAd";
 import { InterstitialAd } from "@/components/InterstitialAd";

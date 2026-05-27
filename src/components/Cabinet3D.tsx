@@ -1,4 +1,5 @@
 // رسم وحدة مطبخ تفصيلية في 3D — تعرض الجسم + الأبواب + الأدراج + الزجاج + الرخامة
+import { memo } from "react";
 import type { PlacedBlock } from "@/lib/blocks";
 import { Appliance3D } from "./Appliance3D";
 import { TexturedMaterial } from "./TexturedMaterial";
@@ -38,7 +39,7 @@ const READY_CABINET_SPECS: Record<string, { placement: "base" | "wall" | "tall";
 
 const getCabinetSpec = (block: PlacedBlock) => READY_CABINET_SPECS[block.type];
 
-export function Cabinet3D({ block, defaultColor, marbleColor, marbleTextureId }: Props) {
+function Cabinet3DImpl({ block, defaultColor, marbleColor, marbleTextureId }: Props) {
   if (APPLIANCE_TYPES.has(block.type)) {
     return <Appliance3D block={block} defaultColor={defaultColor} marbleColor={marbleColor} marbleTextureId={marbleTextureId} />;
   }
@@ -223,3 +224,5 @@ export function Cabinet3D({ block, defaultColor, marbleColor, marbleTextureId }:
     </group>
   );
 }
+
+export const Cabinet3D = memo(Cabinet3DImpl);

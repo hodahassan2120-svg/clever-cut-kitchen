@@ -439,9 +439,11 @@ function DesignEditor() {
   };
 
   const alignAllBlocks = () => {
-    const target = selected ? nearestWall(selected) : (doc.blocks[0] ? nearestWall(doc.blocks[0]) : "back");
-    setDoc((current) => ({ ...current, blocks: current.blocks.map((b) => alignBlockToWall(b, target)) }));
-    toast.success("تمت محاذاة كل الوحدات على خط واحد");
+    setDoc((current) => ({
+      ...current,
+      blocks: current.blocks.map((b) => alignBlockToWall(b, nearestWall(b))),
+    }));
+    toast.success("تمت محاذاة كل وحدة على أقرب حائط لها");
   };
 
   const autoPlaceBlock = (block: PlacedBlock) => {

@@ -92,8 +92,23 @@ function DesignEditor() {
   const [gallery, setGallery] = useState<{ id: string; image_url: string; style: string | null; view_angle: string | null; created_at: string }[]>([]);
   const orbitRef = useRef<any>(null);
   const dragRef = useRef<{ id: string; offsetX: number; offsetZ: number; currentX: number; currentY: number; plane: THREE.Plane; moved: boolean } | null>(null);
+  const dragRafRef = useRef<number | null>(null);
   const [isDragging3d, setIsDragging3d] = useState(false);
+  const [cameraResetKey, setCameraResetKey] = useState(0);
   const callRender = useServerFn(renderRealistic);
+
+  const zoomCamera = (factor: number) => {
+    const c = orbitRef.current;
+    if (!c) return;
+    const dir = c.object.position.clone().sub(c.target);
+    dir.multiplyScalar(factor);
+    c.object.position.copy(c.target).add(dir);
+    c.update();
+  };
+  const resetCamera = () => {
+    setView3d("perspective");
+    setCameraResetKey((k) => k + 1);
+  };
 
   useEffect(() => {
     if (!user) return;

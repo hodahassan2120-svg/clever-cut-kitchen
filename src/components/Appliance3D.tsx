@@ -16,7 +16,7 @@ const STEEL_DARK = "#8a8f96";
 const BLACK_GLASS = "#0e0f12";
 const DISPLAY = "#1a3a2a";
 
-export function Appliance3D({ block, marbleColor, marbleTextureId, defaultColor }: Props) {
+function Appliance3DImpl({ block, marbleColor, marbleTextureId, defaultColor }: Props) {
   const { type, width: W, height: H, depth: D } = block;
   const wallMounted = type === "appl_hood" || type === "appl_hood_chimney" || type === "appl_microwave_built";
   const verticalOffset = wallMounted ? 145 : 0;

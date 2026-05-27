@@ -1061,19 +1061,35 @@ function DesignEditor() {
             )}
 
             <Canvas
+              shadows="soft"
               camera={{ position: [doc.roomWidth, doc.roomDepth * 1.2, doc.roomDepth * 1.4], fov: 45 }}
-              dpr={[1, 1.5]}
-              gl={{ antialias: true, powerPreference: "default", preserveDrawingBuffer: true, alpha: false }}
+              dpr={[1, 2]}
+              gl={{ antialias: true, powerPreference: "default", preserveDrawingBuffer: true, alpha: false, toneMappingExposure: 1.05 }}
               frameloop="demand"
               onPointerMissed={() => { if (!dragRef.current) setSelectedId(null); }}
             >
               <SceneCamera view={view3d} roomWidth={doc.roomWidth} roomDepth={doc.roomDepth} resetKey={cameraResetKey} />
               <color attach="background" args={["#f3eee6"]} />
-              <ambientLight intensity={1.25} />
-              <hemisphereLight args={["#ffffff", "#b8a98a", 0.45]} />
-              <directionalLight position={[doc.roomWidth, 520, doc.roomDepth]} intensity={0.75} />
-              <directionalLight position={[-doc.roomWidth * 0.4, 380, -doc.roomDepth * 0.4]} intensity={0.35} />
-              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[doc.roomWidth / 2, -0.6, doc.roomDepth / 2]}>
+              <SoftShadows size={28} samples={12} focus={0.6} />
+              {/* بيئة عاكسة لـ PBR materials — تعطي انعكاسات واقعية على الستانلس/الرخام/الزجاج */}
+              <Environment preset="apartment" environmentIntensity={0.55} />
+              <ambientLight intensity={0.55} />
+              <hemisphereLight args={["#fff5e1", "#a89678", 0.35]} />
+              <directionalLight
+                position={[doc.roomWidth * 0.7, 540, doc.roomDepth * 0.6]}
+                intensity={1.15}
+                castShadow
+                shadow-mapSize={[1024, 1024]}
+                shadow-camera-left={-doc.roomWidth}
+                shadow-camera-right={doc.roomWidth}
+                shadow-camera-top={doc.roomDepth}
+                shadow-camera-bottom={-doc.roomDepth}
+                shadow-bias={-0.0005}
+              />
+              <directionalLight position={[-doc.roomWidth * 0.4, 380, -doc.roomDepth * 0.4]} intensity={0.25} />
+              {/* Contact Shadows تحت الوحدات — يلطف اتصال الأرضية ويضيف عمق */}
+              <ContactShadows position={[doc.roomWidth / 2, 0.2, doc.roomDepth / 2]} scale={Math.max(doc.roomWidth, doc.roomDepth) * 1.5} opacity={0.55} blur={2.4} far={120} resolution={1024} color="#1a1410" />
+              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[doc.roomWidth / 2, -0.6, doc.roomDepth / 2]} receiveShadow>
                 <planeGeometry args={[doc.roomWidth, doc.roomDepth]} />
                 <TexturedMaterial textureId={doc.floorTextureId} surfaceWidthCm={doc.roomWidth} surfaceHeightCm={doc.roomDepth} fallbackColor={doc.floorColor || "#d9cec0"} roughness={0.92} />
               </mesh>

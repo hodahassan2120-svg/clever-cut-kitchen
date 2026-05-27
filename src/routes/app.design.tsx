@@ -1355,6 +1355,15 @@ function DesignEditor() {
         }}
       />
 
+      {/* مكتبة القوالب الجاهزة */}
+      <TemplatesDialog
+        open={templatesOpen}
+        onClose={() => setTemplatesOpen(false)}
+        onPick={applyTemplate}
+        hasExisting={doc.blocks.length > 0}
+      />
+
+
       {/* تعديل وحدة موجودة */}
       <Dialog open={!!editingId} onOpenChange={(o) => !o && setEditingId(null)}>
         <DialogContent className="max-w-sm">

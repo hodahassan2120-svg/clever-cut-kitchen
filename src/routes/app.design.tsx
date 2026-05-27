@@ -263,6 +263,21 @@ function DesignEditor() {
     if (!b) return;
     updateBlock(id, { rotation: ((b.rotation || 0) + delta + 360) % 360 });
   };
+
+  // اختصارات لوحة المفاتيح: Ctrl+Z تراجع، Ctrl+Shift+Z / Ctrl+Y إعادة، Delete حذف، Ctrl+D تكرار
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable) return;
+      const ctrl = e.ctrlKey || e.metaKey;
+      if (ctrl && e.key.toLowerCase() === "z" && !e.shiftKey) { e.preventDefault(); undo(); return; }
+      if (ctrl && (e.key.toLowerCase() === "y" || (e.key.toLowerCase() === "z" && e.shiftKey))) { e.preventDefault(); redo(); return; }
+      if (ctrl && e.key.toLowerCase() === "d" && selectedId) { e.preventDefault(); duplicateBlock(selectedId); return; }
+      if ((e.key === "Delete" || e.key === "Backspace") && selectedId) { e.preventDefault(); removeBlock(selectedId); return; }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selectedId, doc]);
   const openEditDialog = (b: PlacedBlock) => {
     setEditingId(b.id);
     setEditDims({

@@ -1,0 +1,1 @@
+UPDATE public.app_settings SET adsterra_banner_key = 'b90be571ea468ef68b7b43420f3b108d' WHERE id = 1;

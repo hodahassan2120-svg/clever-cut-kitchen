@@ -15,6 +15,8 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader } from "@/co
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { CustomUnitBuilder } from "@/components/CustomUnitBuilder";
+import { TemplatesDialog } from "@/components/TemplatesDialog";
+import { buildTemplateDoc, type KitchenTemplate } from "@/lib/templates";
 import { Cabinet3D } from "@/components/Cabinet3D";
 import { TexturedMaterial } from "@/components/TexturedMaterial";
 import { TEXTURES } from "@/lib/textures";
@@ -72,6 +74,20 @@ function DesignEditor() {
   const [pendingBlock, setPendingBlock] = useState<KitchenBlock | null>(null);
   const [pendingDims, setPendingDims] = useState({ width: "", depth: "", height: "", notes: "" });
   const [builderOpen, setBuilderOpen] = useState(false);
+  const [templatesOpen, setTemplatesOpen] = useState(false);
+
+  const applyTemplate = (t: KitchenTemplate) => {
+    const next = buildTemplateDoc(t, {
+      globalColor: doc.globalColor,
+      floorColor: doc.floorColor,
+      wallColor: doc.wallColor,
+      marbleColor: doc.marbleColor,
+    });
+    setDoc(next);
+    setSelectedId(null);
+    setTemplatesOpen(false);
+    toast.success(`تم تحميل قالب "${t.name}"`);
+  };
   const [editorStarted, setEditorStarted] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDims, setEditDims] = useState({ width: "", depth: "", height: "", notes: "" });

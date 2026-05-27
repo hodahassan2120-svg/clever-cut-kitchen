@@ -536,7 +536,30 @@ function DesignEditor() {
           <input type="color" value={doc.globalColor || "#b88858"} onChange={(e) => setDoc({ ...doc, globalColor: e.target.value })} className="h-9 w-14 rounded cursor-pointer bg-transparent border border-border/60" />
           <Input value={doc.globalColor || "#b88858"} onChange={(e) => setDoc({ ...doc, globalColor: e.target.value })} className="flex-1 font-mono text-xs h-9" />
         </div>
+        {/* لوحة ألوان واقعية للمطابخ — مستوحاة من تشطيبات حقيقية (HPL/MDF/خشب طبيعي) */}
+        <div className="grid grid-cols-8 gap-1.5 pt-1">
+          {[
+            { name: "أبيض ثلجي", c: "#f5f3ee" }, { name: "كريمي", c: "#e8dcc4" },
+            { name: "بيج رملي", c: "#c9b48c" }, { name: "كابتشينو", c: "#a68763" },
+            { name: "بلوط فاتح", c: "#b88858" }, { name: "بلوط داكن", c: "#7a5a3a" },
+            { name: "جوز", c: "#5a3e2a" }, { name: "ونجي", c: "#2e1d12" },
+            { name: "رمادي فاتح", c: "#c8c3bd" }, { name: "رمادي إسمنتي", c: "#8a8580" },
+            { name: "أنثراسايت", c: "#3a3a3a" }, { name: "أسود مطفي", c: "#1a1a1a" },
+            { name: "زيتي", c: "#5a6a4a" }, { name: "أزرق بحري", c: "#2c4a5c" },
+            { name: "كحلي", c: "#1c2a3e" }, { name: "بورجوندي", c: "#5a2828" },
+          ].map((p) => (
+            <button
+              key={p.c}
+              type="button"
+              onClick={() => setDoc({ ...doc, globalColor: p.c })}
+              title={p.name}
+              className={`h-7 w-full rounded border transition-all hover:scale-110 ${doc.globalColor?.toLowerCase() === p.c.toLowerCase() ? "border-primary ring-2 ring-primary/40" : "border-border/60"}`}
+              style={{ background: p.c }}
+            />
+          ))}
+        </div>
         <p className="text-[10px] text-muted-foreground">يطبَّق على كل الوحدات التي ليس لها لون مخصص.</p>
+
 
         <h4 className="text-sm font-semibold flex items-center gap-1.5 pt-2"><Palette className="size-3.5 text-primary" /> ألوان الغرفة</h4>
         <div className="space-y-2">

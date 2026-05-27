@@ -11,7 +11,7 @@ import { cutBoards, type BoardStock, type BoardPiece, type BoardResult } from "@
 import { Plus, Trash2, Scissors, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import { exportBoardsPDF } from "@/lib/pdf";
-import { AdSlot } from "@/components/AdSlot";
+
 import { SmartLinkPDFExport } from "@/components/SmartLinkGate";
 
 export const Route = createFileRoute("/app/boards")({ component: BoardsPage });
@@ -169,7 +169,7 @@ function BoardsPage() {
           )}
         </div>
       </div>
-      <div className="mt-6"><AdSlot /></div>
+      
     </div>
   );
 }

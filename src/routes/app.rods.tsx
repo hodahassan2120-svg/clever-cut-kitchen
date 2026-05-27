@@ -11,7 +11,7 @@ import { cutRods, type RodStock, type RodPiece, type RodResult } from "@/lib/cut
 import { Plus, Trash2, Scissors, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import { exportRodsPDF } from "@/lib/pdf";
-import { AdSlot } from "@/components/AdSlot";
+
 import { SmartLinkPDFExport } from "@/components/SmartLinkGate";
 
 export const Route = createFileRoute("/app/rods")({ component: RodsPage });

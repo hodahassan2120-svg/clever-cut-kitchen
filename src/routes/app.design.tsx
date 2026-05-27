@@ -541,7 +541,16 @@ function DesignEditor() {
       </button>
       <div className="text-[10px] text-muted-foreground text-center -mt-2">اختر الضلف، الأدراج، الزجاج، الركنية…</div>
 
-      <div className="text-[11px] font-bold text-muted-foreground px-1 pt-2 border-t border-border/40">أو اختر من القوالب الجاهزة:</div>
+      <button
+        onClick={() => setTemplatesOpen(true)}
+        className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border-2 border-primary/40 bg-primary/5 text-primary font-bold text-sm hover:bg-primary/10 transition"
+      >
+        <Sparkles className="size-4" />
+        مكتبة قوالب جاهزة
+      </button>
+      <div className="text-[10px] text-muted-foreground text-center -mt-2">L-Shape، U-Shape، جزيرة…</div>
+
+      <div className="text-[11px] font-bold text-muted-foreground px-1 pt-2 border-t border-border/40">أو اختر وحدة بمفردها:</div>
       {groupedBlocks.map((g) => (
         <div key={g.cat}>
           <h3 className="text-[11px] font-bold text-muted-foreground mb-2 px-1 sticky top-0 bg-card/80 backdrop-blur py-1">{g.label}</h3>

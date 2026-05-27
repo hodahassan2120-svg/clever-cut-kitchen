@@ -224,3 +224,5 @@ function Cabinet3DImpl({ block, defaultColor, marbleColor, marbleTextureId }: Pr
     </group>
   );
 }
+
+export const Cabinet3D = memo(Cabinet3DImpl);

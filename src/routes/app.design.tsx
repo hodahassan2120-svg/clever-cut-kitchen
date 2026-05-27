@@ -41,7 +41,7 @@ export const Route = createFileRoute("/app/design")({
   validateSearch: (s: Record<string, unknown>) => ({ id: typeof s.id === "string" ? s.id : undefined }),
 });
 
-function SceneCamera({ view, roomWidth, roomDepth }: { view: "perspective" | "top" | "front" | "right" | "left"; roomWidth: number; roomDepth: number }) {
+function SceneCamera({ view, roomWidth, roomDepth, resetKey }: { view: "perspective" | "top" | "front" | "right" | "left"; roomWidth: number; roomDepth: number; resetKey: number }) {
   const { camera, invalidate } = useThree();
   useEffect(() => {
     const target: [number, number, number] = [roomWidth / 2, 80, roomDepth / 2];
@@ -57,7 +57,7 @@ function SceneCamera({ view, roomWidth, roomDepth }: { view: "perspective" | "to
     camera.lookAt(...target);
     camera.updateProjectionMatrix();
     invalidate();
-  }, [camera, invalidate, roomDepth, roomWidth, view]);
+  }, [camera, invalidate, roomDepth, roomWidth, view, resetKey]);
   return null;
 }
 

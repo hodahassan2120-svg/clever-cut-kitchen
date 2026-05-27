@@ -108,11 +108,10 @@ function AppLayout() {
 
       <main className="flex-1 overflow-auto pb-16 md:pb-0">
         <Outlet />
-        {/* إعلانات سفلية — لا تؤثر على التخطيط */}
+        {/* إعلانات سفلية ذاتية فقط — لا AdSense داخل الصفحات المحمية */}
         <div className="mt-6 px-4 pb-4 md:pb-6 space-y-3 flex flex-col items-center">
           <CustomBanner className="w-full" />
           <AdsterraBanner className="md:hidden" />
-          <AdSlot className="min-h-[90px] w-full rounded-lg overflow-hidden" format="auto" />
         </div>
       </main>
       <SplashAd />

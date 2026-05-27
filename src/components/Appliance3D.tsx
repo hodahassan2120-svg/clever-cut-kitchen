@@ -406,3 +406,5 @@ function BaseWithOven(W: number, H: number, D: number, color: string, marbleColo
     </group>
   );
 }
+
+export const Appliance3D = memo(Appliance3DImpl);

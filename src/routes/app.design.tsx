@@ -446,11 +446,11 @@ function DesignEditor() {
     toast.success("تمت محاذاة كل وحدة على أقرب حائط لها");
   };
 
+  // ضع الوحدة في وسط الغرفة بدون التصاق بحائط — المستخدم يحركها يدوياً
   const autoPlaceBlock = (block: PlacedBlock) => {
-    const row = doc.blocks.filter((b) => Math.abs(b.y) < 2).sort((a, z) => a.x - z.x);
-    const last = row[row.length - 1];
-    const nextX = last ? last.x + last.width : 0;
-    return snapBlockToWall({ ...block, x: nextX + block.width <= doc.roomWidth ? nextX : 0, y: 0, rotation: 0 }, doc.blocks);
+    const cx = Math.max(0, Math.round(doc.roomWidth / 2 - block.width / 2));
+    const cy = Math.max(0, Math.round(doc.roomDepth / 2 - block.depth / 2));
+    return clampBlock({ ...block, x: cx, y: cy, rotation: 0 });
   };
 
   const groupedBlocks = (["base", "wall", "tall", "appliance", "special"] as const).map((cat) => ({

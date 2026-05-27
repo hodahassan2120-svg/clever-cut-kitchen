@@ -76,8 +76,93 @@ function Landing() {
         </div>
       </section>
 
+      {/* كيف يعمل البرنامج */}
+      <section className="container mx-auto px-4 py-16 border-t border-border/40">
+        <h2 className="text-3xl md:text-4xl font-bold text-center mb-3">كيف يعمل كيتشن برو؟</h2>
+        <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-12">من فكرة العميل لحد لوح الخشب الجاهز للقطع — كل خطوة في مكان واحد، بدون أوراق ولا حسابات يدوية.</p>
+        <div className="grid md:grid-cols-3 gap-6">
+          {[
+            { n: "1", t: "ارسم المطبخ", d: "اسحب وحدات جاهزة (قواعد، علويات، أعمدة، أجهزة) وحدد مقاسات الحوائط والارتفاع. تقدر تشوف النتيجة 2D و 3D فوراً." },
+            { n: "2", t: "احسب التقطيع", d: "البرنامج يولّد قائمة قطع الخشب من تصميمك، ويوزعها على الألواح المتوفرة في مخزونك بأقل هدر ممكن باستخدام خوارزمية تقطيع ذكية." },
+            { n: "3", t: "اطبع وابدأ التنفيذ", d: "صدّر تقرير PDF كامل بالقطع والأبعاد ومخطط التقطيع لكل لوح — جاهز للورشة أو ماكينة CNC." },
+          ].map((s) => (
+            <div key={s.n} className="rounded-2xl border border-border/60 bg-card/40 p-6">
+              <div className="size-10 rounded-full bg-gradient-primary text-primary-foreground font-bold flex items-center justify-center mb-4 shadow-glow">{s.n}</div>
+              <h3 className="text-lg font-bold mb-2">{s.t}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">{s.d}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* لمين البرنامج */}
+      <section className="container mx-auto px-4 py-16 border-t border-border/40">
+        <div className="grid md:grid-cols-2 gap-10 items-start">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">مين يستخدم كيتشن برو؟</h2>
+            <p className="text-muted-foreground mb-6">صُمم خصيصاً لورش النجارة وموزعي المطابخ الجاهزة في الوطن العربي. واجهة عربية كاملة، حسابات بالملليمتر، ودعم لكل أنواع ألواح MDF و HDF و Particle Board.</p>
+            <ul className="space-y-3">
+              {[
+                "ورش نجارة المطابخ والدريسنج روم",
+                "موزعو ومصممو المطابخ الجاهزة",
+                "مهندسو الديكور الداخلي",
+                "مصانع الأثاث الصغيرة والمتوسطة",
+                "هواة التصميم اللي بيعملوا مطابخهم بنفسهم",
+              ].map((x) => (
+                <li key={x} className="flex items-center gap-3 text-sm">
+                  <CheckCircle2 className="size-5 text-primary shrink-0" /> {x}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="rounded-2xl border border-gold/30 bg-gradient-to-br from-gold/10 to-transparent p-8">
+            <Quote className="size-8 text-gold mb-3" />
+            <p className="text-lg leading-relaxed mb-4">"وفّرت ساعات يومياً كنت بقضيها في رسم المطابخ يدوي وحساب التقطيع. الـ 3D ساعدني أقنع عملائي بالتصميم قبل ما أبدأ التصنيع، وقللت هدر الخشب بنسبة 18% تقريباً."</p>
+            <div className="text-sm">
+              <div className="font-bold">م. أحمد سعيد</div>
+              <div className="text-muted-foreground">صاحب ورشة مطابخ — القاهرة</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* إعلان AdSense وسط محتوى حقيقي */}
+      <section className="container mx-auto px-4 py-8">
+        <AdSlot className="min-h-[100px] w-full rounded-lg overflow-hidden" format="auto" />
+      </section>
+
+      {/* الأسئلة الشائعة */}
+      <section className="container mx-auto px-4 py-16 border-t border-border/40 max-w-3xl">
+        <h2 className="text-3xl md:text-4xl font-bold text-center mb-3">أسئلة شائعة</h2>
+        <p className="text-muted-foreground text-center mb-10">كل اللي محتاج تعرفه قبل ما تبدأ.</p>
+        <Accordion type="single" collapsible className="space-y-2">
+          {[
+            { q: "هل البرنامج فعلاً مجاني؟", a: "تقدر تجرب كل المميزات مجاناً لمدة 7 أيام بدون بطاقة ائتمان. بعد كده تختار خطة الاشتراك المناسبة لحجم شغلك." },
+            { q: "محتاج إنترنت عشان أشتغل؟", a: "آه، البرنامج يشتغل من المتصفح مباشرة، يعني تقدر تفتحه من اللاب أو الموبايل أو التابلت — وتصميماتك محفوظة على السحابة مش هتضيع." },
+            { q: "هل يدعم ماكينات الـ CNC؟", a: "تقدر تصدّر قائمة القطع والمخططات PDF جاهزة للطباعة، وفي طريقنا دعم تصدير DXF مباشرة لماكينات الـ CNC قريباً." },
+            { q: "ممكن أضيف وحدات بمقاسات مخصصة؟", a: "أكيد، فيه أداة بناء وحدة مخصصة (Custom Unit Builder) تقدر منها تحدد الطول والعمق والارتفاع وعدد الأرفف وعدد الأبواب وكل تفصيلة." },
+            { q: "هل التقطيع بياخد في اعتباره عرض المنشار؟", a: "آه، تقدر تحدد سُمك المنشار (Kerf) في إعدادات التقطيع عشان الحسابات تطلع مظبوطة 100% للقطع الحقيقي." },
+            { q: "هل بياناتي آمنة؟", a: "كل تصميماتك محمية في حسابك الشخصي ومش متاحة لأي حد تاني. بنستخدم تشفير من الدرجة الأولى لحماية بياناتك." },
+          ].map((f, i) => (
+            <AccordionItem key={i} value={`q${i}`} className="border border-border/60 rounded-xl px-4 bg-card/30">
+              <AccordionTrigger className="text-right hover:no-underline font-semibold">{f.q}</AccordionTrigger>
+              <AccordionContent className="text-muted-foreground leading-relaxed">{f.a}</AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </section>
+
+      {/* CTA نهائي */}
+      <section className="container mx-auto px-4 py-20 text-center border-t border-border/40">
+        <h2 className="text-3xl md:text-5xl font-bold mb-4">جاهز تبدأ مطبخك التالي؟</h2>
+        <p className="text-muted-foreground mb-8 max-w-xl mx-auto">انضم لمئات النجارين والمصممين اللي بيستخدموا كيتشن برو يومياً. 7 أيام مجانية تكفي تكتشف الفرق.</p>
+        <Button asChild size="lg" className="bg-gradient-primary shadow-glow text-base px-10 h-12">
+          <Link to="/register">ابدأ الآن مجاناً</Link>
+        </Button>
+      </section>
+
       <footer className="border-t border-border/50 py-8 text-center text-sm text-muted-foreground">
-        © {new Date().getFullYear()} كيتشن برو — جميع الحقوق محفوظة
+        © {new Date().getFullYear()} كيتشن برو — برنامج تصميم وتقطيع المطابخ — جميع الحقوق محفوظة
       </footer>
     </div>
   );

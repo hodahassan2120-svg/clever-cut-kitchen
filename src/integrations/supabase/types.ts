@@ -87,10 +87,13 @@ export type Database = {
           id: number
           interstitial_ads_enabled: boolean
           max_daily_ad_credits: number
+          monthly_price: number
+          paymob_enabled: boolean
           rewarded_ads_enabled: boolean
           splash_ad_enabled: boolean
           splash_ad_frequency: string
           whatsapp_number: string | null
+          yearly_price: number
         }
         Insert: {
           adsense_client?: string | null
@@ -104,10 +107,13 @@ export type Database = {
           id?: number
           interstitial_ads_enabled?: boolean
           max_daily_ad_credits?: number
+          monthly_price?: number
+          paymob_enabled?: boolean
           rewarded_ads_enabled?: boolean
           splash_ad_enabled?: boolean
           splash_ad_frequency?: string
           whatsapp_number?: string | null
+          yearly_price?: number
         }
         Update: {
           adsense_client?: string | null
@@ -121,10 +127,13 @@ export type Database = {
           id?: number
           interstitial_ads_enabled?: boolean
           max_daily_ad_credits?: number
+          monthly_price?: number
+          paymob_enabled?: boolean
           rewarded_ads_enabled?: boolean
           splash_ad_enabled?: boolean
           splash_ad_frequency?: string
           whatsapp_number?: string | null
+          yearly_price?: number
         }
         Relationships: []
       }
@@ -268,6 +277,48 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          currency: string
+          id: string
+          paymob_order_id: string | null
+          paymob_transaction_id: string | null
+          plan: string
+          raw: Json | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          currency?: string
+          id?: string
+          paymob_order_id?: string | null
+          paymob_transaction_id?: string | null
+          plan: string
+          raw?: Json | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          paymob_order_id?: string | null
+          paymob_transaction_id?: string | null
+          plan?: string
+          raw?: Json | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -375,6 +426,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      activate_paid_subscription: {
+        Args: { _payment_id: string; _plan: string; _user_id: string }
+        Returns: undefined
+      }
       consume_ai_credit: { Args: { _user_id: string }; Returns: Json }
       grant_rewarded_ad_credit: { Args: { _user_id: string }; Returns: Json }
       has_role: {

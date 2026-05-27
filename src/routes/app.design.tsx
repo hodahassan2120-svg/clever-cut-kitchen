@@ -1042,10 +1042,12 @@ function DesignEditor() {
               frameloop="demand"
               onPointerMissed={() => { if (!dragRef.current) setSelectedId(null); }}
             >
-              <SceneCamera view={view3d} roomWidth={doc.roomWidth} roomDepth={doc.roomDepth} />
+              <SceneCamera view={view3d} roomWidth={doc.roomWidth} roomDepth={doc.roomDepth} resetKey={cameraResetKey} />
               <color attach="background" args={["#f3eee6"]} />
-              <ambientLight intensity={1.1} />
-              <directionalLight position={[doc.roomWidth, 520, doc.roomDepth]} intensity={0.65} />
+              <ambientLight intensity={1.25} />
+              <hemisphereLight args={["#ffffff", "#b8a98a", 0.45]} />
+              <directionalLight position={[doc.roomWidth, 520, doc.roomDepth]} intensity={0.75} />
+              <directionalLight position={[-doc.roomWidth * 0.4, 380, -doc.roomDepth * 0.4]} intensity={0.35} />
               <mesh rotation={[-Math.PI / 2, 0, 0]} position={[doc.roomWidth / 2, -0.6, doc.roomDepth / 2]}>
                 <planeGeometry args={[doc.roomWidth, doc.roomDepth]} />
                 <TexturedMaterial textureId={doc.floorTextureId} surfaceWidthCm={doc.roomWidth} surfaceHeightCm={doc.roomDepth} fallbackColor={doc.floorColor || "#d9cec0"} roughness={0.92} />
@@ -1065,7 +1067,6 @@ function DesignEditor() {
                 const onDown = (e: ThreeEvent<PointerEvent>) => {
                   e.stopPropagation();
                   setSelectedId(b.id);
-                  // مستوى أفقي على ارتفاع منتصف الوحدة لحساب نقطة السحب
                   const planeY = vy + b.height / 2;
                   const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -planeY);
                   const point = new THREE.Vector3();
@@ -1092,11 +1093,23 @@ function DesignEditor() {
                   d.moved = true;
                   d.currentX = nx;
                   d.currentY = nz;
-                  updateBlock(b.id, { x: nx, y: nz });
+                  // throttle re-renders to animation frames — keeps دراج سلس مع وحدات كتيرة
+                  if (dragRafRef.current == null) {
+                    dragRafRef.current = requestAnimationFrame(() => {
+                      dragRafRef.current = null;
+                      const cur = dragRef.current;
+                      if (!cur || cur.id !== b.id) return;
+                      updateBlock(b.id, { x: cur.currentX, y: cur.currentY });
+                    });
+                  }
                 };
                 const onUp = (e: ThreeEvent<PointerEvent>) => {
                   const d = dragRef.current;
                   if (d?.id === b.id) {
+                    if (dragRafRef.current != null) {
+                      cancelAnimationFrame(dragRafRef.current);
+                      dragRafRef.current = null;
+                    }
                     if (d.moved) {
                       const moved = snapBlockToWall({ ...b, x: d.currentX, y: d.currentY });
                       setDoc((current) => ({ ...current, blocks: current.blocks.map((item) => (item.id === b.id ? moved : item)) }));
@@ -1106,20 +1119,53 @@ function DesignEditor() {
                     (e.target as Element).releasePointerCapture?.(e.pointerId);
                   }
                 };
+                const maxR = Math.max(b.width, b.depth) / 2;
                 return (
                   <group key={b.id} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
                     <Cabinet3D block={b} defaultColor={isPaintableBlock(b) ? (doc.globalColor || b.color) : b.color} marbleColor={doc.marbleColor} marbleTextureId={doc.marbleTextureId} />
                     {isSel && (
-                      <mesh position={[b.x + b.width / 2, vy + b.height / 2, b.y + b.depth / 2]} rotation={[0, (-b.rotation * Math.PI) / 180, 0]}>
-                        <boxGeometry args={[b.width + 3, b.height + 3, b.depth + 3]} />
-                        <meshBasicMaterial color="#f59e0b" wireframe />
-                      </mesh>
+                      <>
+                        {/* حلقة مضيئة على الأرضية لإبراز الوحدة المحددة */}
+                        <mesh position={[b.x + b.width / 2, 0.4, b.y + b.depth / 2]} rotation={[-Math.PI / 2, 0, 0]}>
+                          <ringGeometry args={[maxR + 4, maxR + 12, 48]} />
+                          <meshBasicMaterial color="#ffb020" transparent opacity={0.7} />
+                        </mesh>
+                        {/* إطار wireframe برتقالي حول الوحدة */}
+                        <mesh position={[b.x + b.width / 2, vy + b.height / 2, b.y + b.depth / 2]} rotation={[0, (-b.rotation * Math.PI) / 180, 0]}>
+                          <boxGeometry args={[b.width + 4, b.height + 4, b.depth + 4]} />
+                          <meshBasicMaterial color="#ffb020" wireframe />
+                        </mesh>
+                      </>
                     )}
                   </group>
                 );
               })}
-              <OrbitControls ref={orbitRef} target={[doc.roomWidth / 2, 80, doc.roomDepth / 2]} maxPolarAngle={Math.PI / 2.05} makeDefault enabled={view3d === "perspective" && !isDragging3d} />
+              <OrbitControls
+                ref={orbitRef}
+                target={[doc.roomWidth / 2, 80, doc.roomDepth / 2]}
+                maxPolarAngle={Math.PI / 2.05}
+                minDistance={120}
+                maxDistance={1600}
+                rotateSpeed={0.7}
+                zoomSpeed={0.9}
+                panSpeed={0.7}
+                makeDefault
+                enabled={view3d === "perspective" && !isDragging3d}
+              />
             </Canvas>
+
+            {/* أزرار التحكم بالكاميرا — زووم + إعادة ضبط */}
+            <div className="absolute bottom-3 right-3 z-10 flex flex-col gap-1.5 rounded-xl border border-border/60 bg-card/90 p-1.5 shadow-card backdrop-blur">
+              <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => zoomCamera(0.8)} title="تقريب">
+                <Plus className="size-4" />
+              </Button>
+              <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => zoomCamera(1.25)} title="تبعيد">
+                <span className="text-base leading-none font-bold">−</span>
+              </Button>
+              <Button size="icon" variant="outline" className="h-8 w-8" onClick={resetCamera} title="إعادة ضبط الكاميرا">
+                <RotateCw className="size-4" />
+              </Button>
+            </div>
 
           </TabsContent>
 

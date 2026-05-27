@@ -1,4 +1,5 @@
 // رسم وحدة مطبخ تفصيلية في 3D — تعرض الجسم + الأبواب + الأدراج + الزجاج + الرخامة
+import { memo } from "react";
 import type { PlacedBlock } from "@/lib/blocks";
 import { Appliance3D } from "./Appliance3D";
 import { TexturedMaterial } from "./TexturedMaterial";

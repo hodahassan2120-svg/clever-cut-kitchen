@@ -23,6 +23,7 @@ import { CustomBanner } from "@/components/CustomBanner";
 import { SplashAd } from "@/components/SplashAd";
 import { InterstitialAd } from "@/components/InterstitialAd";
 import { AdsterraBanner } from "@/components/AdsterraBanner";
+import { AdsterraSocialBar } from "@/components/AdsterraSocialBar";
 
 export const Route = createFileRoute("/app")({ component: AppLayout });
 
@@ -116,6 +117,7 @@ function AppLayout() {
       </main>
       <SplashAd />
       <InterstitialAd />
+      <AdsterraSocialBar />
 
 
       {/* Mobile bottom nav */}

@@ -389,6 +389,7 @@ function DesignEditor() {
       return;
     }
     setAiRendering(true);
+    if (typeof document !== "undefined") document.body.dataset.aiRendering = "true";
     setAiResultUrls(null);
     setRenderOpen(false);
     const context = buildContext();
@@ -417,6 +418,7 @@ function DesignEditor() {
       else toast.error("تعذر توليد الصورة، حاول مرة أخرى");
     } finally {
       setAiRendering(false);
+      if (typeof document !== "undefined") delete document.body.dataset.aiRendering;
     }
   };
 

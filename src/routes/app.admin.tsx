@@ -74,6 +74,24 @@ function Admin() {
     load();
   };
 
+  const revokeActivation = async (userId: string) => {
+    if (!confirm("سيتم إلغاء التفعيل وإرجاع الحساب لوضع التجربة. متابعة؟")) return;
+    await supabase.from("subscriptions").update({ activated_until: null, activated_at: null, is_active: true }).eq("user_id", userId);
+    toast.success("تم إلغاء التفعيل — الحساب الآن في وضع التجربة");
+    load();
+  };
+
+  const extendTrial = async (userId: string, days: number) => {
+    const u = users.find((x) => x.id === userId);
+    const base = u?.trial_ends_at ? Math.max(Date.now(), new Date(u.trial_ends_at).getTime()) : Date.now();
+    const newEnd = new Date(base + days * 86400000).toISOString();
+    const { error } = await supabase.from("subscriptions").update({ trial_ends_at: newEnd, is_active: true }).eq("user_id", userId);
+    if (error) return toast.error("تعذر تمديد التجربة");
+    toast.success(`تم تمديد التجربة ${days} يوم`);
+    load();
+  };
+
+
   const approveRequest = async (req: RequestRow, days: number) => {
     const until = new Date(Date.now() + days * 86400000).toISOString();
     const { error: subErr } = await supabase.from("subscriptions").update({ activated_until: until, is_active: true, activated_at: new Date().toISOString() }).eq("user_id", req.user_id);
@@ -196,9 +214,14 @@ function Admin() {
                     <td className="p-2 text-xs">{u.trial_ends_at ? new Date(u.trial_ends_at).toLocaleDateString("ar-EG") : "-"}</td>
                     <td className="p-2 text-xs">{u.activated_until ? new Date(u.activated_until).toLocaleDateString("ar-EG") : "—"}</td>
                     <td className="p-2"><Switch checked={u.is_active} onCheckedChange={(v) => toggle(u.id, v)} /></td>
-                    <td className="p-2 flex gap-1">
+                    <td className="p-2 flex gap-1 flex-wrap">
                       <Button size="sm" variant="outline" onClick={() => extend(u.id, 30)}>+30 يوم</Button>
                       <Button size="sm" variant="outline" onClick={() => extend(u.id, 365)}>+سنة</Button>
+                      <Button size="sm" variant="outline" onClick={() => extendTrial(u.id, 7)} className="border-gold/40 text-gold">تجربة +7</Button>
+                      <Button size="sm" variant="outline" onClick={() => extendTrial(u.id, 30)} className="border-gold/40 text-gold">تجربة +30</Button>
+                      {u.activated_until && (
+                        <Button size="sm" variant="destructive" onClick={() => revokeActivation(u.id)}>إلغاء التفعيل</Button>
+                      )}
                     </td>
                   </tr>
                 ))}

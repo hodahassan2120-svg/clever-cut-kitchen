@@ -1147,7 +1147,6 @@ function DesignEditor() {
               camera={{ position: [doc.roomWidth, doc.roomDepth * 1.2, doc.roomDepth * 1.4], fov: 45 }}
               dpr={[1, 2]}
               gl={{ antialias: true, powerPreference: "default", preserveDrawingBuffer: true, alpha: false, toneMappingExposure: 1.05 }}
-              frameloop="demand"
               onPointerMissed={() => { if (!dragRef.current) setSelectedId(null); }}
             >
               <SceneCamera view={view3d} roomWidth={doc.roomWidth} roomDepth={doc.roomDepth} resetKey={cameraResetKey} />
@@ -1251,13 +1250,13 @@ function DesignEditor() {
                         {/* حلقة مضيئة على الأرضية لإبراز الوحدة المحددة */}
                         <mesh position={[b.x + b.width / 2, 0.4, b.y + b.depth / 2]} rotation={[-Math.PI / 2, 0, 0]}>
                           <ringGeometry args={[maxR + 4, maxR + 12, 48]} />
-                          <meshBasicMaterial color="#ffb020" transparent opacity={0.7} />
+                          <meshBasicMaterial color="#ffb020" transparent opacity={0.6} />
                         </mesh>
-                        {/* إطار wireframe برتقالي حول الوحدة */}
-                        <mesh position={[b.x + b.width / 2, vy + b.height / 2, b.y + b.depth / 2]} rotation={[0, (-b.rotation * Math.PI) / 180, 0]}>
-                          <boxGeometry args={[b.width + 4, b.height + 4, b.depth + 4]} />
-                          <meshBasicMaterial color="#ffb020" wireframe />
-                        </mesh>
+                        {/* إطار حواف رفيع حول الوحدة — Edges بدل wireframe الكامل */}
+                        <lineSegments position={[b.x + b.width / 2, vy + b.height / 2, b.y + b.depth / 2]} rotation={[0, (-b.rotation * Math.PI) / 180, 0]}>
+                          <edgesGeometry args={[new THREE.BoxGeometry(b.width + 2, b.height + 2, b.depth + 2)]} />
+                          <lineBasicMaterial color="#ffb020" />
+                        </lineSegments>
                       </>
                     )}
                   </group>

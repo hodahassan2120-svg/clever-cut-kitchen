@@ -147,7 +147,7 @@ function DesignEditor() {
   const duplicateBlock = (id: string) => {
     const b = doc.blocks.find((x) => x.id === id);
     if (!b) return;
-    const copy: PlacedBlock = { ...b, id: crypto.randomUUID(), x: Math.min(doc.roomWidth - b.width, b.x + 20), y: Math.min(doc.roomDepth - b.depth, b.y + 20) };
+    const copy: PlacedBlock = autoPlaceBlock({ ...b, id: crypto.randomUUID(), x: Math.min(doc.roomWidth - b.width, b.x + 20), y: Math.min(doc.roomDepth - b.depth, b.y + 20) });
     setDoc({ ...doc, blocks: [...doc.blocks, copy] });
     setSelectedId(copy.id);
     toast.success("تم تكرار الوحدة");
@@ -268,7 +268,12 @@ function DesignEditor() {
   };
 
   const updateBlock = (id: string, patch: Partial<PlacedBlock>) => {
-    setDoc((current) => ({ ...current, blocks: current.blocks.map((b) => (b.id === id ? clampBlock({ ...b, ...patch }) : b)) }));
+    setDoc((current) => {
+      const original = current.blocks.find((b) => b.id === id);
+      if (!original) return current;
+      const moved = resolveCollisions(clampBlock({ ...original, ...patch }), current.blocks);
+      return { ...current, blocks: current.blocks.map((b) => (b.id === id ? moved : b)) };
+    });
   };
   const removeBlock = (id: string) => {
     setDoc({ ...doc, blocks: doc.blocks.filter((b) => b.id !== id) });

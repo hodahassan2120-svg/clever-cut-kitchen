@@ -462,6 +462,48 @@ function DesignEditor() {
     y: Math.max(0, Math.min(b.y, doc.roomDepth - b.depth)),
   });
 
+  // مستوى الوحدة عمودياً — لتحديد ما إذا كانت وحدتان تتعارضان (السفلية والعلوية لا تتعارضان)
+  const blockLevel = (b: PlacedBlock): "base" | "wall" | "tall" => {
+    if (b.placement === "wall" || b.type.startsWith("wall_") || b.type === "appl_hood" || b.type === "appl_hood_chimney" || b.type === "appl_microwave_built" || b.type === "special_window") return "wall";
+    if (b.placement === "tall" || b.type.startsWith("tall_") || b.type === "appl_fridge_side" || b.type === "tall_fridge") return "tall";
+    return "base";
+  };
+
+  // فحص تداخل وحدتين في نفس المستوى العمودي
+  const blocksOverlap = (a: PlacedBlock, b: PlacedBlock) => {
+    const la = blockLevel(a), lb = blockLevel(b);
+    const sameLayer = la === lb || la === "tall" || lb === "tall";
+    if (!sameLayer) return false;
+    const GAP = 0.5;
+    return (
+      a.x < b.x + b.width - GAP &&
+      a.x + a.width > b.x + GAP &&
+      a.y < b.y + b.depth - GAP &&
+      a.y + a.depth > b.y + GAP
+    );
+  };
+
+  // إزاحة الوحدة لمنع التداخل — تدفعها للجهة الأقرب من الوحدات المتعارضة
+  const resolveCollisions = (block: PlacedBlock, blocks = doc.blocks): PlacedBlock => {
+    let b = clampBlock({ ...block });
+    const others = blocks.filter((o) => o.id !== b.id);
+    for (let i = 0; i < 10; i++) {
+      const hit = others.find((o) => blocksOverlap(b, o));
+      if (!hit) break;
+      const pushRight = hit.x + hit.width - b.x;
+      const pushLeft = b.x + b.width - hit.x;
+      const pushFront = hit.y + hit.depth - b.y;
+      const pushBack = b.y + b.depth - hit.y;
+      const minPush = Math.min(pushRight, pushLeft, pushFront, pushBack);
+      if (minPush === pushRight) b.x = hit.x + hit.width;
+      else if (minPush === pushLeft) b.x = hit.x - b.width;
+      else if (minPush === pushFront) b.y = hit.y + hit.depth;
+      else b.y = hit.y - b.depth;
+      b = clampBlock(b);
+    }
+    return b;
+  };
+
   const snapBlockToWall = (block: PlacedBlock, blocks = doc.blocks) => {
     const b = clampBlock(block);
     const distances = [
@@ -471,10 +513,13 @@ function DesignEditor() {
       { wall: "right" as const, value: doc.roomWidth - (b.x + b.width) },
     ].sort((a, z) => a.value - z.value);
     const wall = distances[0].wall;
-    if (wall === "back") b.y = 0;
-    if (wall === "front") b.y = doc.roomDepth - b.depth;
-    if (wall === "left") b.x = 0;
-    if (wall === "right") b.x = doc.roomWidth - b.width;
+    // التصق بالحائط فقط إذا كان قريباً (<30سم) — وإلا اترك الوحدة في مكانها
+    if (distances[0].value < 30) {
+      if (wall === "back") b.y = 0;
+      if (wall === "front") b.y = doc.roomDepth - b.depth;
+      if (wall === "left") b.x = 0;
+      if (wall === "right") b.x = doc.roomWidth - b.width;
+    }
 
     const sameWall = blocks.filter((o) => o.id !== b.id && (
       wall === "back" ? Math.abs(o.y) < 2 :
@@ -492,7 +537,7 @@ function DesignEditor() {
         if (Math.abs((b.y + b.depth) - o.y) <= SNAP) b.y = o.y - b.depth;
       }
     }
-    return clampBlock(b);
+    return resolveCollisions(clampBlock(b), blocks);
   };
 
   const nearestWall = (b: PlacedBlock) => ([
@@ -512,18 +557,22 @@ function DesignEditor() {
   };
 
   const alignAllBlocks = () => {
-    setDoc((current) => ({
-      ...current,
-      blocks: current.blocks.map((b) => alignBlockToWall(b, nearestWall(b))),
-    }));
+    setDoc((current) => {
+      const placed: PlacedBlock[] = [];
+      for (const b of current.blocks) {
+        const aligned = alignBlockToWall(b, nearestWall(b));
+        placed.push(resolveCollisions(aligned, placed));
+      }
+      return { ...current, blocks: placed };
+    });
     toast.success("تمت محاذاة كل وحدة على أقرب حائط لها");
   };
 
-  // ضع الوحدة في وسط الغرفة بدون التصاق بحائط — المستخدم يحركها يدوياً
+  // ضع الوحدة في وسط الغرفة بدون التصاق بحائط — مع تجنب التداخل مع الوحدات الأخرى
   const autoPlaceBlock = (block: PlacedBlock) => {
     const cx = Math.max(0, Math.round(doc.roomWidth / 2 - block.width / 2));
     const cy = Math.max(0, Math.round(doc.roomDepth / 2 - block.depth / 2));
-    return clampBlock({ ...block, x: cx, y: cy, rotation: 0 });
+    return resolveCollisions(clampBlock({ ...block, x: cx, y: cy, rotation: 0 }));
   };
 
   const groupedBlocks = (["base", "wall", "tall", "appliance", "special"] as const).map((cat) => ({

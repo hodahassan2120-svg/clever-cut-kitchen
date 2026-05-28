@@ -1170,17 +1170,29 @@ function DesignEditor() {
               <directionalLight position={[-doc.roomWidth * 0.4, 380, -doc.roomDepth * 0.4]} intensity={0.25} />
               {/* Contact Shadows تحت الوحدات — يلطف اتصال الأرضية ويضيف عمق */}
               <ContactShadows position={[doc.roomWidth / 2, 0.2, doc.roomDepth / 2]} scale={Math.max(doc.roomWidth, doc.roomDepth) * 1.5} opacity={0.55} blur={2.4} far={120} resolution={1024} color="#1a1410" />
-              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[doc.roomWidth / 2, -0.6, doc.roomDepth / 2]} receiveShadow>
+              {/* الأرضية */}
+              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[doc.roomWidth / 2, -0.2, doc.roomDepth / 2]} receiveShadow>
                 <planeGeometry args={[doc.roomWidth, doc.roomDepth]} />
                 <TexturedMaterial textureId={doc.floorTextureId} surfaceWidthCm={doc.roomWidth} surfaceHeightCm={doc.roomDepth} fallbackColor={doc.floorColor || "#d9cec0"} roughness={0.92} />
               </mesh>
-              <mesh position={[doc.roomWidth / 2, 130, -5]}>
-                <boxGeometry args={[doc.roomWidth, 260, 8]} />
-                <TexturedMaterial textureId={doc.wallTextureId} surfaceWidthCm={doc.roomWidth} surfaceHeightCm={260} fallbackColor={doc.wallColor || "#efe7da"} roughness={0.95} />
+              {/* الحائط الخلفي — Plane مواجه للداخل (+z) */}
+              <mesh position={[doc.roomWidth / 2, 140, 0]} receiveShadow>
+                <planeGeometry args={[doc.roomWidth, 280]} />
+                <TexturedMaterial textureId={doc.wallTextureId} surfaceWidthCm={doc.roomWidth} surfaceHeightCm={280} fallbackColor={doc.wallColor || "#efe7da"} roughness={0.95} side={THREE.DoubleSide} />
               </mesh>
-              <mesh position={[-5, 130, doc.roomDepth / 2]}>
-                <boxGeometry args={[8, 260, doc.roomDepth]} />
-                <TexturedMaterial textureId={doc.wallTextureId} surfaceWidthCm={doc.roomDepth} surfaceHeightCm={260} fallbackColor={doc.wallColor || "#efe7da"} roughness={0.95} />
+              {/* الحائط الأيسر — Plane مواجه للداخل (+x) */}
+              <mesh position={[0, 140, doc.roomDepth / 2]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
+                <planeGeometry args={[doc.roomDepth, 280]} />
+                <TexturedMaterial textureId={doc.wallTextureId} surfaceWidthCm={doc.roomDepth} surfaceHeightCm={280} fallbackColor={doc.wallColor || "#efe7da"} roughness={0.95} side={THREE.DoubleSide} />
+              </mesh>
+              {/* وزرة سفلية رفيعة لإبراز التقاء الحوائط بالأرضية */}
+              <mesh position={[doc.roomWidth / 2, 4, 0.6]}>
+                <boxGeometry args={[doc.roomWidth, 8, 1.2]} />
+                <meshStandardMaterial color="#1a1410" roughness={0.9} />
+              </mesh>
+              <mesh position={[0.6, 4, doc.roomDepth / 2]}>
+                <boxGeometry args={[1.2, 8, doc.roomDepth]} />
+                <meshStandardMaterial color="#1a1410" roughness={0.9} />
               </mesh>
               {doc.blocks.map((b) => {
                 const wallMounted = b.placement === "wall" || b.type.startsWith("wall_") || b.type === "appl_hood" || b.type === "appl_hood_chimney" || b.type === "appl_microwave_built" || b.type === "special_window";

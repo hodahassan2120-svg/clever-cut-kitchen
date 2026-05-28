@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import { useEffect, useState } from "react";
-import { useThree } from "@react-three/fiber";
+import { Suspense, useMemo } from "react";
+import { useLoader } from "@react-three/fiber";
 import { getTexture } from "@/lib/textures";
 
 interface Props {
@@ -10,33 +10,50 @@ interface Props {
   fallbackColor: string;
   roughness?: number;
   metalness?: number;
+  side?: THREE.Side;
 }
 
-const cache = new Map<string, THREE.Texture>();
-const loader = new THREE.TextureLoader();
-
-function loadCached(url: string): Promise<THREE.Texture> {
-  const cached = cache.get(url);
-  if (cached) return Promise.resolve(cached);
-  return new Promise((resolve, reject) => {
-    loader.load(
-      url,
-      (tex) => {
-        tex.wrapS = THREE.RepeatWrapping;
-        tex.wrapT = THREE.RepeatWrapping;
-        tex.anisotropy = 8;
-        tex.colorSpace = THREE.SRGBColorSpace;
-        tex.needsUpdate = true;
-        cache.set(url, tex);
-        resolve(tex);
-      },
-      undefined,
-      reject
-    );
-  });
+function FallbackMaterial({ color, roughness, metalness, side }: { color: string; roughness: number; metalness: number; side?: THREE.Side }) {
+  return <meshStandardMaterial color={color} roughness={roughness} metalness={metalness} side={side} />;
 }
 
-/** مادة بخامة واقعية (سيراميك/رخام/جرانيت) — لا تستخدم Suspense */
+function TexturedInner({
+  url,
+  realSizeCm,
+  surfaceWidthCm,
+  surfaceHeightCm,
+  roughness,
+  metalness,
+  side,
+}: {
+  url: string;
+  realSizeCm: number;
+  surfaceWidthCm: number;
+  surfaceHeightCm: number;
+  roughness: number;
+  metalness: number;
+  side?: THREE.Side;
+}) {
+  // useLoader caches by URL — same texture for same URL but we clone to allow per-surface repeat
+  const baseTex = useLoader(THREE.TextureLoader, url);
+
+  const map = useMemo(() => {
+    const t = baseTex.clone();
+    t.wrapS = THREE.RepeatWrapping;
+    t.wrapT = THREE.RepeatWrapping;
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = 8;
+    const rx = Math.max(1, surfaceWidthCm / realSizeCm);
+    const ry = Math.max(1, surfaceHeightCm / realSizeCm);
+    t.repeat.set(rx, ry);
+    t.needsUpdate = true;
+    return t;
+  }, [baseTex, realSizeCm, surfaceWidthCm, surfaceHeightCm]);
+
+  return <meshStandardMaterial map={map} color="#ffffff" roughness={roughness} metalness={metalness} side={side} />;
+}
+
+/** مادة بخامة واقعية — تستخدم Suspense داخلياً عبر useLoader */
 export function TexturedMaterial({
   textureId,
   surfaceWidthCm,
@@ -44,45 +61,23 @@ export function TexturedMaterial({
   fallbackColor,
   roughness = 0.85,
   metalness = 0.05,
+  side,
 }: Props) {
   const tex = getTexture(textureId);
-  const { invalidate } = useThree();
-  const [map, setMap] = useState<THREE.Texture | null>(null);
-
-  useEffect(() => {
-    if (!tex) {
-      setMap(null);
-      invalidate();
-      return;
-    }
-    setMap(null);
-    invalidate();
-    let cancelled = false;
-    loadCached(tex.url).then((t) => {
-      if (cancelled) return;
-      const clone = t.clone();
-      clone.wrapS = THREE.RepeatWrapping;
-      clone.wrapT = THREE.RepeatWrapping;
-      clone.anisotropy = t.anisotropy;
-      clone.colorSpace = THREE.SRGBColorSpace;
-      clone.needsUpdate = true;
-      setMap(clone);
-      invalidate();
-    }).catch(() => { /* ignore */ });
-    return () => { cancelled = true; };
-  }, [tex, invalidate]);
-
-  useEffect(() => {
-    if (!map || !tex) return;
-    const rx = Math.max(1, surfaceWidthCm / tex.realSizeCm);
-    const ry = Math.max(1, surfaceHeightCm / tex.realSizeCm);
-    map.repeat.set(rx, ry);
-    map.needsUpdate = true;
-    invalidate();
-  }, [map, tex, surfaceWidthCm, surfaceHeightCm, invalidate]);
-
-  if (!tex || !map) {
-    return <meshStandardMaterial key={`fb-${fallbackColor}`} color={fallbackColor} roughness={roughness} metalness={metalness} />;
+  if (!tex) {
+    return <FallbackMaterial color={fallbackColor} roughness={roughness} metalness={metalness} side={side} />;
   }
-  return <meshStandardMaterial key={`tx-${tex.id}`} map={map} color="#ffffff" roughness={roughness} metalness={metalness} />;
+  return (
+    <Suspense fallback={<FallbackMaterial color={fallbackColor} roughness={roughness} metalness={metalness} side={side} />}>
+      <TexturedInner
+        url={tex.url}
+        realSizeCm={tex.realSizeCm}
+        surfaceWidthCm={surfaceWidthCm}
+        surfaceHeightCm={surfaceHeightCm}
+        roughness={roughness}
+        metalness={metalness}
+        side={side}
+      />
+    </Suspense>
+  );
 }

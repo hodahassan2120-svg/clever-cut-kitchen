@@ -128,11 +128,22 @@ function Cabinet3DImpl({ block, defaultColor, marbleColor, marbleTextureId }: Pr
               </mesh>
               <mesh position={[0, eachH / 2 - 0.35, DOOR_T / 2 + 0.18]}><boxGeometry args={[W - GAP * 3, 0.28, 0.35]} /><meshStandardMaterial color="#1f1711" roughness={0.9} /></mesh>
               <mesh position={[0, -eachH / 2 + 0.35, DOOR_T / 2 + 0.18]}><boxGeometry args={[W - GAP * 3, 0.28, 0.35]} /><meshStandardMaterial color="#1f1711" roughness={0.9} /></mesh>
-              {/* مقبض أفقي في المنتصف */}
-              <mesh position={[0, 0, DOOR_T / 2 + HANDLE_T / 2]}>
-                <boxGeometry args={[Math.max(12, W * 0.42), 1.6, HANDLE_T * 1.6]} />
-                <meshStandardMaterial color="#d5ac55" roughness={0.28} metalness={0.75} />
-              </mesh>
+              {/* مقبض شريطي أسطواني أفقي للأدراج */}
+              <group position={[0, 0, DOOR_T / 2 + 1.2]}>
+                <mesh rotation={[0, 0, Math.PI / 2]} castShadow>
+                  <cylinderGeometry args={[0.7, 0.7, Math.max(14, W * 0.46), 16]} />
+                  <meshStandardMaterial color="#d8b46a" roughness={0.22} metalness={0.92} envMapIntensity={1.4} />
+                </mesh>
+                {/* قواعد تثبيت المقبض */}
+                <mesh position={[-Math.max(7, W * 0.22), 0, -0.6]}>
+                  <cylinderGeometry args={[0.6, 0.6, 1.4, 12]} />
+                  <meshStandardMaterial color="#b0934d" roughness={0.3} metalness={0.9} />
+                </mesh>
+                <mesh position={[Math.max(7, W * 0.22), 0, -0.6]}>
+                  <cylinderGeometry args={[0.6, 0.6, 1.4, 12]} />
+                  <meshStandardMaterial color="#b0934d" roughness={0.3} metalness={0.9} />
+                </mesh>
+              </group>
             </group>
           );
         });
@@ -176,11 +187,21 @@ function Cabinet3DImpl({ block, defaultColor, marbleColor, marbleTextureId }: Pr
                   <mesh position={[eachW / 2 - 1.2, 0, 0]}><boxGeometry args={[1.4, totalDoorH - GAP, 0.7]} /><meshStandardMaterial color={bodyColor} roughness={0.7} /></mesh>
                 </group>
               )}
-              {/* مقبض عمودي */}
-              <mesh position={[handleX, 0, DOOR_T / 2 + HANDLE_T / 2]}>
-                <boxGeometry args={[1.8, Math.min(22, totalDoorH * 0.42), HANDLE_T * 1.7]} />
-                <meshStandardMaterial color="#d5ac55" roughness={0.28} metalness={0.75} />
-              </mesh>
+              {/* مقبض شريطي عمودي أسطواني */}
+              <group position={[handleX, 0, DOOR_T / 2 + 1.2]}>
+                <mesh castShadow>
+                  <cylinderGeometry args={[0.7, 0.7, Math.min(24, totalDoorH * 0.5), 16]} />
+                  <meshStandardMaterial color="#d8b46a" roughness={0.22} metalness={0.92} envMapIntensity={1.4} />
+                </mesh>
+                <mesh position={[0, Math.min(10, totalDoorH * 0.2), -0.6]} rotation={[Math.PI / 2, 0, 0]}>
+                  <cylinderGeometry args={[0.6, 0.6, 1.4, 12]} />
+                  <meshStandardMaterial color="#b0934d" roughness={0.3} metalness={0.9} />
+                </mesh>
+                <mesh position={[0, -Math.min(10, totalDoorH * 0.2), -0.6]} rotation={[Math.PI / 2, 0, 0]}>
+                  <cylinderGeometry args={[0.6, 0.6, 1.4, 12]} />
+                  <meshStandardMaterial color="#b0934d" roughness={0.3} metalness={0.9} />
+                </mesh>
+              </group>
             </group>
           );
         });

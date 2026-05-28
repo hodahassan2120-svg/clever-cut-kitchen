@@ -39,6 +39,19 @@ const READY_CABINET_SPECS: Record<string, { placement: "base" | "wall" | "tall";
 
 const getCabinetSpec = (block: PlacedBlock) => READY_CABINET_SPECS[block.type];
 
+function WoodMaterial({ color, roughness = 0.58 }: { color: string; roughness?: number }) {
+  return (
+    <meshStandardMaterial
+      color={color}
+      roughness={roughness}
+      metalness={0.015}
+      polygonOffset
+      polygonOffsetFactor={-0.5}
+      polygonOffsetUnits={-0.5}
+    />
+  );
+}
+
 function Cabinet3DImpl({ block, defaultColor, marbleColor, marbleTextureId }: Props) {
   if (APPLIANCE_TYPES.has(block.type)) {
     return <Appliance3D block={block} defaultColor={defaultColor} marbleColor={marbleColor} marbleTextureId={marbleTextureId} />;
@@ -87,10 +100,14 @@ function Cabinet3DImpl({ block, defaultColor, marbleColor, marbleTextureId }: Pr
 
   return (
     <group position={[cx, cy, cz]} rotation={rotation}>
-      {/* جسم الوحدة كألواح منفصلة بدون واجهة أمامية — يمنع تداخل الألوان مع الضلف */}
+      {/* جسم الوحدة كألواح منفصلة + ظهر واضح — شكل مصمت بدل ظهورها كخطوط */}
       <mesh position={[0, 0, -D / 2 + PANEL_T / 2 - zFightGap]}>
         <boxGeometry args={[W, H, PANEL_T]} />
         <meshStandardMaterial color="#2c2722" roughness={0.9} polygonOffset polygonOffsetFactor={1} polygonOffsetUnits={1} />
+      </mesh>
+      <mesh position={[0, 0, D / 2 - PANEL_T / 2]}>
+        <boxGeometry args={[W, H, PANEL_T]} />
+        <meshStandardMaterial color={carcassColor} roughness={0.8} transparent opacity={0.28} />
       </mesh>
       <mesh position={[-W / 2 + PANEL_T / 2, 0, 0]}>
         <boxGeometry args={[PANEL_T, H, D]} />
@@ -120,7 +137,7 @@ function Cabinet3DImpl({ block, defaultColor, marbleColor, marbleTextureId }: Pr
             <group key={`dr${i}`} position={[0, y, D / 2 + DOOR_T / 2 + zFightGap]}>
               <mesh castShadow receiveShadow>
                 <boxGeometry args={[W - GAP * 2, eachH, DOOR_T]} />
-                <meshStandardMaterial color={bodyColor} roughness={0.64} metalness={0.02} polygonOffset polygonOffsetFactor={-1} polygonOffsetUnits={-1} />
+                <WoodMaterial color={bodyColor} />
               </mesh>
               <mesh position={[0, 0, DOOR_T / 2 + 0.12]}>
                 <boxGeometry args={[W - GAP * 7, Math.max(2, eachH - 4), 0.25]} />
@@ -166,7 +183,7 @@ function Cabinet3DImpl({ block, defaultColor, marbleColor, marbleTextureId }: Pr
                 {isGlass ? (
                   <meshStandardMaterial color="#9eb8c6" roughness={0.18} transparent opacity={0.42} polygonOffset polygonOffsetFactor={-1} polygonOffsetUnits={-1} />
                 ) : (
-                  <meshStandardMaterial color={bodyColor} roughness={0.64} metalness={0.02} polygonOffset polygonOffsetFactor={-1} polygonOffsetUnits={-1} />
+                  <WoodMaterial color={bodyColor} />
                 )}
               </mesh>
               {!isGlass && (

@@ -1185,21 +1185,12 @@ function DesignEditor() {
                 <planeGeometry args={[doc.roomDepth, 280]} />
                 <TexturedMaterial textureId={doc.wallTextureId} surfaceWidthCm={doc.roomDepth} surfaceHeightCm={280} fallbackColor={doc.wallColor || "#efe7da"} roughness={0.95} side={THREE.DoubleSide} />
               </mesh>
-              {/* الحائط الأيمن — Plane مواجه للداخل (-x) */}
-              <mesh position={[doc.roomWidth, 140, doc.roomDepth / 2]} rotation={[0, -Math.PI / 2, 0]} receiveShadow>
-                <planeGeometry args={[doc.roomDepth, 280]} />
-                <TexturedMaterial textureId={doc.wallTextureId} surfaceWidthCm={doc.roomDepth} surfaceHeightCm={280} fallbackColor={doc.wallColor || "#efe7da"} roughness={0.95} side={THREE.DoubleSide} />
-              </mesh>
               {/* وزرة سفلية رفيعة لإبراز التقاء الحوائط بالأرضية */}
               <mesh position={[doc.roomWidth / 2, 4, 0.6]}>
                 <boxGeometry args={[doc.roomWidth, 8, 1.2]} />
                 <meshStandardMaterial color="#1a1410" roughness={0.9} />
               </mesh>
               <mesh position={[0.6, 4, doc.roomDepth / 2]}>
-                <boxGeometry args={[1.2, 8, doc.roomDepth]} />
-                <meshStandardMaterial color="#1a1410" roughness={0.9} />
-              </mesh>
-              <mesh position={[doc.roomWidth - 0.6, 4, doc.roomDepth / 2]}>
                 <boxGeometry args={[1.2, 8, doc.roomDepth]} />
                 <meshStandardMaterial color="#1a1410" roughness={0.9} />
               </mesh>

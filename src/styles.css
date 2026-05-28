@@ -126,3 +126,13 @@
     color: transparent;
   }
 }
+
+/* Hide Adsterra Social Bar injected DOM (for paid users or during AI rendering) */
+body.hide-adsterra-social [id^="social-bar"],
+body.hide-adsterra-social [class*="social-bar"],
+body.hide-adsterra-social iframe[src*="effectivecpmnetwork"],
+body.hide-adsterra-social iframe[src*="highperformanceformat"][height="50"] {
+  display: none !important;
+  visibility: hidden !important;
+}
+

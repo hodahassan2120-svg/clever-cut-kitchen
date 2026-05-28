@@ -1224,23 +1224,32 @@ function DesignEditor() {
                 <planeGeometry args={[doc.roomWidth, doc.roomDepth]} />
                 <TexturedMaterial textureId={doc.floorTextureId} surfaceWidthCm={doc.roomWidth} surfaceHeightCm={doc.roomDepth} fallbackColor={doc.floorColor || "#d9cec0"} roughness={0.92} />
               </mesh>
-              {/* الحائط الخلفي — Plane مواجه للداخل (+z) */}
-              <mesh position={[doc.roomWidth / 2, 140, 0]} receiveShadow>
-                <planeGeometry args={[doc.roomWidth, 280]} />
+              {/* الحائط الخلفي — Plane مواجه للداخل */}
+              <mesh position={[doc.roomWidth / 2, 140, -0.5]} receiveShadow>
+                <planeGeometry args={[doc.roomWidth + 2, 280]} />
                 <TexturedMaterial textureId={doc.wallTextureId} surfaceWidthCm={doc.roomWidth} surfaceHeightCm={280} fallbackColor={doc.wallColor || "#efe7da"} roughness={0.95} side={THREE.DoubleSide} />
               </mesh>
-              {/* الحائط الأيسر — Plane مواجه للداخل (+x) */}
-              <mesh position={[0, 140, doc.roomDepth / 2]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
-                <planeGeometry args={[doc.roomDepth, 280]} />
+              {/* الحائط الأيسر — Plane مواجه للداخل */}
+              <mesh position={[-0.5, 140, doc.roomDepth / 2]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
+                <planeGeometry args={[doc.roomDepth + 2, 280]} />
                 <TexturedMaterial textureId={doc.wallTextureId} surfaceWidthCm={doc.roomDepth} surfaceHeightCm={280} fallbackColor={doc.wallColor || "#efe7da"} roughness={0.95} side={THREE.DoubleSide} />
               </mesh>
-              {/* وزرة سفلية رفيعة لإبراز التقاء الحوائط بالأرضية */}
-              <mesh position={[doc.roomWidth / 2, 4, 0.6]}>
-                <boxGeometry args={[doc.roomWidth, 8, 1.2]} />
+              {/* إطار علوي خفيف يحدد ارتفاع الجدران */}
+              <mesh position={[doc.roomWidth / 2, 282, 0]}>
+                <boxGeometry args={[doc.roomWidth + 4, 4, 4]} />
+                <meshStandardMaterial color="#1a1410" roughness={0.85} />
+              </mesh>
+              <mesh position={[0, 282, doc.roomDepth / 2]}>
+                <boxGeometry args={[4, 4, doc.roomDepth + 4]} />
+                <meshStandardMaterial color="#1a1410" roughness={0.85} />
+              </mesh>
+              {/* وزرة سفلية لإبراز التقاء الحوائط بالأرضية */}
+              <mesh position={[doc.roomWidth / 2, 4, 0.8]}>
+                <boxGeometry args={[doc.roomWidth, 8, 1.6]} />
                 <meshStandardMaterial color="#1a1410" roughness={0.9} />
               </mesh>
-              <mesh position={[0.6, 4, doc.roomDepth / 2]}>
-                <boxGeometry args={[1.2, 8, doc.roomDepth]} />
+              <mesh position={[0.8, 4, doc.roomDepth / 2]}>
+                <boxGeometry args={[1.6, 8, doc.roomDepth]} />
                 <meshStandardMaterial color="#1a1410" roughness={0.9} />
               </mesh>
               {doc.blocks.map((b) => {

@@ -1239,6 +1239,11 @@ function DesignEditor() {
                 <planeGeometry args={[doc.roomDepth + 2, 280]} />
                 <TexturedMaterial textureId={doc.wallTextureId} surfaceWidthCm={doc.roomDepth} surfaceHeightCm={280} fallbackColor={doc.wallColor || "#efe7da"} roughness={0.95} side={THREE.DoubleSide} />
               </mesh>
+              {/* الحائط الأيمن شفاف قليلاً حتى يوضح حدود الغرفة بدون حجب الوحدات */}
+              <mesh position={[doc.roomWidth + 0.5, 140, doc.roomDepth / 2]} rotation={[0, -Math.PI / 2, 0]} receiveShadow>
+                <planeGeometry args={[doc.roomDepth + 2, 280]} />
+                <TexturedMaterial textureId={doc.wallTextureId} surfaceWidthCm={doc.roomDepth} surfaceHeightCm={280} fallbackColor={doc.wallColor || "#efe7da"} roughness={0.95} side={THREE.DoubleSide} opacity={0.45} />
+              </mesh>
               {/* إطار علوي خفيف يحدد ارتفاع الجدران */}
               <mesh position={[doc.roomWidth / 2, 282, 0]}>
                 <boxGeometry args={[doc.roomWidth + 4, 4, 4]} />
@@ -1308,8 +1313,11 @@ function DesignEditor() {
                       dragRafRef.current = null;
                     }
                     if (d.moved) {
-                      const moved = snapBlockToWall({ ...b, x: d.currentX, y: d.currentY });
-                      setDoc((current) => ({ ...current, blocks: current.blocks.map((item) => (item.id === b.id ? moved : item)) }));
+                      setDoc((current) => {
+                        const currentBlock = current.blocks.find((item) => item.id === b.id) ?? b;
+                        const moved = snapBlockToWall({ ...currentBlock, x: d.currentX, y: d.currentY }, current.blocks);
+                        return { ...current, blocks: current.blocks.map((item) => (item.id === b.id ? moved : item)) };
+                      });
                     }
                     dragRef.current = null;
                     setIsDragging3d(false);
@@ -1327,11 +1335,11 @@ function DesignEditor() {
                           <ringGeometry args={[maxR + 4, maxR + 12, 48]} />
                           <meshBasicMaterial color="#ffb020" transparent opacity={0.6} />
                         </mesh>
-                        {/* إطار حواف رفيع حول الوحدة — Edges بدل wireframe الكامل */}
-                        <lineSegments position={[b.x + b.width / 2, vy + b.height / 2, b.y + b.depth / 2]} rotation={[0, (-b.rotation * Math.PI) / 180, 0]}>
-                          <edgesGeometry args={[new THREE.BoxGeometry(b.width + 2, b.height + 2, b.depth + 2)]} />
-                          <lineBasicMaterial color="#ffb020" />
-                        </lineSegments>
+                        {/* ظل تحديد فقط — بدون wireframe حتى لا تتحول الوحدة إلى خطوط */}
+                        <mesh position={[b.x + b.width / 2, vy + b.height + 3, b.y + b.depth / 2]} rotation={[-Math.PI / 2, 0, 0]}>
+                          <planeGeometry args={[Math.max(24, b.width * 0.75), Math.max(18, b.depth * 0.75)]} />
+                          <meshBasicMaterial color="#ffb020" transparent opacity={0.22} side={THREE.DoubleSide} />
+                        </mesh>
                       </>
                     )}
                   </group>

@@ -11,10 +11,11 @@ interface Props {
   roughness?: number;
   metalness?: number;
   side?: THREE.Side;
+  opacity?: number;
 }
 
-function FallbackMaterial({ color, roughness, metalness, side }: { color: string; roughness: number; metalness: number; side?: THREE.Side }) {
-  return <meshStandardMaterial color={color} roughness={roughness} metalness={metalness} side={side} />;
+function FallbackMaterial({ color, roughness, metalness, side, opacity }: { color: string; roughness: number; metalness: number; side?: THREE.Side; opacity: number }) {
+  return <meshStandardMaterial color={color} roughness={roughness} metalness={metalness} side={side} transparent={opacity < 1} opacity={opacity} />;
 }
 
 function TexturedInner({
@@ -25,6 +26,7 @@ function TexturedInner({
   roughness,
   metalness,
   side,
+  opacity,
 }: {
   url: string;
   realSizeCm: number;
@@ -33,6 +35,7 @@ function TexturedInner({
   roughness: number;
   metalness: number;
   side?: THREE.Side;
+  opacity: number;
 }) {
   // useLoader caches by URL — same texture for same URL but we clone to allow per-surface repeat
   const baseTex = useLoader(THREE.TextureLoader, url);
@@ -50,7 +53,7 @@ function TexturedInner({
     return t;
   }, [baseTex, realSizeCm, surfaceWidthCm, surfaceHeightCm]);
 
-  return <meshStandardMaterial map={map} color="#ffffff" roughness={roughness} metalness={metalness} side={side} />;
+  return <meshStandardMaterial map={map} color="#ffffff" roughness={roughness} metalness={metalness} side={side} transparent={opacity < 1} opacity={opacity} />;
 }
 
 /** مادة بخامة واقعية — تستخدم Suspense داخلياً عبر useLoader */
@@ -62,13 +65,14 @@ export function TexturedMaterial({
   roughness = 0.85,
   metalness = 0.05,
   side,
+  opacity = 1,
 }: Props) {
   const tex = getTexture(textureId);
   if (!tex) {
-    return <FallbackMaterial color={fallbackColor} roughness={roughness} metalness={metalness} side={side} />;
+    return <FallbackMaterial color={fallbackColor} roughness={roughness} metalness={metalness} side={side} opacity={opacity} />;
   }
   return (
-    <Suspense fallback={<FallbackMaterial color={fallbackColor} roughness={roughness} metalness={metalness} side={side} />}>
+    <Suspense fallback={<FallbackMaterial color={fallbackColor} roughness={roughness} metalness={metalness} side={side} opacity={opacity} />}>
       <TexturedInner
         url={tex.url}
         realSizeCm={tex.realSizeCm}
@@ -77,6 +81,7 @@ export function TexturedMaterial({
         roughness={roughness}
         metalness={metalness}
         side={side}
+        opacity={opacity}
       />
     </Suspense>
   );

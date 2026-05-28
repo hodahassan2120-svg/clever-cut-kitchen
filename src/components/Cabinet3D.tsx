@@ -193,12 +193,12 @@ function Cabinet3DImpl({ block, defaultColor, marbleColor, marbleTextureId }: Pr
                   <cylinderGeometry args={[0.7, 0.7, Math.min(24, totalDoorH * 0.5), 16]} />
                   <meshStandardMaterial color="#d8b46a" roughness={0.22} metalness={0.92} envMapIntensity={1.4} />
                 </mesh>
-                <mesh position={[0, Math.min(10, totalDoorH * 0.2), -0.6]}>
-                  <cylinderGeometry args={[0.6, 0.6, 1.4, 12]} rotation={[Math.PI / 2, 0, 0]} />
+                <mesh position={[0, Math.min(10, totalDoorH * 0.2), -0.6]} rotation={[Math.PI / 2, 0, 0]}>
+                  <cylinderGeometry args={[0.6, 0.6, 1.4, 12]} />
                   <meshStandardMaterial color="#b0934d" roughness={0.3} metalness={0.9} />
                 </mesh>
-                <mesh position={[0, -Math.min(10, totalDoorH * 0.2), -0.6]}>
-                  <cylinderGeometry args={[0.6, 0.6, 1.4, 12]} rotation={[Math.PI / 2, 0, 0]} />
+                <mesh position={[0, -Math.min(10, totalDoorH * 0.2), -0.6]} rotation={[Math.PI / 2, 0, 0]}>
+                  <cylinderGeometry args={[0.6, 0.6, 1.4, 12]} />
                   <meshStandardMaterial color="#b0934d" roughness={0.3} metalness={0.9} />
                 </mesh>
               </group>

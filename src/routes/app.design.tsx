@@ -38,6 +38,18 @@ type ViewAngle = "perspective" | "front" | "top";
 const STYLE_LABELS: Record<RenderStyle, string> = { modern: "مودرن", classic: "كلاسيك", industrial: "صناعي", luxury: "فاخر" };
 const VIEW_LABELS: Record<ViewAngle, string> = { perspective: "منظور", front: "أمامي", top: "علوي" };
 
+type FinishDraft = Pick<DesignDoc, "globalColor" | "floorColor" | "wallColor" | "marbleColor" | "floorTextureId" | "wallTextureId" | "marbleTextureId">;
+
+const makeFinishDraft = (source: DesignDoc): FinishDraft => ({
+  globalColor: source.globalColor,
+  floorColor: source.floorColor,
+  wallColor: source.wallColor,
+  marbleColor: source.marbleColor,
+  floorTextureId: source.floorTextureId,
+  wallTextureId: source.wallTextureId,
+  marbleTextureId: source.marbleTextureId,
+});
+
 export const Route = createFileRoute("/app/design")({
   component: DesignEditor,
   validateSearch: (s: Record<string, unknown>) => ({ id: typeof s.id === "string" ? s.id : undefined }),
@@ -84,8 +96,11 @@ function DesignEditor() {
       marbleColor: doc.marbleColor,
     });
     setDoc(next);
+    setFinishDraft(makeFinishDraft(next));
+    setFinishDirty(false);
     setSelectedId(null);
     setTemplatesOpen(false);
+    setSceneRefreshKey((k) => k + 1);
     toast.success(`تم تحميل قالب "${t.name}"`);
   };
   const [editorStarted, setEditorStarted] = useState(false);
@@ -93,9 +108,12 @@ function DesignEditor() {
   const [editDims, setEditDims] = useState({ width: "", depth: "", height: "", notes: "" });
   const [setupRoom, setSetupRoom] = useState({ name: "تصميم جديد", width: "400", depth: "300", shape: "rectangle" as "rectangle" | "l_shape", cutoutWidth: "100", cutoutDepth: "100" });
   const [savedRows, setSavedRows] = useState<{ id: string; name: string; updated_at: string }[]>([]);
+  const [activeTab, setActiveTab] = useState<"2d" | "3d">("2d");
   const [view3d, setView3d] = useState<"perspective" | "top" | "front" | "right" | "left">("perspective");
   const stageWrapRef = useRef<HTMLDivElement>(null);
   const [stageSize, setStageSize] = useState({ w: 360, h: 400 });
+  const [finishDraft, setFinishDraft] = useState<FinishDraft>(() => makeFinishDraft(DEFAULT_DESIGN));
+  const [finishDirty, setFinishDirty] = useState(false);
   const [aiRendering, setAiRendering] = useState(false);
   const [aiResultUrls, setAiResultUrls] = useState<string[] | null>(null);
   const [aiCredits, setAiCredits] = useState<number | null>(null);
@@ -111,6 +129,7 @@ function DesignEditor() {
   const dragRafRef = useRef<number | null>(null);
   const [isDragging3d, setIsDragging3d] = useState(false);
   const [cameraResetKey, setCameraResetKey] = useState(0);
+  const [sceneRefreshKey, setSceneRefreshKey] = useState(0);
   const callRender = useServerFn(renderRealistic);
 
   // History stack — Undo/Redo على مستوى المستند بالكامل
@@ -126,6 +145,9 @@ function DesignEditor() {
       lastDocRef.current = doc;
     }
   }, [doc]);
+  useEffect(() => {
+    if (!finishDirty) setFinishDraft(makeFinishDraft(doc));
+  }, [doc.globalColor, doc.floorColor, doc.wallColor, doc.marbleColor, doc.floorTextureId, doc.wallTextureId, doc.marbleTextureId, finishDirty]);
   const undo = () => {
     const h = historyRef.current;
     if (!h.past.length) return;
@@ -133,6 +155,9 @@ function DesignEditor() {
     h.future.push(lastDocRef.current);
     skipHistoryRef.current = true;
     setDoc(prev);
+    setFinishDraft(makeFinishDraft(prev));
+    setFinishDirty(false);
+    setSceneRefreshKey((k) => k + 1);
     toast.info("تم التراجع");
   };
   const redo = () => {
@@ -142,6 +167,9 @@ function DesignEditor() {
     h.past.push(lastDocRef.current);
     skipHistoryRef.current = true;
     setDoc(next);
+    setFinishDraft(makeFinishDraft(next));
+    setFinishDirty(false);
+    setSceneRefreshKey((k) => k + 1);
     toast.info("تمت الإعادة");
   };
   const duplicateBlock = (id: string) => {
@@ -177,7 +205,11 @@ function DesignEditor() {
     if (!id || !user) return;
     supabase.from("designs").select("*").eq("id", id).maybeSingle().then(({ data }) => {
       if (data) {
-        setDoc({ ...DEFAULT_DESIGN, ...(data.data as unknown as DesignDoc) });
+        const loaded = { ...DEFAULT_DESIGN, ...(data.data as unknown as DesignDoc) };
+        setDoc(loaded);
+        setFinishDraft(makeFinishDraft(loaded));
+        setFinishDirty(false);
+        setSceneRefreshKey((k) => k + 1);
         setName(data.name);
         setDesignId(data.id);
         setEditorStarted(true);
@@ -201,7 +233,7 @@ function DesignEditor() {
     setName(setupRoom.name || "تصميم جديد");
     setDesignId(null);
     setSelectedId(null);
-    setDoc({
+    const next = {
       ...DEFAULT_DESIGN,
       roomWidth,
       roomDepth,
@@ -209,7 +241,11 @@ function DesignEditor() {
       cutoutWidth: setupRoom.shape === "l_shape" ? Math.min(cutoutWidth || 0, roomWidth - 50) : 0,
       cutoutDepth: setupRoom.shape === "l_shape" ? Math.min(cutoutDepth || 0, roomDepth - 50) : 0,
       blocks: [],
-    });
+    };
+    setDoc(next);
+    setFinishDraft(makeFinishDraft(next));
+    setFinishDirty(false);
+    setSceneRefreshKey((k) => k + 1);
     setEditorStarted(true);
   };
 
@@ -450,6 +486,22 @@ function DesignEditor() {
 
   const toUnit = (cm: number) => (unit === "m" ? (cm / 100).toFixed(2) : cm.toString());
   const fromUnit = (v: string) => (unit === "m" ? parseFloat(v) * 100 : parseFloat(v));
+  const updateFinishDraft = (patch: Partial<FinishDraft>) => {
+    setFinishDraft((current) => ({ ...current, ...patch }));
+    setFinishDirty(true);
+  };
+  const applyFinishDraft = () => {
+    setDoc((current) => ({ ...current, ...finishDraft }));
+    setFinishDirty(false);
+    setSceneRefreshKey((k) => k + 1);
+    setCameraResetKey((k) => k + 1);
+    toast.success("تم تطبيق الخامات والألوان على التصميم");
+  };
+  const resetFinishDraft = () => {
+    setFinishDraft(makeFinishDraft(doc));
+    setFinishDirty(false);
+    toast.info("تم إلغاء تعديلات الخامات غير المطبقة");
+  };
   const isPaintableBlock = (b: PlacedBlock) => !!b.placement || b.type.startsWith("base_") || b.type.startsWith("wall_") || b.type.startsWith("tall_") || b.type === "special_island";
   const blockColor = (b: PlacedBlock) => b.customColor || !isPaintableBlock(b) ? b.color : (doc.globalColor || b.color);
 
@@ -665,14 +717,16 @@ function DesignEditor() {
         )}
       </div>
 
-      {/* اللون العام لكل الوحدات */}
+      {/* اللون العام وكل الخامات — تطبق بعد زر التأكيد فقط لتجنب كسر مشهد 3D أثناء التبديل */}
       <div className="space-y-2 mb-6 pb-4 border-b border-border/40">
-        <h4 className="text-sm font-semibold flex items-center gap-1.5"><Palette className="size-3.5 text-primary" /> اللون العام للوحدات</h4>
-        <div className="flex items-center gap-2">
-          <input type="color" value={doc.globalColor || "#b88858"} onChange={(e) => setDoc({ ...doc, globalColor: e.target.value })} className="h-9 w-14 rounded cursor-pointer bg-transparent border border-border/60" />
-          <Input value={doc.globalColor || "#b88858"} onChange={(e) => setDoc({ ...doc, globalColor: e.target.value })} className="flex-1 font-mono text-xs h-9" />
+        <div className="flex items-center justify-between gap-2">
+          <h4 className="text-sm font-semibold flex items-center gap-1.5"><Palette className="size-3.5 text-primary" /> اللون العام للوحدات</h4>
+          {finishDirty && <span className="text-[10px] text-primary font-bold">تعديلات جاهزة للتطبيق</span>}
         </div>
-        {/* لوحة ألوان واقعية للمطابخ — مستوحاة من تشطيبات حقيقية (HPL/MDF/خشب طبيعي) */}
+        <div className="flex items-center gap-2">
+          <input type="color" value={finishDraft.globalColor || "#b88858"} onChange={(e) => updateFinishDraft({ globalColor: e.target.value })} className="h-9 w-14 rounded cursor-pointer bg-transparent border border-border/60" />
+          <Input value={finishDraft.globalColor || "#b88858"} onChange={(e) => updateFinishDraft({ globalColor: e.target.value })} className="flex-1 font-mono text-xs h-9" />
+        </div>
         <div className="grid grid-cols-8 gap-1.5 pt-1">
           {[
             { name: "أبيض ثلجي", c: "#f5f3ee" }, { name: "كريمي", c: "#e8dcc4" },
@@ -687,38 +741,36 @@ function DesignEditor() {
             <button
               key={p.c}
               type="button"
-              onClick={() => setDoc({ ...doc, globalColor: p.c })}
+              onClick={() => updateFinishDraft({ globalColor: p.c })}
               title={p.name}
-              className={`h-7 w-full rounded border transition-all hover:scale-110 ${doc.globalColor?.toLowerCase() === p.c.toLowerCase() ? "border-primary ring-2 ring-primary/40" : "border-border/60"}`}
+              className={`h-7 w-full rounded border transition-all hover:scale-110 ${finishDraft.globalColor?.toLowerCase() === p.c.toLowerCase() ? "border-primary ring-2 ring-primary/40" : "border-border/60"}`}
               style={{ background: p.c }}
             />
           ))}
         </div>
-        <p className="text-[10px] text-muted-foreground">يطبَّق على كل الوحدات التي ليس لها لون مخصص.</p>
-
+        <p className="text-[10px] text-muted-foreground">اختر اللون أو الخامة ثم اضغط “تطبيق التغييرات” لتحديث 3D بثبات.</p>
 
         <h4 className="text-sm font-semibold flex items-center gap-1.5 pt-2"><Palette className="size-3.5 text-primary" /> ألوان الغرفة</h4>
         <div className="space-y-2">
           <div>
             <Label className="text-[11px] text-muted-foreground">لون الأرضية</Label>
             <div className="flex items-center gap-2">
-              <input type="color" value={doc.floorColor || "#d9cec0"} onChange={(e) => setDoc({ ...doc, floorColor: e.target.value })} className="h-8 w-12 rounded cursor-pointer bg-transparent border border-border/60" />
-              <Input value={doc.floorColor || "#d9cec0"} onChange={(e) => setDoc({ ...doc, floorColor: e.target.value })} className="flex-1 font-mono text-xs h-8" />
+              <input type="color" value={finishDraft.floorColor || "#d9cec0"} onChange={(e) => updateFinishDraft({ floorColor: e.target.value })} className="h-8 w-12 rounded cursor-pointer bg-transparent border border-border/60" />
+              <Input value={finishDraft.floorColor || "#d9cec0"} onChange={(e) => updateFinishDraft({ floorColor: e.target.value })} className="flex-1 font-mono text-xs h-8" />
             </div>
           </div>
           <div>
             <Label className="text-[11px] text-muted-foreground">لون الحوائط</Label>
             <div className="flex items-center gap-2">
-              <input type="color" value={doc.wallColor || "#efe7da"} onChange={(e) => setDoc({ ...doc, wallColor: e.target.value })} className="h-8 w-12 rounded cursor-pointer bg-transparent border border-border/60" />
-              <Input value={doc.wallColor || "#efe7da"} onChange={(e) => setDoc({ ...doc, wallColor: e.target.value })} className="flex-1 font-mono text-xs h-8" />
+              <input type="color" value={finishDraft.wallColor || "#efe7da"} onChange={(e) => updateFinishDraft({ wallColor: e.target.value })} className="h-8 w-12 rounded cursor-pointer bg-transparent border border-border/60" />
+              <Input value={finishDraft.wallColor || "#efe7da"} onChange={(e) => updateFinishDraft({ wallColor: e.target.value })} className="flex-1 font-mono text-xs h-8" />
             </div>
           </div>
           <div>
             <Label className="text-[11px] text-muted-foreground">لون الرخام</Label>
             <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2">
-              <input type="color" value={doc.marbleColor || "#d8cfbf"} onChange={(e) => setDoc({ ...doc, marbleColor: e.target.value })} className="h-8 w-12 rounded cursor-pointer bg-transparent border border-border/60" />
-              <Input value={doc.marbleColor || "#d8cfbf"} onChange={(e) => setDoc({ ...doc, marbleColor: e.target.value })} className="flex-1 font-mono text-xs h-8" />
+              <input type="color" value={finishDraft.marbleColor || "#d8cfbf"} onChange={(e) => updateFinishDraft({ marbleColor: e.target.value })} className="h-8 w-12 rounded cursor-pointer bg-transparent border border-border/60" />
+              <Input value={finishDraft.marbleColor || "#d8cfbf"} onChange={(e) => updateFinishDraft({ marbleColor: e.target.value })} className="flex-1 font-mono text-xs h-8" />
             </div>
           </div>
         </div>
@@ -732,12 +784,9 @@ function DesignEditor() {
 
           {(["floor","wall","counter"] as const).map((cat) => {
             const label = cat === "floor" ? "أرضية" : cat === "wall" ? "حوائط" : "رخامة";
-            const currentId = cat === "floor" ? doc.floorTextureId : cat === "wall" ? doc.wallTextureId : doc.marbleTextureId;
+            const currentId = cat === "floor" ? finishDraft.floorTextureId : cat === "wall" ? finishDraft.wallTextureId : finishDraft.marbleTextureId;
             const setId = (id: string | undefined) =>
-              setDoc({
-                ...doc,
-                ...(cat === "floor" ? { floorTextureId: id } : cat === "wall" ? { wallTextureId: id } : { marbleTextureId: id }),
-              });
+              updateFinishDraft(cat === "floor" ? { floorTextureId: id } : cat === "wall" ? { wallTextureId: id } : { marbleTextureId: id });
             const items = TEXTURES.filter((t) => t.category === cat);
             return (
               <div key={cat} className="space-y-1.5">
@@ -769,8 +818,15 @@ function DesignEditor() {
               </div>
             );
           })}
+          <div className="sticky bottom-0 z-10 -mx-1 mt-3 flex gap-2 rounded-xl border border-border/60 bg-card/95 p-2 shadow-card backdrop-blur">
+            <Button type="button" onClick={applyFinishDraft} disabled={!finishDirty} className="flex-1 bg-gradient-primary shadow-glow">
+              <Sparkles className="size-3.5" /> تطبيق التغييرات
+            </Button>
+            <Button type="button" variant="outline" onClick={resetFinishDraft} disabled={!finishDirty} className="px-3">
+              إلغاء
+            </Button>
+          </div>
         </div>
-      </div>
       </div>
 
 
@@ -1003,7 +1059,7 @@ function DesignEditor() {
         </div>
 
 
-        <Tabs defaultValue="2d" className="flex-1 flex flex-col overflow-hidden min-h-0">
+        <Tabs value={activeTab} onValueChange={(value) => { setActiveTab(value as "2d" | "3d"); if (value === "3d") setSceneRefreshKey((k) => k + 1); }} className="flex-1 flex flex-col overflow-hidden min-h-0">
           <TabsList className="mx-2 mt-2 self-start shrink-0">
             <TabsTrigger value="2d">2D</TabsTrigger>
             <TabsTrigger value="3d">3D</TabsTrigger>
@@ -1107,7 +1163,7 @@ function DesignEditor() {
               </div>
             )}
           </TabsContent>
-          <TabsContent value="3d" className="flex-1 m-0 bg-background min-h-0 relative" data-design-3d>
+          <TabsContent value="3d" className="flex-1 m-0 bg-background min-h-[420px] h-full relative overflow-hidden" data-design-3d>
             {toolbar3dVisible ? (
               <div className="absolute top-2 left-2 right-2 z-10 flex flex-wrap items-center gap-1.5 rounded-xl border border-border/60 bg-card/90 p-1.5 shadow-card backdrop-blur">
                 {([
@@ -1197,6 +1253,9 @@ function DesignEditor() {
             )}
 
             <Canvas
+              key={`scene-${activeTab}-${sceneRefreshKey}`}
+              className="block h-full w-full"
+              style={{ width: "100%", height: "100%" }}
               shadows="soft"
               camera={{ position: [doc.roomWidth, doc.roomDepth * 1.2, doc.roomDepth * 1.4], fov: 45 }}
               dpr={[1, 2]}

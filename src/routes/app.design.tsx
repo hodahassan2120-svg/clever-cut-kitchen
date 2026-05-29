@@ -196,7 +196,11 @@ function DesignEditor() {
     if (!id || !user) return;
     supabase.from("designs").select("*").eq("id", id).maybeSingle().then(({ data }) => {
       if (data) {
-        setDoc({ ...DEFAULT_DESIGN, ...(data.data as unknown as DesignDoc) });
+        const loaded = { ...DEFAULT_DESIGN, ...(data.data as unknown as DesignDoc) };
+        setDoc(loaded);
+        setFinishDraft(makeFinishDraft(loaded));
+        setFinishDirty(false);
+        setSceneRefreshKey((k) => k + 1);
         setName(data.name);
         setDesignId(data.id);
         setEditorStarted(true);
@@ -220,7 +224,7 @@ function DesignEditor() {
     setName(setupRoom.name || "تصميم جديد");
     setDesignId(null);
     setSelectedId(null);
-    setDoc({
+    const next = {
       ...DEFAULT_DESIGN,
       roomWidth,
       roomDepth,
@@ -228,7 +232,11 @@ function DesignEditor() {
       cutoutWidth: setupRoom.shape === "l_shape" ? Math.min(cutoutWidth || 0, roomWidth - 50) : 0,
       cutoutDepth: setupRoom.shape === "l_shape" ? Math.min(cutoutDepth || 0, roomDepth - 50) : 0,
       blocks: [],
-    });
+    };
+    setDoc(next);
+    setFinishDraft(makeFinishDraft(next));
+    setFinishDirty(false);
+    setSceneRefreshKey((k) => k + 1);
     setEditorStarted(true);
   };
 

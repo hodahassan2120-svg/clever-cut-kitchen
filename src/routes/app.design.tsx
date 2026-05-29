@@ -477,6 +477,22 @@ function DesignEditor() {
 
   const toUnit = (cm: number) => (unit === "m" ? (cm / 100).toFixed(2) : cm.toString());
   const fromUnit = (v: string) => (unit === "m" ? parseFloat(v) * 100 : parseFloat(v));
+  const updateFinishDraft = (patch: Partial<FinishDraft>) => {
+    setFinishDraft((current) => ({ ...current, ...patch }));
+    setFinishDirty(true);
+  };
+  const applyFinishDraft = () => {
+    setDoc((current) => ({ ...current, ...finishDraft }));
+    setFinishDirty(false);
+    setSceneRefreshKey((k) => k + 1);
+    setCameraResetKey((k) => k + 1);
+    toast.success("تم تطبيق الخامات والألوان على التصميم");
+  };
+  const resetFinishDraft = () => {
+    setFinishDraft(makeFinishDraft(doc));
+    setFinishDirty(false);
+    toast.info("تم إلغاء تعديلات الخامات غير المطبقة");
+  };
   const isPaintableBlock = (b: PlacedBlock) => !!b.placement || b.type.startsWith("base_") || b.type.startsWith("wall_") || b.type.startsWith("tall_") || b.type === "special_island";
   const blockColor = (b: PlacedBlock) => b.customColor || !isPaintableBlock(b) ? b.color : (doc.globalColor || b.color);
 

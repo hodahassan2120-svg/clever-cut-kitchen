@@ -1059,7 +1059,7 @@ function DesignEditor() {
         </div>
 
 
-        <Tabs defaultValue="2d" className="flex-1 flex flex-col overflow-hidden min-h-0">
+        <Tabs value={activeTab} onValueChange={(value) => { setActiveTab(value as "2d" | "3d"); if (value === "3d") setSceneRefreshKey((k) => k + 1); }} className="flex-1 flex flex-col overflow-hidden min-h-0">
           <TabsList className="mx-2 mt-2 self-start shrink-0">
             <TabsTrigger value="2d">2D</TabsTrigger>
             <TabsTrigger value="3d">3D</TabsTrigger>
@@ -1163,7 +1163,7 @@ function DesignEditor() {
               </div>
             )}
           </TabsContent>
-          <TabsContent value="3d" className="flex-1 m-0 bg-background min-h-0 relative" data-design-3d>
+          <TabsContent value="3d" className="flex-1 m-0 bg-background min-h-[420px] h-full relative overflow-hidden" data-design-3d>
             {toolbar3dVisible ? (
               <div className="absolute top-2 left-2 right-2 z-10 flex flex-wrap items-center gap-1.5 rounded-xl border border-border/60 bg-card/90 p-1.5 shadow-card backdrop-blur">
                 {([
@@ -1253,6 +1253,9 @@ function DesignEditor() {
             )}
 
             <Canvas
+              key={`scene-${activeTab}-${sceneRefreshKey}`}
+              className="block h-full w-full"
+              style={{ width: "100%", height: "100%" }}
               shadows="soft"
               camera={{ position: [doc.roomWidth, doc.roomDepth * 1.2, doc.roomDepth * 1.4], fov: 45 }}
               dpr={[1, 2]}

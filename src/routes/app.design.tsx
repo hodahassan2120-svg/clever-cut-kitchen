@@ -145,6 +145,9 @@ function DesignEditor() {
       lastDocRef.current = doc;
     }
   }, [doc]);
+  useEffect(() => {
+    if (!finishDirty) setFinishDraft(makeFinishDraft(doc));
+  }, [doc.globalColor, doc.floorColor, doc.wallColor, doc.marbleColor, doc.floorTextureId, doc.wallTextureId, doc.marbleTextureId, finishDirty]);
   const undo = () => {
     const h = historyRef.current;
     if (!h.past.length) return;
@@ -152,6 +155,9 @@ function DesignEditor() {
     h.future.push(lastDocRef.current);
     skipHistoryRef.current = true;
     setDoc(prev);
+    setFinishDraft(makeFinishDraft(prev));
+    setFinishDirty(false);
+    setSceneRefreshKey((k) => k + 1);
     toast.info("تم التراجع");
   };
   const redo = () => {
@@ -161,6 +167,9 @@ function DesignEditor() {
     h.past.push(lastDocRef.current);
     skipHistoryRef.current = true;
     setDoc(next);
+    setFinishDraft(makeFinishDraft(next));
+    setFinishDirty(false);
+    setSceneRefreshKey((k) => k + 1);
     toast.info("تمت الإعادة");
   };
   const duplicateBlock = (id: string) => {

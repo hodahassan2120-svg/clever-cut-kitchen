@@ -784,12 +784,9 @@ function DesignEditor() {
 
           {(["floor","wall","counter"] as const).map((cat) => {
             const label = cat === "floor" ? "أرضية" : cat === "wall" ? "حوائط" : "رخامة";
-            const currentId = cat === "floor" ? doc.floorTextureId : cat === "wall" ? doc.wallTextureId : doc.marbleTextureId;
+            const currentId = cat === "floor" ? finishDraft.floorTextureId : cat === "wall" ? finishDraft.wallTextureId : finishDraft.marbleTextureId;
             const setId = (id: string | undefined) =>
-              setDoc({
-                ...doc,
-                ...(cat === "floor" ? { floorTextureId: id } : cat === "wall" ? { wallTextureId: id } : { marbleTextureId: id }),
-              });
+              updateFinishDraft(cat === "floor" ? { floorTextureId: id } : cat === "wall" ? { wallTextureId: id } : { marbleTextureId: id });
             const items = TEXTURES.filter((t) => t.category === cat);
             return (
               <div key={cat} className="space-y-1.5">
@@ -821,8 +818,15 @@ function DesignEditor() {
               </div>
             );
           })}
+          <div className="sticky bottom-0 z-10 -mx-1 mt-3 flex gap-2 rounded-xl border border-border/60 bg-card/95 p-2 shadow-card backdrop-blur">
+            <Button type="button" onClick={applyFinishDraft} disabled={!finishDirty} className="flex-1 bg-gradient-primary shadow-glow">
+              <Sparkles className="size-3.5" /> تطبيق التغييرات
+            </Button>
+            <Button type="button" variant="outline" onClick={resetFinishDraft} disabled={!finishDirty} className="px-3">
+              إلغاء
+            </Button>
+          </div>
         </div>
-      </div>
       </div>
 
 

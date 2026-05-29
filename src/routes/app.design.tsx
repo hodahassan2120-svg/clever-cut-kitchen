@@ -717,14 +717,16 @@ function DesignEditor() {
         )}
       </div>
 
-      {/* اللون العام لكل الوحدات */}
+      {/* اللون العام وكل الخامات — تطبق بعد زر التأكيد فقط لتجنب كسر مشهد 3D أثناء التبديل */}
       <div className="space-y-2 mb-6 pb-4 border-b border-border/40">
-        <h4 className="text-sm font-semibold flex items-center gap-1.5"><Palette className="size-3.5 text-primary" /> اللون العام للوحدات</h4>
-        <div className="flex items-center gap-2">
-          <input type="color" value={doc.globalColor || "#b88858"} onChange={(e) => setDoc({ ...doc, globalColor: e.target.value })} className="h-9 w-14 rounded cursor-pointer bg-transparent border border-border/60" />
-          <Input value={doc.globalColor || "#b88858"} onChange={(e) => setDoc({ ...doc, globalColor: e.target.value })} className="flex-1 font-mono text-xs h-9" />
+        <div className="flex items-center justify-between gap-2">
+          <h4 className="text-sm font-semibold flex items-center gap-1.5"><Palette className="size-3.5 text-primary" /> اللون العام للوحدات</h4>
+          {finishDirty && <span className="text-[10px] text-primary font-bold">تعديلات جاهزة للتطبيق</span>}
         </div>
-        {/* لوحة ألوان واقعية للمطابخ — مستوحاة من تشطيبات حقيقية (HPL/MDF/خشب طبيعي) */}
+        <div className="flex items-center gap-2">
+          <input type="color" value={finishDraft.globalColor || "#b88858"} onChange={(e) => updateFinishDraft({ globalColor: e.target.value })} className="h-9 w-14 rounded cursor-pointer bg-transparent border border-border/60" />
+          <Input value={finishDraft.globalColor || "#b88858"} onChange={(e) => updateFinishDraft({ globalColor: e.target.value })} className="flex-1 font-mono text-xs h-9" />
+        </div>
         <div className="grid grid-cols-8 gap-1.5 pt-1">
           {[
             { name: "أبيض ثلجي", c: "#f5f3ee" }, { name: "كريمي", c: "#e8dcc4" },
@@ -739,38 +741,36 @@ function DesignEditor() {
             <button
               key={p.c}
               type="button"
-              onClick={() => setDoc({ ...doc, globalColor: p.c })}
+              onClick={() => updateFinishDraft({ globalColor: p.c })}
               title={p.name}
-              className={`h-7 w-full rounded border transition-all hover:scale-110 ${doc.globalColor?.toLowerCase() === p.c.toLowerCase() ? "border-primary ring-2 ring-primary/40" : "border-border/60"}`}
+              className={`h-7 w-full rounded border transition-all hover:scale-110 ${finishDraft.globalColor?.toLowerCase() === p.c.toLowerCase() ? "border-primary ring-2 ring-primary/40" : "border-border/60"}`}
               style={{ background: p.c }}
             />
           ))}
         </div>
-        <p className="text-[10px] text-muted-foreground">يطبَّق على كل الوحدات التي ليس لها لون مخصص.</p>
-
+        <p className="text-[10px] text-muted-foreground">اختر اللون أو الخامة ثم اضغط “تطبيق التغييرات” لتحديث 3D بثبات.</p>
 
         <h4 className="text-sm font-semibold flex items-center gap-1.5 pt-2"><Palette className="size-3.5 text-primary" /> ألوان الغرفة</h4>
         <div className="space-y-2">
           <div>
             <Label className="text-[11px] text-muted-foreground">لون الأرضية</Label>
             <div className="flex items-center gap-2">
-              <input type="color" value={doc.floorColor || "#d9cec0"} onChange={(e) => setDoc({ ...doc, floorColor: e.target.value })} className="h-8 w-12 rounded cursor-pointer bg-transparent border border-border/60" />
-              <Input value={doc.floorColor || "#d9cec0"} onChange={(e) => setDoc({ ...doc, floorColor: e.target.value })} className="flex-1 font-mono text-xs h-8" />
+              <input type="color" value={finishDraft.floorColor || "#d9cec0"} onChange={(e) => updateFinishDraft({ floorColor: e.target.value })} className="h-8 w-12 rounded cursor-pointer bg-transparent border border-border/60" />
+              <Input value={finishDraft.floorColor || "#d9cec0"} onChange={(e) => updateFinishDraft({ floorColor: e.target.value })} className="flex-1 font-mono text-xs h-8" />
             </div>
           </div>
           <div>
             <Label className="text-[11px] text-muted-foreground">لون الحوائط</Label>
             <div className="flex items-center gap-2">
-              <input type="color" value={doc.wallColor || "#efe7da"} onChange={(e) => setDoc({ ...doc, wallColor: e.target.value })} className="h-8 w-12 rounded cursor-pointer bg-transparent border border-border/60" />
-              <Input value={doc.wallColor || "#efe7da"} onChange={(e) => setDoc({ ...doc, wallColor: e.target.value })} className="flex-1 font-mono text-xs h-8" />
+              <input type="color" value={finishDraft.wallColor || "#efe7da"} onChange={(e) => updateFinishDraft({ wallColor: e.target.value })} className="h-8 w-12 rounded cursor-pointer bg-transparent border border-border/60" />
+              <Input value={finishDraft.wallColor || "#efe7da"} onChange={(e) => updateFinishDraft({ wallColor: e.target.value })} className="flex-1 font-mono text-xs h-8" />
             </div>
           </div>
           <div>
             <Label className="text-[11px] text-muted-foreground">لون الرخام</Label>
             <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2">
-              <input type="color" value={doc.marbleColor || "#d8cfbf"} onChange={(e) => setDoc({ ...doc, marbleColor: e.target.value })} className="h-8 w-12 rounded cursor-pointer bg-transparent border border-border/60" />
-              <Input value={doc.marbleColor || "#d8cfbf"} onChange={(e) => setDoc({ ...doc, marbleColor: e.target.value })} className="flex-1 font-mono text-xs h-8" />
+              <input type="color" value={finishDraft.marbleColor || "#d8cfbf"} onChange={(e) => updateFinishDraft({ marbleColor: e.target.value })} className="h-8 w-12 rounded cursor-pointer bg-transparent border border-border/60" />
+              <Input value={finishDraft.marbleColor || "#d8cfbf"} onChange={(e) => updateFinishDraft({ marbleColor: e.target.value })} className="flex-1 font-mono text-xs h-8" />
             </div>
           </div>
         </div>

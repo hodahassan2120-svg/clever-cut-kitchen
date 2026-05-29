@@ -38,6 +38,18 @@ type ViewAngle = "perspective" | "front" | "top";
 const STYLE_LABELS: Record<RenderStyle, string> = { modern: "مودرن", classic: "كلاسيك", industrial: "صناعي", luxury: "فاخر" };
 const VIEW_LABELS: Record<ViewAngle, string> = { perspective: "منظور", front: "أمامي", top: "علوي" };
 
+type FinishDraft = Pick<DesignDoc, "globalColor" | "floorColor" | "wallColor" | "marbleColor" | "floorTextureId" | "wallTextureId" | "marbleTextureId">;
+
+const makeFinishDraft = (source: DesignDoc): FinishDraft => ({
+  globalColor: source.globalColor,
+  floorColor: source.floorColor,
+  wallColor: source.wallColor,
+  marbleColor: source.marbleColor,
+  floorTextureId: source.floorTextureId,
+  wallTextureId: source.wallTextureId,
+  marbleTextureId: source.marbleTextureId,
+});
+
 export const Route = createFileRoute("/app/design")({
   component: DesignEditor,
   validateSearch: (s: Record<string, unknown>) => ({ id: typeof s.id === "string" ? s.id : undefined }),
@@ -84,8 +96,11 @@ function DesignEditor() {
       marbleColor: doc.marbleColor,
     });
     setDoc(next);
+    setFinishDraft(makeFinishDraft(next));
+    setFinishDirty(false);
     setSelectedId(null);
     setTemplatesOpen(false);
+    setSceneRefreshKey((k) => k + 1);
     toast.success(`تم تحميل قالب "${t.name}"`);
   };
   const [editorStarted, setEditorStarted] = useState(false);
@@ -93,9 +108,12 @@ function DesignEditor() {
   const [editDims, setEditDims] = useState({ width: "", depth: "", height: "", notes: "" });
   const [setupRoom, setSetupRoom] = useState({ name: "تصميم جديد", width: "400", depth: "300", shape: "rectangle" as "rectangle" | "l_shape", cutoutWidth: "100", cutoutDepth: "100" });
   const [savedRows, setSavedRows] = useState<{ id: string; name: string; updated_at: string }[]>([]);
+  const [activeTab, setActiveTab] = useState<"2d" | "3d">("2d");
   const [view3d, setView3d] = useState<"perspective" | "top" | "front" | "right" | "left">("perspective");
   const stageWrapRef = useRef<HTMLDivElement>(null);
   const [stageSize, setStageSize] = useState({ w: 360, h: 400 });
+  const [finishDraft, setFinishDraft] = useState<FinishDraft>(() => makeFinishDraft(DEFAULT_DESIGN));
+  const [finishDirty, setFinishDirty] = useState(false);
   const [aiRendering, setAiRendering] = useState(false);
   const [aiResultUrls, setAiResultUrls] = useState<string[] | null>(null);
   const [aiCredits, setAiCredits] = useState<number | null>(null);
@@ -111,6 +129,7 @@ function DesignEditor() {
   const dragRafRef = useRef<number | null>(null);
   const [isDragging3d, setIsDragging3d] = useState(false);
   const [cameraResetKey, setCameraResetKey] = useState(0);
+  const [sceneRefreshKey, setSceneRefreshKey] = useState(0);
   const callRender = useServerFn(renderRealistic);
 
   // History stack — Undo/Redo على مستوى المستند بالكامل

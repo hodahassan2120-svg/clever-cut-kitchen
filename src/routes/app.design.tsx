@@ -579,28 +579,28 @@ function DesignEditor() {
     return b;
   };
 
-  const snapBlockToWall = (block: PlacedBlock, blocks = doc.blocks) => {
-    const b = clampBlock(block);
+  const snapBlockToWall = (block: PlacedBlock, blocks = doc.blocks, room = doc) => {
+    const b = clampBlock(block, room);
     const distances = [
       { wall: "back" as const, value: b.y },
       { wall: "left" as const, value: b.x },
-      { wall: "front" as const, value: doc.roomDepth - (b.y + b.depth) },
-      { wall: "right" as const, value: doc.roomWidth - (b.x + b.width) },
+      { wall: "front" as const, value: room.roomDepth - blockFootprint(b).maxY },
+      { wall: "right" as const, value: room.roomWidth - blockFootprint(b).maxX },
     ].sort((a, z) => a.value - z.value);
     const wall = distances[0].wall;
     // التصق بالحائط فقط إذا كان قريباً (<30سم) — وإلا اترك الوحدة في مكانها
     if (distances[0].value < 30) {
       if (wall === "back") b.y = 0;
-      if (wall === "front") b.y = doc.roomDepth - b.depth;
+      if (wall === "front") b.y += room.roomDepth - blockFootprint(b).maxY;
       if (wall === "left") b.x = 0;
-      if (wall === "right") b.x = doc.roomWidth - b.width;
+      if (wall === "right") b.x += room.roomWidth - blockFootprint(b).maxX;
     }
 
     const sameWall = blocks.filter((o) => o.id !== b.id && (
       wall === "back" ? Math.abs(o.y) < 2 :
-      wall === "front" ? Math.abs(o.y + o.depth - doc.roomDepth) < 2 :
+      wall === "front" ? Math.abs(blockFootprint(o).maxY - room.roomDepth) < 2 :
       wall === "left" ? Math.abs(o.x) < 2 :
-      Math.abs(o.x + o.width - doc.roomWidth) < 2
+      Math.abs(blockFootprint(o).maxX - room.roomWidth) < 2
     ));
     const SNAP = 18;
     for (const o of sameWall) {
@@ -612,7 +612,7 @@ function DesignEditor() {
         if (Math.abs((b.y + b.depth) - o.y) <= SNAP) b.y = o.y - b.depth;
       }
     }
-    return resolveCollisions(clampBlock(b), blocks);
+    return resolveCollisions(clampBlock(b, room), blocks, room);
   };
 
   const nearestWall = (b: PlacedBlock) => ([

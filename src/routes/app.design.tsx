@@ -523,14 +523,14 @@ function DesignEditor() {
     return { minX: cx - halfX, maxX: cx + halfX, minY: cy - halfY, maxY: cy + halfY };
   };
 
-  const clampBlock = (b: PlacedBlock) => {
+  const clampBlock = (b: PlacedBlock, room = doc) => {
     const next = { ...b };
     for (let i = 0; i < 2; i++) {
       const fp = blockFootprint(next);
       if (fp.minX < 0) next.x += -fp.minX;
-      if (fp.maxX > doc.roomWidth) next.x -= fp.maxX - doc.roomWidth;
+      if (fp.maxX > room.roomWidth) next.x -= fp.maxX - room.roomWidth;
       if (fp.minY < 0) next.y += -fp.minY;
-      if (fp.maxY > doc.roomDepth) next.y -= fp.maxY - doc.roomDepth;
+      if (fp.maxY > room.roomDepth) next.y -= fp.maxY - room.roomDepth;
     }
     return next;
   };
@@ -558,8 +558,8 @@ function DesignEditor() {
   };
 
   // إزاحة الوحدة لمنع التداخل — تدفعها للجهة الأقرب من الوحدات المتعارضة
-  const resolveCollisions = (block: PlacedBlock, blocks = doc.blocks): PlacedBlock => {
-    let b = clampBlock({ ...block });
+  const resolveCollisions = (block: PlacedBlock, blocks = doc.blocks, room = doc): PlacedBlock => {
+    let b = clampBlock({ ...block }, room);
     const others = blocks.filter((o) => o.id !== b.id);
     for (let i = 0; i < 10; i++) {
       const hit = others.find((o) => blocksOverlap(b, o));
@@ -574,7 +574,7 @@ function DesignEditor() {
       else if (minPush === pushLeft) b.x -= pushLeft;
       else if (minPush === pushFront) b.y += pushFront;
       else b.y -= pushBack;
-      b = clampBlock(b);
+      b = clampBlock(b, room);
     }
     return b;
   };

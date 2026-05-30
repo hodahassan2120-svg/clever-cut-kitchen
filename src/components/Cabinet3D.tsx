@@ -45,6 +45,7 @@ function WoodMaterial({ color, roughness = 0.58 }: { color: string; roughness?: 
       color={color}
       roughness={roughness}
       metalness={0.015}
+      envMapIntensity={0.35}
       polygonOffset
       polygonOffsetFactor={-0.5}
       polygonOffsetUnits={-0.5}
@@ -105,9 +106,10 @@ function Cabinet3DImpl({ block, defaultColor, marbleColor, marbleTextureId }: Pr
         <boxGeometry args={[W, H, PANEL_T]} />
         <meshStandardMaterial color="#2c2722" roughness={0.9} polygonOffset polygonOffsetFactor={1} polygonOffsetUnits={1} />
       </mesh>
-      <mesh position={[0, 0, D / 2 - PANEL_T / 2]}>
-        <boxGeometry args={[W, H, PANEL_T]} />
-        <meshStandardMaterial color={carcassColor} roughness={0.8} transparent opacity={0.28} />
+      {/* كتلة داخلية خفيفة تجعل الوحدة مصمتة بصرياً من كل زاوية بدل أن تظهر كإطار/خطوط فقط */}
+      <mesh position={[0, 0, 0]} castShadow receiveShadow>
+        <boxGeometry args={[Math.max(1, W - PANEL_T * 2), Math.max(1, H - PANEL_T * 2), Math.max(1, D - PANEL_T * 2)]} />
+        <meshStandardMaterial color={carcassColor} roughness={0.86} metalness={0.01} />
       </mesh>
       <mesh position={[-W / 2 + PANEL_T / 2, 0, 0]}>
         <boxGeometry args={[PANEL_T, H, D]} />
@@ -156,7 +158,7 @@ function Cabinet3DImpl({ block, defaultColor, marbleColor, marbleTextureId }: Pr
                   <cylinderGeometry args={[0.6, 0.6, 1.4, 12]} />
                   <meshStandardMaterial color="#b0934d" roughness={0.3} metalness={0.9} />
                 </mesh>
-                <mesh position={[Math.max(7, W * 0.22), 0, -0.6]}>
+                <mesh position={[Math.max(7, W * 0.22), 0, -0.6]} rotation={[Math.PI / 2, 0, 0]}>
                   <cylinderGeometry args={[0.6, 0.6, 1.4, 12]} />
                   <meshStandardMaterial color="#b0934d" roughness={0.3} metalness={0.9} />
                 </mesh>

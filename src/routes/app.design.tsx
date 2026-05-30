@@ -39,6 +39,7 @@ import { Cabinet3D } from "@/components/Cabinet3D";
 import { TexturedMaterial } from "@/components/TexturedMaterial";
 import { TEXTURES } from "@/lib/textures";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { Slider } from "@/components/ui/slider";
@@ -216,7 +217,7 @@ function DesignEditor() {
       created_at: string;
     }[]
   >([]);
-  const orbitRef = useRef<any>(null);
+  const orbitRef = useRef<{ object: THREE.Camera; target: THREE.Vector3; update: () => void } | null>(null);
   const dragRef = useRef<{
     id: string;
     offsetX: number;
@@ -515,10 +516,11 @@ function DesignEditor() {
   const save = async () => {
     if (!user) return toast.error("سجل الدخول أولاً");
     if (!name.trim()) return toast.error("اكتب اسماً للتصميم");
+    const designData = JSON.parse(JSON.stringify(doc)) as Json;
     if (designId) {
       const { error } = await supabase
         .from("designs")
-        .update({ name: name.trim(), data: doc as any, updated_at: new Date().toISOString() })
+        .update({ name: name.trim(), data: designData, updated_at: new Date().toISOString() })
         .eq("id", designId)
         .eq("user_id", user.id);
       if (error) {
@@ -532,7 +534,7 @@ function DesignEditor() {
     } else {
       const { data, error } = await supabase
         .from("designs")
-        .insert({ user_id: user.id, name: name.trim(), data: doc as any })
+        .insert({ user_id: user.id, name: name.trim(), data: designData })
         .select("id")
         .single();
       if (error) {

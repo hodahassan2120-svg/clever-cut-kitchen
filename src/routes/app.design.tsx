@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Stage, Layer, Rect, Line, Text as KText, Group } from "react-konva";
 import { Canvas, useThree, type ThreeEvent } from "@react-three/fiber";
 import { OrbitControls, Environment, ContactShadows, SoftShadows } from "@react-three/drei";
+import type { OrbitControls as OrbitControlsType } from "three-stdlib";
 import * as THREE from "three";
 import {
   KITCHEN_BLOCKS,
@@ -217,7 +218,7 @@ function DesignEditor() {
       created_at: string;
     }[]
   >([]);
-  const orbitRef = useRef<{ object: THREE.Camera; target: THREE.Vector3; update: () => void } | null>(null);
+  const orbitRef = useRef<OrbitControlsType | null>(null);
   const dragRef = useRef<{
     id: string;
     offsetX: number;

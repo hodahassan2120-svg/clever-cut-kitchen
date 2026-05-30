@@ -513,11 +513,26 @@ function DesignEditor() {
       : [0, 0, doc.roomWidth, 0, doc.roomWidth, doc.roomDepth, 0, doc.roomDepth];
   };
 
-  const clampBlock = (b: PlacedBlock) => ({
-    ...b,
-    x: Math.max(0, Math.min(b.x, doc.roomWidth - b.width)),
-    y: Math.max(0, Math.min(b.y, doc.roomDepth - b.depth)),
-  });
+  const blockFootprint = (b: PlacedBlock) => {
+    const rad = (((b.rotation || 0) % 360) * Math.PI) / 180;
+    const cx = b.x + b.width / 2;
+    const cy = b.y + b.depth / 2;
+    const halfX = (Math.abs(Math.cos(rad)) * b.width + Math.abs(Math.sin(rad)) * b.depth) / 2;
+    const halfY = (Math.abs(Math.sin(rad)) * b.width + Math.abs(Math.cos(rad)) * b.depth) / 2;
+    return { minX: cx - halfX, maxX: cx + halfX, minY: cy - halfY, maxY: cy + halfY };
+  };
+
+  const clampBlock = (b: PlacedBlock) => {
+    const next = { ...b };
+    for (let i = 0; i < 2; i++) {
+      const fp = blockFootprint(next);
+      if (fp.minX < 0) next.x += -fp.minX;
+      if (fp.maxX > doc.roomWidth) next.x -= fp.maxX - doc.roomWidth;
+      if (fp.minY < 0) next.y += -fp.minY;
+      if (fp.maxY > doc.roomDepth) next.y -= fp.maxY - doc.roomDepth;
+    }
+    return next;
+  };
 
   // مستوى الوحدة عمودياً — لتحديد ما إذا كانت وحدتان تتعارضان (السفلية والعلوية لا تتعارضان)
   const blockLevel = (b: PlacedBlock): "base" | "wall" | "tall" => {
@@ -531,12 +546,13 @@ function DesignEditor() {
     const la = blockLevel(a), lb = blockLevel(b);
     const sameLayer = la === lb || la === "tall" || lb === "tall";
     if (!sameLayer) return false;
+    const fa = blockFootprint(a), fb = blockFootprint(b);
     const GAP = 0.5;
     return (
-      a.x < b.x + b.width - GAP &&
-      a.x + a.width > b.x + GAP &&
-      a.y < b.y + b.depth - GAP &&
-      a.y + a.depth > b.y + GAP
+      fa.minX < fb.maxX - GAP &&
+      fa.maxX > fb.minX + GAP &&
+      fa.minY < fb.maxY - GAP &&
+      fa.maxY > fb.minY + GAP
     );
   };
 
@@ -547,15 +563,16 @@ function DesignEditor() {
     for (let i = 0; i < 10; i++) {
       const hit = others.find((o) => blocksOverlap(b, o));
       if (!hit) break;
-      const pushRight = hit.x + hit.width - b.x;
-      const pushLeft = b.x + b.width - hit.x;
-      const pushFront = hit.y + hit.depth - b.y;
-      const pushBack = b.y + b.depth - hit.y;
+      const fb = blockFootprint(b), fh = blockFootprint(hit);
+      const pushRight = fh.maxX - fb.minX;
+      const pushLeft = fb.maxX - fh.minX;
+      const pushFront = fh.maxY - fb.minY;
+      const pushBack = fb.maxY - fh.minY;
       const minPush = Math.min(pushRight, pushLeft, pushFront, pushBack);
-      if (minPush === pushRight) b.x = hit.x + hit.width;
-      else if (minPush === pushLeft) b.x = hit.x - b.width;
-      else if (minPush === pushFront) b.y = hit.y + hit.depth;
-      else b.y = hit.y - b.depth;
+      if (minPush === pushRight) b.x += pushRight;
+      else if (minPush === pushLeft) b.x -= pushLeft;
+      else if (minPush === pushFront) b.y += pushFront;
+      else b.y -= pushBack;
       b = clampBlock(b);
     }
     return b;

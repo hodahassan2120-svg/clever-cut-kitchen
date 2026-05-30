@@ -154,7 +154,7 @@ function Cabinet3DImpl({ block, defaultColor, marbleColor, marbleTextureId }: Pr
                   <meshStandardMaterial color="#d8b46a" roughness={0.22} metalness={0.92} envMapIntensity={1.4} />
                 </mesh>
                 {/* قواعد تثبيت المقبض */}
-                <mesh position={[-Math.max(7, W * 0.22), 0, -0.6]}>
+                <mesh position={[-Math.max(7, W * 0.22), 0, -0.6]} rotation={[Math.PI / 2, 0, 0]}>
                   <cylinderGeometry args={[0.6, 0.6, 1.4, 12]} />
                   <meshStandardMaterial color="#b0934d" roughness={0.3} metalness={0.9} />
                 </mesh>

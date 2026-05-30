@@ -493,6 +493,7 @@ function DesignEditor() {
   const applyFinishDraft = () => {
     setDoc((current) => ({ ...current, ...finishDraft }));
     setFinishDirty(false);
+    setActiveTab("3d");
     setSceneRefreshKey((k) => k + 1);
     setCameraResetKey((k) => k + 1);
     toast.success("تم تطبيق الخامات والألوان على التصميم");

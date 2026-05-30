@@ -1311,7 +1311,7 @@ function DesignEditor() {
                 <boxGeometry args={[doc.roomWidth + 8, 280, 6]} />
                 <meshStandardMaterial color={doc.wallColor || "#efe7da"} roughness={0.98} />
               </mesh>
-              <mesh position={[doc.roomWidth / 2, 140, -0.5]} receiveShadow>
+              <mesh position={[doc.roomWidth / 2, 140, 0.25]} receiveShadow>
                 <planeGeometry args={[doc.roomWidth + 2, 280]} />
                 <TexturedMaterial textureId={doc.wallTextureId} surfaceWidthCm={doc.roomWidth} surfaceHeightCm={280} fallbackColor={doc.wallColor || "#efe7da"} roughness={0.95} side={THREE.DoubleSide} />
               </mesh>
@@ -1320,7 +1320,7 @@ function DesignEditor() {
                 <boxGeometry args={[6, 280, doc.roomDepth + 8]} />
                 <meshStandardMaterial color={doc.wallColor || "#efe7da"} roughness={0.98} />
               </mesh>
-              <mesh position={[-0.5, 140, doc.roomDepth / 2]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
+              <mesh position={[0.25, 140, doc.roomDepth / 2]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
                 <planeGeometry args={[doc.roomDepth + 2, 280]} />
                 <TexturedMaterial textureId={doc.wallTextureId} surfaceWidthCm={doc.roomDepth} surfaceHeightCm={280} fallbackColor={doc.wallColor || "#efe7da"} roughness={0.95} side={THREE.DoubleSide} />
               </mesh>
@@ -1329,7 +1329,7 @@ function DesignEditor() {
                 <boxGeometry args={[6, 280, doc.roomDepth + 8]} />
                 <meshStandardMaterial color={doc.wallColor || "#efe7da"} roughness={0.98} transparent opacity={0.28} />
               </mesh>
-              <mesh position={[doc.roomWidth + 0.5, 140, doc.roomDepth / 2]} rotation={[0, -Math.PI / 2, 0]} receiveShadow>
+              <mesh position={[doc.roomWidth - 0.25, 140, doc.roomDepth / 2]} rotation={[0, -Math.PI / 2, 0]} receiveShadow>
                 <planeGeometry args={[doc.roomDepth + 2, 280]} />
                 <TexturedMaterial textureId={doc.wallTextureId} surfaceWidthCm={doc.roomDepth} surfaceHeightCm={280} fallbackColor={doc.wallColor || "#efe7da"} roughness={0.95} side={THREE.DoubleSide} opacity={0.45} />
               </mesh>

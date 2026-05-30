@@ -4,7 +4,14 @@ import { Stage, Layer, Rect, Line, Text as KText, Group } from "react-konva";
 import { Canvas, useThree, type ThreeEvent } from "@react-three/fiber";
 import { OrbitControls, Environment, ContactShadows, SoftShadows } from "@react-three/drei";
 import * as THREE from "three";
-import { KITCHEN_BLOCKS, CATEGORY_LABELS, DEFAULT_DESIGN, type DesignDoc, type KitchenBlock, type PlacedBlock } from "@/lib/blocks";
+import {
+  KITCHEN_BLOCKS,
+  CATEGORY_LABELS,
+  DEFAULT_DESIGN,
+  type DesignDoc,
+  type KitchenBlock,
+  type PlacedBlock,
+} from "@/lib/blocks";
 import { BlockIcon } from "@/components/BlockIcon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,8 +19,19 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader } from "@/components/ui/sheet";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { CustomUnitBuilder } from "@/components/CustomUnitBuilder";
 import { TemplatesDialog } from "@/components/TemplatesDialog";
 import { buildTemplateDoc, type KitchenTemplate } from "@/lib/templates";
@@ -24,7 +42,30 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { Slider } from "@/components/ui/slider";
-import { Save, Plus, Trash2, LayoutGrid, Settings2, Wand2, Palette, FolderOpen, Ruler, PenLine, RotateCw, Pencil, X, Camera, ChevronDown, Sparkles, Download, Loader2, Eye, EyeOff, Images, Layers } from "lucide-react";
+import {
+  Save,
+  Plus,
+  Trash2,
+  LayoutGrid,
+  Settings2,
+  Wand2,
+  Palette,
+  FolderOpen,
+  Ruler,
+  PenLine,
+  RotateCw,
+  Pencil,
+  X,
+  Camera,
+  ChevronDown,
+  Sparkles,
+  Download,
+  Loader2,
+  Eye,
+  EyeOff,
+  Images,
+  Layers,
+} from "lucide-react";
 import type Konva from "konva";
 import { useServerFn } from "@tanstack/react-start";
 import { renderRealistic } from "@/lib/render.functions";
@@ -35,10 +76,28 @@ import { Gift } from "lucide-react";
 
 type RenderStyle = "modern" | "classic" | "industrial" | "luxury";
 type ViewAngle = "perspective" | "front" | "top";
-const STYLE_LABELS: Record<RenderStyle, string> = { modern: "مودرن", classic: "كلاسيك", industrial: "صناعي", luxury: "فاخر" };
-const VIEW_LABELS: Record<ViewAngle, string> = { perspective: "منظور", front: "أمامي", top: "علوي" };
+const STYLE_LABELS: Record<RenderStyle, string> = {
+  modern: "مودرن",
+  classic: "كلاسيك",
+  industrial: "صناعي",
+  luxury: "فاخر",
+};
+const VIEW_LABELS: Record<ViewAngle, string> = {
+  perspective: "منظور",
+  front: "أمامي",
+  top: "علوي",
+};
 
-type FinishDraft = Pick<DesignDoc, "globalColor" | "floorColor" | "wallColor" | "marbleColor" | "floorTextureId" | "wallTextureId" | "marbleTextureId">;
+type FinishDraft = Pick<
+  DesignDoc,
+  | "globalColor"
+  | "floorColor"
+  | "wallColor"
+  | "marbleColor"
+  | "floorTextureId"
+  | "wallTextureId"
+  | "marbleTextureId"
+>;
 
 const makeFinishDraft = (source: DesignDoc): FinishDraft => ({
   globalColor: source.globalColor,
@@ -52,10 +111,22 @@ const makeFinishDraft = (source: DesignDoc): FinishDraft => ({
 
 export const Route = createFileRoute("/app/design")({
   component: DesignEditor,
-  validateSearch: (s: Record<string, unknown>) => ({ id: typeof s.id === "string" ? s.id : undefined }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    id: typeof s.id === "string" ? s.id : undefined,
+  }),
 });
 
-function SceneCamera({ view, roomWidth, roomDepth, resetKey }: { view: "perspective" | "top" | "front" | "right" | "left"; roomWidth: number; roomDepth: number; resetKey: number }) {
+function SceneCamera({
+  view,
+  roomWidth,
+  roomDepth,
+  resetKey,
+}: {
+  view: "perspective" | "top" | "front" | "right" | "left";
+  roomWidth: number;
+  roomDepth: number;
+  resetKey: number;
+}) {
   const { camera, invalidate } = useThree();
   useEffect(() => {
     const target: [number, number, number] = [roomWidth / 2, 80, roomDepth / 2];
@@ -106,13 +177,26 @@ function DesignEditor() {
   const [editorStarted, setEditorStarted] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDims, setEditDims] = useState({ width: "", depth: "", height: "", notes: "" });
-  const [setupRoom, setSetupRoom] = useState({ name: "تصميم جديد", width: "400", depth: "300", shape: "rectangle" as "rectangle" | "l_shape", cutoutWidth: "100", cutoutDepth: "100" });
-  const [savedRows, setSavedRows] = useState<{ id: string; name: string; updated_at: string }[]>([]);
+  const [setupRoom, setSetupRoom] = useState({
+    name: "تصميم جديد",
+    width: "400",
+    depth: "300",
+    shape: "rectangle" as "rectangle" | "l_shape",
+    cutoutWidth: "100",
+    cutoutDepth: "100",
+  });
+  const [savedRows, setSavedRows] = useState<{ id: string; name: string; updated_at: string }[]>(
+    [],
+  );
   const [activeTab, setActiveTab] = useState<"2d" | "3d">("2d");
-  const [view3d, setView3d] = useState<"perspective" | "top" | "front" | "right" | "left">("perspective");
+  const [view3d, setView3d] = useState<"perspective" | "top" | "front" | "right" | "left">(
+    "perspective",
+  );
   const stageWrapRef = useRef<HTMLDivElement>(null);
   const [stageSize, setStageSize] = useState({ w: 360, h: 400 });
-  const [finishDraft, setFinishDraft] = useState<FinishDraft>(() => makeFinishDraft(DEFAULT_DESIGN));
+  const [finishDraft, setFinishDraft] = useState<FinishDraft>(() =>
+    makeFinishDraft(DEFAULT_DESIGN),
+  );
   const [finishDirty, setFinishDirty] = useState(false);
   const [aiRendering, setAiRendering] = useState(false);
   const [aiResultUrls, setAiResultUrls] = useState<string[] | null>(null);
@@ -123,9 +207,25 @@ function DesignEditor() {
   const [renderMulti, setRenderMulti] = useState(false);
   const [renderOpen, setRenderOpen] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
-  const [gallery, setGallery] = useState<{ id: string; image_url: string; style: string | null; view_angle: string | null; created_at: string }[]>([]);
+  const [gallery, setGallery] = useState<
+    {
+      id: string;
+      image_url: string;
+      style: string | null;
+      view_angle: string | null;
+      created_at: string;
+    }[]
+  >([]);
   const orbitRef = useRef<any>(null);
-  const dragRef = useRef<{ id: string; offsetX: number; offsetZ: number; currentX: number; currentY: number; plane: THREE.Plane; moved: boolean } | null>(null);
+  const dragRef = useRef<{
+    id: string;
+    offsetX: number;
+    offsetZ: number;
+    currentX: number;
+    currentY: number;
+    plane: THREE.Plane;
+    moved: boolean;
+  } | null>(null);
   const dragRafRef = useRef<number | null>(null);
   const [isDragging3d, setIsDragging3d] = useState(false);
   const [cameraResetKey, setCameraResetKey] = useState(0);
@@ -137,7 +237,11 @@ function DesignEditor() {
   const skipHistoryRef = useRef(false);
   const lastDocRef = useRef<DesignDoc>(doc);
   useEffect(() => {
-    if (skipHistoryRef.current) { skipHistoryRef.current = false; lastDocRef.current = doc; return; }
+    if (skipHistoryRef.current) {
+      skipHistoryRef.current = false;
+      lastDocRef.current = doc;
+      return;
+    }
     if (lastDocRef.current !== doc) {
       historyRef.current.past.push(lastDocRef.current);
       if (historyRef.current.past.length > 50) historyRef.current.past.shift();
@@ -147,7 +251,16 @@ function DesignEditor() {
   }, [doc]);
   useEffect(() => {
     if (!finishDirty) setFinishDraft(makeFinishDraft(doc));
-  }, [doc.globalColor, doc.floorColor, doc.wallColor, doc.marbleColor, doc.floorTextureId, doc.wallTextureId, doc.marbleTextureId, finishDirty]);
+  }, [
+    doc.globalColor,
+    doc.floorColor,
+    doc.wallColor,
+    doc.marbleColor,
+    doc.floorTextureId,
+    doc.wallTextureId,
+    doc.marbleTextureId,
+    finishDirty,
+  ]);
   const undo = () => {
     const h = historyRef.current;
     if (!h.past.length) return;
@@ -175,7 +288,12 @@ function DesignEditor() {
   const duplicateBlock = (id: string) => {
     const b = doc.blocks.find((x) => x.id === id);
     if (!b) return;
-    const copy: PlacedBlock = autoPlaceBlock({ ...b, id: crypto.randomUUID(), x: Math.min(doc.roomWidth - b.width, b.x + 20), y: Math.min(doc.roomDepth - b.depth, b.y + 20) });
+    const copy: PlacedBlock = autoPlaceBlock({
+      ...b,
+      id: crypto.randomUUID(),
+      x: Math.min(doc.roomWidth - b.width, b.x + 20),
+      y: Math.min(doc.roomDepth - b.depth, b.y + 20),
+    });
     setDoc({ ...doc, blocks: [...doc.blocks, copy] });
     setSelectedId(copy.id);
     toast.success("تم تكرار الوحدة");
@@ -196,39 +314,56 @@ function DesignEditor() {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("subscriptions").select("ai_credits").eq("user_id", user.id).maybeSingle()
+    supabase
+      .from("subscriptions")
+      .select("ai_credits")
+      .eq("user_id", user.id)
+      .maybeSingle()
       .then(({ data }) => setAiCredits(data?.ai_credits ?? 0));
   }, [user]);
 
-
   useEffect(() => {
     if (!id || !user) return;
-    supabase.from("designs").select("*").eq("id", id).maybeSingle().then(({ data }) => {
-      if (data) {
-        const loaded = { ...DEFAULT_DESIGN, ...(data.data as unknown as DesignDoc) };
-        setDoc(loaded);
-        setFinishDraft(makeFinishDraft(loaded));
-        setFinishDirty(false);
-        setSceneRefreshKey((k) => k + 1);
-        setName(data.name);
-        setDesignId(data.id);
-        setEditorStarted(true);
-      }
-    });
+    supabase
+      .from("designs")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          const loaded = { ...DEFAULT_DESIGN, ...(data.data as unknown as DesignDoc) };
+          setDoc(loaded);
+          setFinishDraft(makeFinishDraft(loaded));
+          setFinishDirty(false);
+          setSceneRefreshKey((k) => k + 1);
+          setName(data.name);
+          setDesignId(data.id);
+          setEditorStarted(true);
+        }
+      });
   }, [id, user]);
 
   useEffect(() => {
     if (!user || id) return;
-    supabase.from("designs").select("id,name,updated_at").eq("user_id", user.id).order("updated_at", { ascending: false }).then(({ data }) => {
-      setSavedRows(data ?? []);
-    });
+    supabase
+      .from("designs")
+      .select("id,name,updated_at")
+      .eq("user_id", user.id)
+      .order("updated_at", { ascending: false })
+      .then(({ data }) => {
+        setSavedRows(data ?? []);
+      });
   }, [id, user]);
 
   const startNewDesign = () => {
-    const roomWidth = unit === "m" ? parseFloat(setupRoom.width) * 100 : parseFloat(setupRoom.width);
-    const roomDepth = unit === "m" ? parseFloat(setupRoom.depth) * 100 : parseFloat(setupRoom.depth);
-    const cutoutWidth = unit === "m" ? parseFloat(setupRoom.cutoutWidth) * 100 : parseFloat(setupRoom.cutoutWidth);
-    const cutoutDepth = unit === "m" ? parseFloat(setupRoom.cutoutDepth) * 100 : parseFloat(setupRoom.cutoutDepth);
+    const roomWidth =
+      unit === "m" ? parseFloat(setupRoom.width) * 100 : parseFloat(setupRoom.width);
+    const roomDepth =
+      unit === "m" ? parseFloat(setupRoom.depth) * 100 : parseFloat(setupRoom.depth);
+    const cutoutWidth =
+      unit === "m" ? parseFloat(setupRoom.cutoutWidth) * 100 : parseFloat(setupRoom.cutoutWidth);
+    const cutoutDepth =
+      unit === "m" ? parseFloat(setupRoom.cutoutDepth) * 100 : parseFloat(setupRoom.cutoutDepth);
     if (!roomWidth || !roomDepth) return toast.error("أدخل مقاسات الغرفة");
     setName(setupRoom.name || "تصميم جديد");
     setDesignId(null);
@@ -291,8 +426,11 @@ function DesignEditor() {
       type: pendingBlock.type,
       name: pendingBlock.name,
       color: pendingBlock.color,
-      x: 0, y: 0,
-      width: w * mul, depth: d * mul, height: h * mul,
+      x: 0,
+      y: 0,
+      width: w * mul,
+      depth: d * mul,
+      height: h * mul,
       rotation: 0,
       notes: pendingDims.notes || undefined,
     };
@@ -325,12 +463,29 @@ function DesignEditor() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable) return;
+      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable)
+        return;
       const ctrl = e.ctrlKey || e.metaKey;
-      if (ctrl && e.key.toLowerCase() === "z" && !e.shiftKey) { e.preventDefault(); undo(); return; }
-      if (ctrl && (e.key.toLowerCase() === "y" || (e.key.toLowerCase() === "z" && e.shiftKey))) { e.preventDefault(); redo(); return; }
-      if (ctrl && e.key.toLowerCase() === "d" && selectedId) { e.preventDefault(); duplicateBlock(selectedId); return; }
-      if ((e.key === "Delete" || e.key === "Backspace") && selectedId) { e.preventDefault(); removeBlock(selectedId); return; }
+      if (ctrl && e.key.toLowerCase() === "z" && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+        return;
+      }
+      if (ctrl && (e.key.toLowerCase() === "y" || (e.key.toLowerCase() === "z" && e.shiftKey))) {
+        e.preventDefault();
+        redo();
+        return;
+      }
+      if (ctrl && e.key.toLowerCase() === "d" && selectedId) {
+        e.preventDefault();
+        duplicateBlock(selectedId);
+        return;
+      }
+      if ((e.key === "Delete" || e.key === "Backspace") && selectedId) {
+        e.preventDefault();
+        removeBlock(selectedId);
+        return;
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -346,7 +501,9 @@ function DesignEditor() {
   };
   const confirmEdit = () => {
     if (!editingId) return;
-    const w = fromUnit(editDims.width), d = fromUnit(editDims.depth), h = fromUnit(editDims.height);
+    const w = fromUnit(editDims.width),
+      d = fromUnit(editDims.depth),
+      h = fromUnit(editDims.height);
     if (!w || !d || !h) return toast.error("أدخل جميع المقاسات");
     updateBlock(editingId, { width: w, depth: d, height: h, notes: editDims.notes || undefined });
     setEditingId(null);
@@ -359,7 +516,11 @@ function DesignEditor() {
     if (!user) return toast.error("سجل الدخول أولاً");
     if (!name.trim()) return toast.error("اكتب اسماً للتصميم");
     if (designId) {
-      const { error } = await supabase.from("designs").update({ name: name.trim(), data: doc as any, updated_at: new Date().toISOString() }).eq("id", designId).eq("user_id", user.id);
+      const { error } = await supabase
+        .from("designs")
+        .update({ name: name.trim(), data: doc as any, updated_at: new Date().toISOString() })
+        .eq("id", designId)
+        .eq("user_id", user.id);
       if (error) {
         console.error("[design save] update failed", error);
         const msg = /subscription|policy/i.test(error.message)
@@ -369,7 +530,11 @@ function DesignEditor() {
       }
       toast.success("تم تحديث التصميم");
     } else {
-      const { data, error } = await supabase.from("designs").insert({ user_id: user.id, name: name.trim(), data: doc as any }).select("id").single();
+      const { data, error } = await supabase
+        .from("designs")
+        .insert({ user_id: user.id, name: name.trim(), data: doc as any })
+        .select("id")
+        .single();
       if (error) {
         console.error("[design save] insert failed", error);
         const msg = /subscription|policy/i.test(error.message)
@@ -405,8 +570,12 @@ function DesignEditor() {
     const baseCount = doc.blocks.filter((b) => b.type.startsWith("base_")).length;
     const wallCount = doc.blocks.filter((b) => b.type.startsWith("wall_")).length;
     const tallCount = doc.blocks.filter((b) => b.type.startsWith("tall_")).length;
-    const marbleName = doc.marbleTextureId ? TEXTURES.find((t) => t.id === doc.marbleTextureId)?.name : null;
-    const floorName = doc.floorTextureId ? TEXTURES.find((t) => t.id === doc.floorTextureId)?.name : null;
+    const marbleName = doc.marbleTextureId
+      ? TEXTURES.find((t) => t.id === doc.marbleTextureId)?.name
+      : null;
+    const floorName = doc.floorTextureId
+      ? TEXTURES.find((t) => t.id === doc.floorTextureId)?.name
+      : null;
     const parts = [
       `أبعاد الغرفة ${doc.roomWidth}×${doc.roomDepth} سم`,
       `${baseCount} وحدة سفلية، ${wallCount} وحدة علوية، ${tallCount} وحدة طويلة`,
@@ -438,8 +607,19 @@ function DesignEditor() {
     try {
       for (const view of angles) {
         const dataUrl = await captureView(view);
-        if (!dataUrl) { toast.error("تعذر التقاط لقطة 3D"); continue; }
-        const res = await callRender({ data: { imageDataUrl: dataUrl, style: renderStyle, viewAngle: view, designId: designId ?? undefined, contextNote: context } });
+        if (!dataUrl) {
+          toast.error("تعذر التقاط لقطة 3D");
+          continue;
+        }
+        const res = await callRender({
+          data: {
+            imageDataUrl: dataUrl,
+            style: renderStyle,
+            viewAngle: view,
+            designId: designId ?? undefined,
+            contextNote: context,
+          },
+        });
         results.push(res.imageDataUrl);
         setAiCredits(res.creditsRemaining);
       }
@@ -454,9 +634,12 @@ function DesignEditor() {
         setAdModalOpen(true);
         toast.info("نفذ رصيدك — شاهد إعلان للحصول على كريديت مجاني");
       } else if (msg.includes("RATE_LIMIT")) toast.error("تم تجاوز الحد المسموح، حاول بعد قليل");
-      else if (msg.includes("NO_CREDITS")) toast.error("نفذ رصيد الذكاء الاصطناعي للخدمة، يرجى التواصل مع الأدمن");
-      else if (results.length > 0) { setAiResultUrls(results); toast.warning("تم توليد بعض الصور فقط"); }
-      else toast.error("تعذر توليد الصورة، حاول مرة أخرى");
+      else if (msg.includes("NO_CREDITS"))
+        toast.error("نفذ رصيد الذكاء الاصطناعي للخدمة، يرجى التواصل مع الأدمن");
+      else if (results.length > 0) {
+        setAiResultUrls(results);
+        toast.warning("تم توليد بعض الصور فقط");
+      } else toast.error("تعذر توليد الصورة، حاول مرة أخرى");
     } finally {
       setAiRendering(false);
       if (typeof document !== "undefined") delete document.body.dataset.aiRendering;
@@ -465,24 +648,31 @@ function DesignEditor() {
 
   const loadGallery = async () => {
     if (!user) return;
-    const { data } = await supabase.from("design_renders").select("id,image_url,style,view_angle,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(60);
+    const { data } = await supabase
+      .from("design_renders")
+      .select("id,image_url,style,view_angle,created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(60);
     const rows = data ?? [];
     // image_url may be a storage path (new) or a full URL (legacy). Generate signed URLs for paths.
-    const resolved = await Promise.all(rows.map(async (r) => {
-      if (/^https?:\/\//i.test(r.image_url)) return r;
-      const { data: signed } = await supabase.storage.from("design-renders").createSignedUrl(r.image_url, 60 * 60);
-      return { ...r, image_url: signed?.signedUrl ?? r.image_url };
-    }));
+    const resolved = await Promise.all(
+      rows.map(async (r) => {
+        if (/^https?:\/\//i.test(r.image_url)) return r;
+        const { data: signed } = await supabase.storage
+          .from("design-renders")
+          .createSignedUrl(r.image_url, 60 * 60);
+        return { ...r, image_url: signed?.signedUrl ?? r.image_url };
+      }),
+    );
     setGallery(resolved);
   };
-
 
   const deleteRender = async (id: string) => {
     await supabase.from("design_renders").delete().eq("id", id);
     setGallery((g) => g.filter((r) => r.id !== id));
     toast.success("تم الحذف");
   };
-
 
   const toUnit = (cm: number) => (unit === "m" ? (cm / 100).toFixed(2) : cm.toString());
   const fromUnit = (v: string) => (unit === "m" ? parseFloat(v) * 100 : parseFloat(v));
@@ -503,14 +693,33 @@ function DesignEditor() {
     setFinishDirty(false);
     toast.info("تم إلغاء تعديلات الخامات غير المطبقة");
   };
-  const isPaintableBlock = (b: PlacedBlock) => !!b.placement || b.type.startsWith("base_") || b.type.startsWith("wall_") || b.type.startsWith("tall_") || b.type === "special_island";
-  const blockColor = (b: PlacedBlock) => b.customColor || !isPaintableBlock(b) ? b.color : (doc.globalColor || b.color);
+  const isPaintableBlock = (b: PlacedBlock) =>
+    !!b.placement ||
+    b.type.startsWith("base_") ||
+    b.type.startsWith("wall_") ||
+    b.type.startsWith("tall_") ||
+    b.type === "special_island";
+  const blockColor = (b: PlacedBlock) =>
+    b.customColor || !isPaintableBlock(b) ? b.color : doc.globalColor || b.color;
 
   const roomPolygon = () => {
     const cw = doc.roomShape === "l_shape" ? Math.max(0, doc.cutoutWidth || 0) : 0;
     const cd = doc.roomShape === "l_shape" ? Math.max(0, doc.cutoutDepth || 0) : 0;
     return doc.roomShape === "l_shape" && cw > 0 && cd > 0
-      ? [0, 0, doc.roomWidth - cw, 0, doc.roomWidth - cw, cd, doc.roomWidth, cd, doc.roomWidth, doc.roomDepth, 0, doc.roomDepth]
+      ? [
+          0,
+          0,
+          doc.roomWidth - cw,
+          0,
+          doc.roomWidth - cw,
+          cd,
+          doc.roomWidth,
+          cd,
+          doc.roomWidth,
+          doc.roomDepth,
+          0,
+          doc.roomDepth,
+        ]
       : [0, 0, doc.roomWidth, 0, doc.roomWidth, doc.roomDepth, 0, doc.roomDepth];
   };
 
@@ -537,17 +746,33 @@ function DesignEditor() {
 
   // مستوى الوحدة عمودياً — لتحديد ما إذا كانت وحدتان تتعارضان (السفلية والعلوية لا تتعارضان)
   const blockLevel = (b: PlacedBlock): "base" | "wall" | "tall" => {
-    if (b.placement === "wall" || b.type.startsWith("wall_") || b.type === "appl_hood" || b.type === "appl_hood_chimney" || b.type === "appl_microwave_built" || b.type === "special_window") return "wall";
-    if (b.placement === "tall" || b.type.startsWith("tall_") || b.type === "appl_fridge_side" || b.type === "tall_fridge") return "tall";
+    if (
+      b.placement === "wall" ||
+      b.type.startsWith("wall_") ||
+      b.type === "appl_hood" ||
+      b.type === "appl_hood_chimney" ||
+      b.type === "appl_microwave_built" ||
+      b.type === "special_window"
+    )
+      return "wall";
+    if (
+      b.placement === "tall" ||
+      b.type.startsWith("tall_") ||
+      b.type === "appl_fridge_side" ||
+      b.type === "tall_fridge"
+    )
+      return "tall";
     return "base";
   };
 
   // فحص تداخل وحدتين في نفس المستوى العمودي
   const blocksOverlap = (a: PlacedBlock, b: PlacedBlock) => {
-    const la = blockLevel(a), lb = blockLevel(b);
+    const la = blockLevel(a),
+      lb = blockLevel(b);
     const sameLayer = la === lb || la === "tall" || lb === "tall";
     if (!sameLayer) return false;
-    const fa = blockFootprint(a), fb = blockFootprint(b);
+    const fa = blockFootprint(a),
+      fb = blockFootprint(b);
     const GAP = 0.5;
     return (
       fa.minX < fb.maxX - GAP &&
@@ -564,7 +789,8 @@ function DesignEditor() {
     for (let i = 0; i < 10; i++) {
       const hit = others.find((o) => blocksOverlap(b, o));
       if (!hit) break;
-      const fb = blockFootprint(b), fh = blockFootprint(hit);
+      const fb = blockFootprint(b),
+        fh = blockFootprint(hit);
       const pushRight = fh.maxX - fb.minX;
       const pushLeft = fb.maxX - fh.minX;
       const pushFront = fh.maxY - fb.minY;
@@ -596,31 +822,37 @@ function DesignEditor() {
       if (wall === "right") b.x += room.roomWidth - blockFootprint(b).maxX;
     }
 
-    const sameWall = blocks.filter((o) => o.id !== b.id && (
-      wall === "back" ? Math.abs(o.y) < 2 :
-      wall === "front" ? Math.abs(blockFootprint(o).maxY - room.roomDepth) < 2 :
-      wall === "left" ? Math.abs(o.x) < 2 :
-      Math.abs(blockFootprint(o).maxX - room.roomWidth) < 2
-    ));
+    const sameWall = blocks.filter(
+      (o) =>
+        o.id !== b.id &&
+        (wall === "back"
+          ? Math.abs(o.y) < 2
+          : wall === "front"
+            ? Math.abs(blockFootprint(o).maxY - room.roomDepth) < 2
+            : wall === "left"
+              ? Math.abs(o.x) < 2
+              : Math.abs(blockFootprint(o).maxX - room.roomWidth) < 2),
+    );
     const SNAP = 18;
     for (const o of sameWall) {
       if (wall === "back" || wall === "front") {
         if (Math.abs(b.x - (o.x + o.width)) <= SNAP) b.x = o.x + o.width;
-        if (Math.abs((b.x + b.width) - o.x) <= SNAP) b.x = o.x - b.width;
+        if (Math.abs(b.x + b.width - o.x) <= SNAP) b.x = o.x - b.width;
       } else {
         if (Math.abs(b.y - (o.y + o.depth)) <= SNAP) b.y = o.y + o.depth;
-        if (Math.abs((b.y + b.depth) - o.y) <= SNAP) b.y = o.y - b.depth;
+        if (Math.abs(b.y + b.depth - o.y) <= SNAP) b.y = o.y - b.depth;
       }
     }
     return resolveCollisions(clampBlock(b, room), blocks, room);
   };
 
-  const nearestWall = (b: PlacedBlock) => ([
-    { wall: "back" as const, value: b.y },
-    { wall: "left" as const, value: b.x },
-    { wall: "front" as const, value: doc.roomDepth - (b.y + b.depth) },
-    { wall: "right" as const, value: doc.roomWidth - (b.x + b.width) },
-  ].sort((a, z) => a.value - z.value)[0].wall);
+  const nearestWall = (b: PlacedBlock) =>
+    [
+      { wall: "back" as const, value: b.y },
+      { wall: "left" as const, value: b.x },
+      { wall: "front" as const, value: doc.roomDepth - (b.y + b.depth) },
+      { wall: "right" as const, value: doc.roomWidth - (b.x + b.width) },
+    ].sort((a, z) => a.value - z.value)[0].wall;
 
   const alignBlockToWall = (block: PlacedBlock, wall: "back" | "front" | "left" | "right") => {
     const b = clampBlock({ ...block });
@@ -665,7 +897,9 @@ function DesignEditor() {
         <Wand2 className="size-4" />
         إنشاء وحدة مخصصة
       </button>
-      <div className="text-[10px] text-muted-foreground text-center -mt-2">اختر الضلف، الأدراج، الزجاج، الركنية…</div>
+      <div className="text-[10px] text-muted-foreground text-center -mt-2">
+        اختر الضلف، الأدراج، الزجاج، الركنية…
+      </div>
 
       <button
         onClick={() => setTemplatesOpen(true)}
@@ -674,12 +908,18 @@ function DesignEditor() {
         <Sparkles className="size-4" />
         مكتبة قوالب جاهزة
       </button>
-      <div className="text-[10px] text-muted-foreground text-center -mt-2">L-Shape، U-Shape، جزيرة…</div>
+      <div className="text-[10px] text-muted-foreground text-center -mt-2">
+        L-Shape، U-Shape، جزيرة…
+      </div>
 
-      <div className="text-[11px] font-bold text-muted-foreground px-1 pt-2 border-t border-border/40">أو اختر وحدة بمفردها:</div>
+      <div className="text-[11px] font-bold text-muted-foreground px-1 pt-2 border-t border-border/40">
+        أو اختر وحدة بمفردها:
+      </div>
       {groupedBlocks.map((g) => (
         <div key={g.cat}>
-          <h3 className="text-[11px] font-bold text-muted-foreground mb-2 px-1 sticky top-0 bg-card/80 backdrop-blur py-1">{g.label}</h3>
+          <h3 className="text-[11px] font-bold text-muted-foreground mb-2 px-1 sticky top-0 bg-card/80 backdrop-blur py-1">
+            {g.label}
+          </h3>
           <div className="space-y-1">
             {g.items.map((b) => (
               <button
@@ -690,7 +930,11 @@ function DesignEditor() {
                 <BlockIcon type={b.type} className="size-8 text-primary shrink-0" />
                 <div className="flex-1 text-right min-w-0">
                   <div className="font-medium truncate">{b.name}</div>
-                  {b.description && <div className="text-[10px] text-muted-foreground truncate">{b.description}</div>}
+                  {b.description && (
+                    <div className="text-[10px] text-muted-foreground truncate">
+                      {b.description}
+                    </div>
+                  )}
                 </div>
                 <Plus className="size-3.5 text-primary shrink-0" />
               </button>
@@ -708,28 +952,63 @@ function DesignEditor() {
         <h4 className="text-sm font-semibold">أبعاد الغرفة</h4>
         <div>
           <Label className="text-xs">العرض ({unit})</Label>
-          <Input type="number" value={toUnit(doc.roomWidth)} onChange={(e) => setDoc({ ...doc, roomWidth: fromUnit(e.target.value) || 0 })} />
+          <Input
+            type="number"
+            value={toUnit(doc.roomWidth)}
+            onChange={(e) => setDoc({ ...doc, roomWidth: fromUnit(e.target.value) || 0 })}
+          />
         </div>
         <div>
           <Label className="text-xs">العمق ({unit})</Label>
-          <Input type="number" value={toUnit(doc.roomDepth)} onChange={(e) => setDoc({ ...doc, roomDepth: fromUnit(e.target.value) || 0 })} />
+          <Input
+            type="number"
+            value={toUnit(doc.roomDepth)}
+            onChange={(e) => setDoc({ ...doc, roomDepth: fromUnit(e.target.value) || 0 })}
+          />
         </div>
         <div>
           <Label className="text-xs mb-1 block">شكل الغرفة</Label>
           <div className="grid grid-cols-2 gap-1.5">
-            <Button size="sm" variant={(doc.roomShape || "rectangle") === "rectangle" ? "default" : "outline"} onClick={() => setDoc({ ...doc, roomShape: "rectangle" })}>مستطيلة</Button>
-            <Button size="sm" variant={doc.roomShape === "l_shape" ? "default" : "outline"} onClick={() => setDoc({ ...doc, roomShape: "l_shape", cutoutWidth: doc.cutoutWidth || 100, cutoutDepth: doc.cutoutDepth || 100 })}>شكل L</Button>
+            <Button
+              size="sm"
+              variant={(doc.roomShape || "rectangle") === "rectangle" ? "default" : "outline"}
+              onClick={() => setDoc({ ...doc, roomShape: "rectangle" })}
+            >
+              مستطيلة
+            </Button>
+            <Button
+              size="sm"
+              variant={doc.roomShape === "l_shape" ? "default" : "outline"}
+              onClick={() =>
+                setDoc({
+                  ...doc,
+                  roomShape: "l_shape",
+                  cutoutWidth: doc.cutoutWidth || 100,
+                  cutoutDepth: doc.cutoutDepth || 100,
+                })
+              }
+            >
+              شكل L
+            </Button>
           </div>
         </div>
         {doc.roomShape === "l_shape" && (
           <div className="grid grid-cols-2 gap-2">
             <div>
               <Label className="text-xs">عرض الجزء الناقص</Label>
-              <Input type="number" value={toUnit(doc.cutoutWidth || 0)} onChange={(e) => setDoc({ ...doc, cutoutWidth: fromUnit(e.target.value) || 0 })} />
+              <Input
+                type="number"
+                value={toUnit(doc.cutoutWidth || 0)}
+                onChange={(e) => setDoc({ ...doc, cutoutWidth: fromUnit(e.target.value) || 0 })}
+              />
             </div>
             <div>
               <Label className="text-xs">عمق الجزء الناقص</Label>
-              <Input type="number" value={toUnit(doc.cutoutDepth || 0)} onChange={(e) => setDoc({ ...doc, cutoutDepth: fromUnit(e.target.value) || 0 })} />
+              <Input
+                type="number"
+                value={toUnit(doc.cutoutDepth || 0)}
+                onChange={(e) => setDoc({ ...doc, cutoutDepth: fromUnit(e.target.value) || 0 })}
+              />
             </div>
           </div>
         )}
@@ -738,23 +1017,44 @@ function DesignEditor() {
       {/* اللون العام وكل الخامات — تطبق بعد زر التأكيد فقط لتجنب كسر مشهد 3D أثناء التبديل */}
       <div className="space-y-2 mb-6 pb-4 border-b border-border/40">
         <div className="flex items-center justify-between gap-2">
-          <h4 className="text-sm font-semibold flex items-center gap-1.5"><Palette className="size-3.5 text-primary" /> اللون العام للوحدات</h4>
-          {finishDirty && <span className="text-[10px] text-primary font-bold">تعديلات جاهزة للتطبيق</span>}
+          <h4 className="text-sm font-semibold flex items-center gap-1.5">
+            <Palette className="size-3.5 text-primary" /> اللون العام للوحدات
+          </h4>
+          {finishDirty && (
+            <span className="text-[10px] text-primary font-bold">تعديلات جاهزة للتطبيق</span>
+          )}
         </div>
         <div className="flex items-center gap-2">
-          <input type="color" value={finishDraft.globalColor || "#b88858"} onChange={(e) => updateFinishDraft({ globalColor: e.target.value })} className="h-9 w-14 rounded cursor-pointer bg-transparent border border-border/60" />
-          <Input value={finishDraft.globalColor || "#b88858"} onChange={(e) => updateFinishDraft({ globalColor: e.target.value })} className="flex-1 font-mono text-xs h-9" />
+          <input
+            type="color"
+            value={finishDraft.globalColor || "#b88858"}
+            onChange={(e) => updateFinishDraft({ globalColor: e.target.value })}
+            className="h-9 w-14 rounded cursor-pointer bg-transparent border border-border/60"
+          />
+          <Input
+            value={finishDraft.globalColor || "#b88858"}
+            onChange={(e) => updateFinishDraft({ globalColor: e.target.value })}
+            className="flex-1 font-mono text-xs h-9"
+          />
         </div>
         <div className="grid grid-cols-8 gap-1.5 pt-1">
           {[
-            { name: "أبيض ثلجي", c: "#f5f3ee" }, { name: "كريمي", c: "#e8dcc4" },
-            { name: "بيج رملي", c: "#c9b48c" }, { name: "كابتشينو", c: "#a68763" },
-            { name: "بلوط فاتح", c: "#b88858" }, { name: "بلوط داكن", c: "#7a5a3a" },
-            { name: "جوز", c: "#5a3e2a" }, { name: "ونجي", c: "#2e1d12" },
-            { name: "رمادي فاتح", c: "#c8c3bd" }, { name: "رمادي إسمنتي", c: "#8a8580" },
-            { name: "أنثراسايت", c: "#3a3a3a" }, { name: "أسود مطفي", c: "#1a1a1a" },
-            { name: "زيتي", c: "#5a6a4a" }, { name: "أزرق بحري", c: "#2c4a5c" },
-            { name: "كحلي", c: "#1c2a3e" }, { name: "بورجوندي", c: "#5a2828" },
+            { name: "أبيض ثلجي", c: "#f5f3ee" },
+            { name: "كريمي", c: "#e8dcc4" },
+            { name: "بيج رملي", c: "#c9b48c" },
+            { name: "كابتشينو", c: "#a68763" },
+            { name: "بلوط فاتح", c: "#b88858" },
+            { name: "بلوط داكن", c: "#7a5a3a" },
+            { name: "جوز", c: "#5a3e2a" },
+            { name: "ونجي", c: "#2e1d12" },
+            { name: "رمادي فاتح", c: "#c8c3bd" },
+            { name: "رمادي إسمنتي", c: "#8a8580" },
+            { name: "أنثراسايت", c: "#3a3a3a" },
+            { name: "أسود مطفي", c: "#1a1a1a" },
+            { name: "زيتي", c: "#5a6a4a" },
+            { name: "أزرق بحري", c: "#2c4a5c" },
+            { name: "كحلي", c: "#1c2a3e" },
+            { name: "بورجوندي", c: "#5a2828" },
           ].map((p) => (
             <button
               key={p.c}
@@ -766,29 +1066,60 @@ function DesignEditor() {
             />
           ))}
         </div>
-        <p className="text-[10px] text-muted-foreground">اختر اللون أو الخامة ثم اضغط “تطبيق التغييرات” لتحديث 3D بثبات.</p>
+        <p className="text-[10px] text-muted-foreground">
+          اختر اللون أو الخامة ثم اضغط “تطبيق التغييرات” لتحديث 3D بثبات.
+        </p>
 
-        <h4 className="text-sm font-semibold flex items-center gap-1.5 pt-2"><Palette className="size-3.5 text-primary" /> ألوان الغرفة</h4>
+        <h4 className="text-sm font-semibold flex items-center gap-1.5 pt-2">
+          <Palette className="size-3.5 text-primary" /> ألوان الغرفة
+        </h4>
         <div className="space-y-2">
           <div>
             <Label className="text-[11px] text-muted-foreground">لون الأرضية</Label>
             <div className="flex items-center gap-2">
-              <input type="color" value={finishDraft.floorColor || "#d9cec0"} onChange={(e) => updateFinishDraft({ floorColor: e.target.value })} className="h-8 w-12 rounded cursor-pointer bg-transparent border border-border/60" />
-              <Input value={finishDraft.floorColor || "#d9cec0"} onChange={(e) => updateFinishDraft({ floorColor: e.target.value })} className="flex-1 font-mono text-xs h-8" />
+              <input
+                type="color"
+                value={finishDraft.floorColor || "#d9cec0"}
+                onChange={(e) => updateFinishDraft({ floorColor: e.target.value })}
+                className="h-8 w-12 rounded cursor-pointer bg-transparent border border-border/60"
+              />
+              <Input
+                value={finishDraft.floorColor || "#d9cec0"}
+                onChange={(e) => updateFinishDraft({ floorColor: e.target.value })}
+                className="flex-1 font-mono text-xs h-8"
+              />
             </div>
           </div>
           <div>
             <Label className="text-[11px] text-muted-foreground">لون الحوائط</Label>
             <div className="flex items-center gap-2">
-              <input type="color" value={finishDraft.wallColor || "#efe7da"} onChange={(e) => updateFinishDraft({ wallColor: e.target.value })} className="h-8 w-12 rounded cursor-pointer bg-transparent border border-border/60" />
-              <Input value={finishDraft.wallColor || "#efe7da"} onChange={(e) => updateFinishDraft({ wallColor: e.target.value })} className="flex-1 font-mono text-xs h-8" />
+              <input
+                type="color"
+                value={finishDraft.wallColor || "#efe7da"}
+                onChange={(e) => updateFinishDraft({ wallColor: e.target.value })}
+                className="h-8 w-12 rounded cursor-pointer bg-transparent border border-border/60"
+              />
+              <Input
+                value={finishDraft.wallColor || "#efe7da"}
+                onChange={(e) => updateFinishDraft({ wallColor: e.target.value })}
+                className="flex-1 font-mono text-xs h-8"
+              />
             </div>
           </div>
           <div>
             <Label className="text-[11px] text-muted-foreground">لون الرخام</Label>
             <div className="flex items-center gap-2">
-              <input type="color" value={finishDraft.marbleColor || "#d8cfbf"} onChange={(e) => updateFinishDraft({ marbleColor: e.target.value })} className="h-8 w-12 rounded cursor-pointer bg-transparent border border-border/60" />
-              <Input value={finishDraft.marbleColor || "#d8cfbf"} onChange={(e) => updateFinishDraft({ marbleColor: e.target.value })} className="flex-1 font-mono text-xs h-8" />
+              <input
+                type="color"
+                value={finishDraft.marbleColor || "#d8cfbf"}
+                onChange={(e) => updateFinishDraft({ marbleColor: e.target.value })}
+                className="h-8 w-12 rounded cursor-pointer bg-transparent border border-border/60"
+              />
+              <Input
+                value={finishDraft.marbleColor || "#d8cfbf"}
+                onChange={(e) => updateFinishDraft({ marbleColor: e.target.value })}
+                className="flex-1 font-mono text-xs h-8"
+              />
             </div>
           </div>
         </div>
@@ -798,20 +1129,38 @@ function DesignEditor() {
           <h4 className="text-sm font-semibold flex items-center gap-1.5">
             <Sparkles className="size-3.5 text-primary" /> خامات واقعية (سيراميك / رخام)
           </h4>
-          <p className="text-[10px] text-muted-foreground -mt-1">اختر خامة فعلية لتطبيقها في العرض ثلاثي الأبعاد. اضغط مرة ثانية لإلغائها.</p>
+          <p className="text-[10px] text-muted-foreground -mt-1">
+            اختر خامة فعلية لتطبيقها في العرض ثلاثي الأبعاد. اضغط مرة ثانية لإلغائها.
+          </p>
 
-          {(["floor","wall","counter"] as const).map((cat) => {
+          {(["floor", "wall", "counter"] as const).map((cat) => {
             const label = cat === "floor" ? "أرضية" : cat === "wall" ? "حوائط" : "رخامة";
-            const currentId = cat === "floor" ? finishDraft.floorTextureId : cat === "wall" ? finishDraft.wallTextureId : finishDraft.marbleTextureId;
+            const currentId =
+              cat === "floor"
+                ? finishDraft.floorTextureId
+                : cat === "wall"
+                  ? finishDraft.wallTextureId
+                  : finishDraft.marbleTextureId;
             const setId = (id: string | undefined) =>
-              updateFinishDraft(cat === "floor" ? { floorTextureId: id } : cat === "wall" ? { wallTextureId: id } : { marbleTextureId: id });
+              updateFinishDraft(
+                cat === "floor"
+                  ? { floorTextureId: id }
+                  : cat === "wall"
+                    ? { wallTextureId: id }
+                    : { marbleTextureId: id },
+              );
             const items = TEXTURES.filter((t) => t.category === cat);
             return (
               <div key={cat} className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <Label className="text-[11px] text-muted-foreground">{label}</Label>
                   {currentId && (
-                    <button onClick={() => setId(undefined)} className="text-[10px] text-destructive hover:underline">إزالة</button>
+                    <button
+                      onClick={() => setId(undefined)}
+                      className="text-[10px] text-destructive hover:underline"
+                    >
+                      إزالة
+                    </button>
                   )}
                 </div>
                 <div className="grid grid-cols-3 gap-1.5">
@@ -825,7 +1174,12 @@ function DesignEditor() {
                         title={t.name}
                         className={`relative aspect-square rounded-md overflow-hidden border-2 transition ${active ? "border-primary ring-2 ring-primary/30" : "border-border/40 hover:border-primary/40"}`}
                       >
-                        <img src={t.url} alt={t.name} loading="lazy" className="w-full h-full object-cover" />
+                        <img
+                          src={t.url}
+                          alt={t.name}
+                          loading="lazy"
+                          className="w-full h-full object-cover"
+                        />
                         <span className="absolute inset-x-0 bottom-0 bg-black/60 text-white text-[8px] py-0.5 px-1 truncate text-center">
                           {t.name}
                         </span>
@@ -837,72 +1191,141 @@ function DesignEditor() {
             );
           })}
           <div className="sticky bottom-0 z-10 -mx-1 mt-3 flex gap-2 rounded-xl border border-border/60 bg-card/95 p-2 shadow-card backdrop-blur">
-            <Button type="button" onClick={applyFinishDraft} disabled={!finishDirty} className="flex-1 bg-gradient-primary shadow-glow">
+            <Button
+              type="button"
+              onClick={applyFinishDraft}
+              disabled={!finishDirty}
+              className="flex-1 bg-gradient-primary shadow-glow"
+            >
               <Sparkles className="size-3.5" /> تطبيق التغييرات
             </Button>
-            <Button type="button" variant="outline" onClick={resetFinishDraft} disabled={!finishDirty} className="px-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={resetFinishDraft}
+              disabled={!finishDirty}
+              className="px-3"
+            >
               إلغاء
             </Button>
           </div>
         </div>
       </div>
 
-
-
-
-
       {selected ? (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-semibold">{selected.name}</h4>
-            <Button size="sm" variant="ghost" onClick={() => removeBlock(selected.id)}><Trash2 className="size-3.5 text-destructive" /></Button>
+            <Button size="sm" variant="ghost" onClick={() => removeBlock(selected.id)}>
+              <Trash2 className="size-3.5 text-destructive" />
+            </Button>
           </div>
           {/* ملخص مكونات الوحدة المخصصة */}
           {selected.placement && (
             <div className="text-[11px] bg-muted/30 border border-border/40 rounded-lg p-2 space-y-0.5">
               {selected.cabinet && <div>• دولاب طولي</div>}
-              {!selected.cabinet && <div>• {selected.placement === "base" ? "سفلية" : selected.placement === "wall" ? "علوية" : "طولية"}</div>}
+              {!selected.cabinet && (
+                <div>
+                  •{" "}
+                  {selected.placement === "base"
+                    ? "سفلية"
+                    : selected.placement === "wall"
+                      ? "علوية"
+                      : "طولية"}
+                </div>
+              )}
               {selected.corner && <div>• ركنية</div>}
-              {(selected.doors || 0) > 0 && <div>• {selected.doors} {selected.glass ? "ضلفة زجاج" : "ضلف"}</div>}
+              {(selected.doors || 0) > 0 && (
+                <div>
+                  • {selected.doors} {selected.glass ? "ضلفة زجاج" : "ضلف"}
+                </div>
+              )}
               {(selected.drawers || 0) > 0 && <div>• {selected.drawers} أدراج</div>}
             </div>
           )}
           <div>
             <Label className="text-xs">العرض ({unit})</Label>
-            <Input type="number" value={toUnit(selected.width)} onChange={(e) => updateBlock(selected.id, { width: fromUnit(e.target.value) || 0 })} />
+            <Input
+              type="number"
+              value={toUnit(selected.width)}
+              onChange={(e) => updateBlock(selected.id, { width: fromUnit(e.target.value) || 0 })}
+            />
           </div>
           <div>
             <Label className="text-xs">العمق ({unit})</Label>
-            <Input type="number" value={toUnit(selected.depth)} onChange={(e) => updateBlock(selected.id, { depth: fromUnit(e.target.value) || 0 })} />
+            <Input
+              type="number"
+              value={toUnit(selected.depth)}
+              onChange={(e) => updateBlock(selected.id, { depth: fromUnit(e.target.value) || 0 })}
+            />
           </div>
           <div>
             <Label className="text-xs">الارتفاع ({unit})</Label>
-            <Input type="number" value={toUnit(selected.height)} onChange={(e) => updateBlock(selected.id, { height: fromUnit(e.target.value) || 0 })} />
+            <Input
+              type="number"
+              value={toUnit(selected.height)}
+              onChange={(e) => updateBlock(selected.id, { height: fromUnit(e.target.value) || 0 })}
+            />
           </div>
           <div>
             <Label className="text-xs flex items-center justify-between">
               <span>الدوران: {Math.round(selected.rotation)}°</span>
               <span className="flex gap-1">
-                <Button size="sm" variant="outline" className="h-6 px-1.5 text-[10px]" onClick={() => rotateBlock(selected.id, -15)}>-15°</Button>
-                <Button size="sm" variant="outline" className="h-6 px-1.5 text-[10px]" onClick={() => rotateBlock(selected.id, 90)}>+90°</Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-6 px-1.5 text-[10px]"
+                  onClick={() => rotateBlock(selected.id, -15)}
+                >
+                  -15°
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-6 px-1.5 text-[10px]"
+                  onClick={() => rotateBlock(selected.id, 90)}
+                >
+                  +90°
+                </Button>
               </span>
             </Label>
             <Slider
               value={[((selected.rotation % 360) + 360) % 360]}
-              min={0} max={360} step={1}
+              min={0}
+              max={360}
+              step={1}
               onValueChange={(v) => updateBlock(selected.id, { rotation: v[0] })}
               className="mt-2"
             />
           </div>
           {/* لون خاص للوحدة */}
           <div className="p-2 rounded-lg border border-border/40 bg-muted/20 space-y-2">
-            <Label className="text-xs flex items-center gap-1.5"><Palette className="size-3" /> لون هذه الوحدة</Label>
+            <Label className="text-xs flex items-center gap-1.5">
+              <Palette className="size-3" /> لون هذه الوحدة
+            </Label>
             <div className="flex items-center gap-2">
-              <input type="color" value={selected.color} onChange={(e) => updateBlock(selected.id, { color: e.target.value, customColor: true })} className="h-9 w-14 rounded cursor-pointer bg-transparent border border-border/60" />
-              <Input value={selected.color} onChange={(e) => updateBlock(selected.id, { color: e.target.value, customColor: true })} className="flex-1 font-mono text-xs h-9" />
+              <input
+                type="color"
+                value={selected.color}
+                onChange={(e) =>
+                  updateBlock(selected.id, { color: e.target.value, customColor: true })
+                }
+                className="h-9 w-14 rounded cursor-pointer bg-transparent border border-border/60"
+              />
+              <Input
+                value={selected.color}
+                onChange={(e) =>
+                  updateBlock(selected.id, { color: e.target.value, customColor: true })
+                }
+                className="flex-1 font-mono text-xs h-9"
+              />
             </div>
             <label className="flex items-center gap-2 text-[11px] cursor-pointer">
-              <input type="checkbox" checked={!!selected.customColor} onChange={(e) => updateBlock(selected.id, { customColor: e.target.checked })} />
+              <input
+                type="checkbox"
+                checked={!!selected.customColor}
+                onChange={(e) => updateBlock(selected.id, { customColor: e.target.checked })}
+              />
               لون مخصص (لا يتأثر باللون العام)
             </label>
           </div>
@@ -917,7 +1340,9 @@ function DesignEditor() {
           </div>
         </div>
       ) : (
-        <p className="text-xs text-muted-foreground">اختر وحدة من اللوحة لتعديل خصائصها أو أضف وحدة جديدة من القائمة.</p>
+        <p className="text-xs text-muted-foreground">
+          اختر وحدة من اللوحة لتعديل خصائصها أو أضف وحدة جديدة من القائمة.
+        </p>
       )}
     </>
   );
@@ -932,71 +1357,129 @@ function DesignEditor() {
         <div className="max-w-6xl mx-auto grid lg:grid-cols-[1.1fr_0.9fr] gap-5 items-start">
           <section className="border border-border/60 bg-card/60 rounded-2xl p-5 md:p-6 shadow-card">
             <div className="flex items-center gap-3 mb-5">
-              <div className="size-11 rounded-xl bg-primary/10 text-primary grid place-items-center"><Ruler className="size-5" /></div>
+              <div className="size-11 rounded-xl bg-primary/10 text-primary grid place-items-center">
+                <Ruler className="size-5" />
+              </div>
               <div>
                 <h1 className="text-2xl font-bold">تصميم جديد</h1>
-                <p className="text-sm text-muted-foreground">اكتب مقاسات الغرفة وحدد شكلها قبل فتح مساحة التصميم.</p>
+                <p className="text-sm text-muted-foreground">
+                  اكتب مقاسات الغرفة وحدد شكلها قبل فتح مساحة التصميم.
+                </p>
               </div>
             </div>
             <div className="space-y-4">
               <div>
                 <Label className="text-xs">اسم التصميم</Label>
-                <Input value={setupRoom.name} onChange={(e) => setSetupRoom({ ...setupRoom, name: e.target.value })} />
+                <Input
+                  value={setupRoom.name}
+                  onChange={(e) => setSetupRoom({ ...setupRoom, name: e.target.value })}
+                />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-xs">عرض الغرفة ({unit})</Label>
-                  <Input type="number" value={setupRoom.width} onChange={(e) => setSetupRoom({ ...setupRoom, width: e.target.value })} />
+                  <Input
+                    type="number"
+                    value={setupRoom.width}
+                    onChange={(e) => setSetupRoom({ ...setupRoom, width: e.target.value })}
+                  />
                 </div>
                 <div>
                   <Label className="text-xs">عمق الغرفة ({unit})</Label>
-                  <Input type="number" value={setupRoom.depth} onChange={(e) => setSetupRoom({ ...setupRoom, depth: e.target.value })} />
+                  <Input
+                    type="number"
+                    value={setupRoom.depth}
+                    onChange={(e) => setSetupRoom({ ...setupRoom, depth: e.target.value })}
+                  />
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                <Button size="sm" variant={unit === "cm" ? "default" : "outline"} onClick={() => setUnit("cm")}>سم</Button>
-                <Button size="sm" variant={unit === "m" ? "default" : "outline"} onClick={() => setUnit("m")}>م</Button>
+                <Button
+                  size="sm"
+                  variant={unit === "cm" ? "default" : "outline"}
+                  onClick={() => setUnit("cm")}
+                >
+                  سم
+                </Button>
+                <Button
+                  size="sm"
+                  variant={unit === "m" ? "default" : "outline"}
+                  onClick={() => setUnit("m")}
+                >
+                  م
+                </Button>
               </div>
               <div>
                 <Label className="text-xs mb-2 block">شكل الغرفة</Label>
                 <div className="grid grid-cols-2 gap-2">
-                  <button onClick={() => setSetupRoom({ ...setupRoom, shape: "rectangle" })} className={`p-3 rounded-xl border text-sm font-semibold ${setupRoom.shape === "rectangle" ? "border-primary bg-primary/10 text-primary" : "border-border/60 bg-muted/20"}`}>مستطيلة</button>
-                  <button onClick={() => setSetupRoom({ ...setupRoom, shape: "l_shape" })} className={`p-3 rounded-xl border text-sm font-semibold ${setupRoom.shape === "l_shape" ? "border-primary bg-primary/10 text-primary" : "border-border/60 bg-muted/20"}`}>غير منتظمة L</button>
+                  <button
+                    onClick={() => setSetupRoom({ ...setupRoom, shape: "rectangle" })}
+                    className={`p-3 rounded-xl border text-sm font-semibold ${setupRoom.shape === "rectangle" ? "border-primary bg-primary/10 text-primary" : "border-border/60 bg-muted/20"}`}
+                  >
+                    مستطيلة
+                  </button>
+                  <button
+                    onClick={() => setSetupRoom({ ...setupRoom, shape: "l_shape" })}
+                    className={`p-3 rounded-xl border text-sm font-semibold ${setupRoom.shape === "l_shape" ? "border-primary bg-primary/10 text-primary" : "border-border/60 bg-muted/20"}`}
+                  >
+                    غير منتظمة L
+                  </button>
                 </div>
               </div>
               {setupRoom.shape === "l_shape" && (
                 <div className="grid grid-cols-2 gap-3 p-3 rounded-xl border border-border/50 bg-muted/20">
                   <div>
                     <Label className="text-xs">عرض الجزء الناقص ({unit})</Label>
-                    <Input type="number" value={setupRoom.cutoutWidth} onChange={(e) => setSetupRoom({ ...setupRoom, cutoutWidth: e.target.value })} />
+                    <Input
+                      type="number"
+                      value={setupRoom.cutoutWidth}
+                      onChange={(e) => setSetupRoom({ ...setupRoom, cutoutWidth: e.target.value })}
+                    />
                   </div>
                   <div>
                     <Label className="text-xs">عمق الجزء الناقص ({unit})</Label>
-                    <Input type="number" value={setupRoom.cutoutDepth} onChange={(e) => setSetupRoom({ ...setupRoom, cutoutDepth: e.target.value })} />
+                    <Input
+                      type="number"
+                      value={setupRoom.cutoutDepth}
+                      onChange={(e) => setSetupRoom({ ...setupRoom, cutoutDepth: e.target.value })}
+                    />
                   </div>
                 </div>
               )}
-              <Button onClick={startNewDesign} className="w-full bg-gradient-primary shadow-glow"><PenLine className="size-4" /> ابدأ التصميم</Button>
+              <Button onClick={startNewDesign} className="w-full bg-gradient-primary shadow-glow">
+                <PenLine className="size-4" /> ابدأ التصميم
+              </Button>
             </div>
           </section>
 
           <section className="border border-border/60 bg-card/60 rounded-2xl p-5 md:p-6 shadow-card">
             <div className="flex items-center gap-3 mb-5">
-              <div className="size-11 rounded-xl bg-primary/10 text-primary grid place-items-center"><FolderOpen className="size-5" /></div>
+              <div className="size-11 rounded-xl bg-primary/10 text-primary grid place-items-center">
+                <FolderOpen className="size-5" />
+              </div>
               <div>
                 <h2 className="text-xl font-bold">تعديل تصميم محفوظ</h2>
                 <p className="text-sm text-muted-foreground">افتح تصميم سابق واستكمل عليه.</p>
               </div>
             </div>
             {savedRows.length === 0 ? (
-              <div className="rounded-xl border border-border/50 bg-muted/20 p-6 text-center text-sm text-muted-foreground">لا توجد تصميمات محفوظة بعد.</div>
+              <div className="rounded-xl border border-border/50 bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+                لا توجد تصميمات محفوظة بعد.
+              </div>
             ) : (
               <div className="space-y-2 max-h-[420px] overflow-auto pr-1">
                 {savedRows.map((r) => (
-                  <Link key={r.id} to="/app/design" search={{ id: r.id }} className="flex items-center justify-between gap-3 rounded-xl border border-border/50 bg-muted/20 p-3 hover:border-primary/60 transition">
+                  <Link
+                    key={r.id}
+                    to="/app/design"
+                    search={{ id: r.id }}
+                    className="flex items-center justify-between gap-3 rounded-xl border border-border/50 bg-muted/20 p-3 hover:border-primary/60 transition"
+                  >
                     <div className="min-w-0">
                       <div className="font-semibold truncate">{r.name}</div>
-                      <div className="text-xs text-muted-foreground">{new Date(r.updated_at).toLocaleDateString("ar-EG")}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {new Date(r.updated_at).toLocaleDateString("ar-EG")}
+                      </div>
                     </div>
                     <FolderOpen className="size-4 text-primary shrink-0" />
                   </Link>
@@ -1023,12 +1506,18 @@ function DesignEditor() {
           {/* Mobile sheets */}
           <Sheet>
             <SheetTrigger asChild>
-              <Button size="sm" variant="default" className="md:hidden h-9 gap-1 bg-gradient-primary shadow-glow">
+              <Button
+                size="sm"
+                variant="default"
+                className="md:hidden h-9 gap-1 bg-gradient-primary shadow-glow"
+              >
                 <LayoutGrid className="size-4" /> الوحدات
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-80 overflow-auto">
-              <SheetHeader><SheetTitle>الوحدات</SheetTitle></SheetHeader>
+              <SheetHeader>
+                <SheetTitle>الوحدات</SheetTitle>
+              </SheetHeader>
               <div className="mt-4">{BlocksPanel}</div>
             </SheetContent>
           </Sheet>
@@ -1039,20 +1528,46 @@ function DesignEditor() {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-80 overflow-auto">
-              <SheetHeader><SheetTitle>الخصائص</SheetTitle></SheetHeader>
+              <SheetHeader>
+                <SheetTitle>الخصائص</SheetTitle>
+              </SheetHeader>
               <div className="mt-4">{PropsPanel}</div>
             </SheetContent>
           </Sheet>
 
-          <Input className="max-w-[120px] md:max-w-xs h-9 text-sm" value={name} onChange={(e) => setName(e.target.value)} />
+          <Input
+            className="max-w-[120px] md:max-w-xs h-9 text-sm"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
           <div className="flex items-center gap-1">
-            <Button size="sm" variant={unit === "cm" ? "default" : "outline"} onClick={() => setUnit("cm")}>سم</Button>
-            <Button size="sm" variant={unit === "m" ? "default" : "outline"} onClick={() => setUnit("m")}>م</Button>
+            <Button
+              size="sm"
+              variant={unit === "cm" ? "default" : "outline"}
+              onClick={() => setUnit("cm")}
+            >
+              سم
+            </Button>
+            <Button
+              size="sm"
+              variant={unit === "m" ? "default" : "outline"}
+              onClick={() => setUnit("m")}
+            >
+              م
+            </Button>
           </div>
-          <Button size="sm" variant="outline" className="h-9 gap-1" onClick={alignAllBlocks} title="محاذاة كل الوحدات على أقرب حائط">
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-9 gap-1"
+            onClick={alignAllBlocks}
+            title="محاذاة كل الوحدات على أقرب حائط"
+          >
             <Ruler className="size-4" /> محاذاة
           </Button>
-          <Button onClick={save} size="sm" className="mr-auto bg-gradient-primary shadow-glow"><Save className="size-4" /> حفظ</Button>
+          <Button onClick={save} size="sm" className="mr-auto bg-gradient-primary shadow-glow">
+            <Save className="size-4" /> حفظ
+          </Button>
         </div>
 
         {/* Quick-add strip for mobile */}
@@ -1076,40 +1591,161 @@ function DesignEditor() {
           ))}
         </div>
 
-
-        <Tabs value={activeTab} onValueChange={(value) => { setActiveTab(value as "2d" | "3d"); if (value === "3d") setSceneRefreshKey((k) => k + 1); }} className="flex-1 flex flex-col overflow-hidden min-h-0">
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => {
+            setActiveTab(value as "2d" | "3d");
+            if (value === "3d") setSceneRefreshKey((k) => k + 1);
+          }}
+          className="flex-1 flex flex-col overflow-hidden min-h-0"
+        >
           <TabsList className="mx-2 mt-2 self-start shrink-0">
             <TabsTrigger value="2d">2D</TabsTrigger>
             <TabsTrigger value="3d">3D</TabsTrigger>
           </TabsList>
-          <TabsContent value="2d" className="flex-1 overflow-hidden bg-muted/20 m-0 min-h-0 relative">
+          <TabsContent
+            value="2d"
+            className="flex-1 overflow-hidden bg-muted/20 m-0 min-h-0 relative"
+          >
             <div ref={stageWrapRef} className="w-full h-full">
-              <Stage width={stageSize.w} height={stageSize.h} onMouseDown={(e) => { if (e.target === e.target.getStage()) setSelectedId(null); }}>
+              <Stage
+                width={stageSize.w}
+                height={stageSize.h}
+                onMouseDown={(e) => {
+                  if (e.target === e.target.getStage()) setSelectedId(null);
+                }}
+              >
                 <Layer>
-                  <Line points={roomPolygon().map((p, i) => (i % 2 === 0 ? PAD + p * scale : PAD + p * scale))} fill="#1a1a1a" stroke="#c2956b" strokeWidth={2} closed />
+                  <Line
+                    points={roomPolygon().map((p, i) =>
+                      i % 2 === 0 ? PAD + p * scale : PAD + p * scale,
+                    )}
+                    fill="#1a1a1a"
+                    stroke="#c2956b"
+                    strokeWidth={2}
+                    closed
+                  />
                   {Array.from({ length: Math.floor(doc.roomWidth / 50) }).map((_, i) => (
-                    <Line key={`v${i}`} points={[PAD + (i + 1) * 50 * scale, PAD, PAD + (i + 1) * 50 * scale, PAD + doc.roomDepth * scale]} stroke="#333" strokeWidth={0.5} />
+                    <Line
+                      key={`v${i}`}
+                      points={[
+                        PAD + (i + 1) * 50 * scale,
+                        PAD,
+                        PAD + (i + 1) * 50 * scale,
+                        PAD + doc.roomDepth * scale,
+                      ]}
+                      stroke="#333"
+                      strokeWidth={0.5}
+                    />
                   ))}
                   {Array.from({ length: Math.floor(doc.roomDepth / 50) }).map((_, i) => (
-                    <Line key={`h${i}`} points={[PAD, PAD + (i + 1) * 50 * scale, PAD + doc.roomWidth * scale, PAD + (i + 1) * 50 * scale]} stroke="#333" strokeWidth={0.5} />
+                    <Line
+                      key={`h${i}`}
+                      points={[
+                        PAD,
+                        PAD + (i + 1) * 50 * scale,
+                        PAD + doc.roomWidth * scale,
+                        PAD + (i + 1) * 50 * scale,
+                      ]}
+                      stroke="#333"
+                      strokeWidth={0.5}
+                    />
                   ))}
                   {/* قياسات الجدران */}
-                  <KText text={`${toUnit(doc.roomWidth)} ${unit}`} fontSize={13} fontStyle="bold" fill="#f59e0b" x={PAD} y={PAD - 18} width={doc.roomWidth * scale} align="center" />
-                  <KText text={`${toUnit(doc.roomWidth)} ${unit}`} fontSize={13} fontStyle="bold" fill="#f59e0b" x={PAD} y={PAD + doc.roomDepth * scale + 4} width={doc.roomWidth * scale} align="center" />
-                  <KText text={`${toUnit(doc.roomDepth)} ${unit}`} fontSize={13} fontStyle="bold" fill="#f59e0b" x={PAD - 38} y={PAD + (doc.roomDepth * scale) / 2 - 7} width={32} align="right" />
-                  <KText text={`${toUnit(doc.roomDepth)} ${unit}`} fontSize={13} fontStyle="bold" fill="#f59e0b" x={PAD + doc.roomWidth * scale + 6} y={PAD + (doc.roomDepth * scale) / 2 - 7} width={50} align="left" />
+                  <KText
+                    text={`${toUnit(doc.roomWidth)} ${unit}`}
+                    fontSize={13}
+                    fontStyle="bold"
+                    fill="#f59e0b"
+                    x={PAD}
+                    y={PAD - 18}
+                    width={doc.roomWidth * scale}
+                    align="center"
+                  />
+                  <KText
+                    text={`${toUnit(doc.roomWidth)} ${unit}`}
+                    fontSize={13}
+                    fontStyle="bold"
+                    fill="#f59e0b"
+                    x={PAD}
+                    y={PAD + doc.roomDepth * scale + 4}
+                    width={doc.roomWidth * scale}
+                    align="center"
+                  />
+                  <KText
+                    text={`${toUnit(doc.roomDepth)} ${unit}`}
+                    fontSize={13}
+                    fontStyle="bold"
+                    fill="#f59e0b"
+                    x={PAD - 38}
+                    y={PAD + (doc.roomDepth * scale) / 2 - 7}
+                    width={32}
+                    align="right"
+                  />
+                  <KText
+                    text={`${toUnit(doc.roomDepth)} ${unit}`}
+                    fontSize={13}
+                    fontStyle="bold"
+                    fill="#f59e0b"
+                    x={PAD + doc.roomWidth * scale + 6}
+                    y={PAD + (doc.roomDepth * scale) / 2 - 7}
+                    width={50}
+                    align="left"
+                  />
                   {/* مقابض سحب الجدران (مستطيلة فقط) */}
                   {(doc.roomShape || "rectangle") === "rectangle" && (
                     <>
                       {/* مقبض الحائط السفلي — لتغيير العمق */}
-                      <Rect x={PAD + (doc.roomWidth * scale) / 2 - 18} y={PAD + doc.roomDepth * scale - 6} width={36} height={12} fill="#f59e0b" cornerRadius={6} draggable
-                        dragBoundFunc={(pos) => ({ x: PAD + (doc.roomWidth * scale) / 2 - 18, y: pos.y })}
-                        onDragEnd={(e) => { const newY = e.target.y() + 6; const newDepth = Math.max(150, Math.round((newY - PAD) / scale / 10) * 10); setDoc({ ...doc, roomDepth: newDepth }); e.target.position({ x: PAD + (doc.roomWidth * scale) / 2 - 18, y: PAD + newDepth * scale - 6 }); }}
+                      <Rect
+                        x={PAD + (doc.roomWidth * scale) / 2 - 18}
+                        y={PAD + doc.roomDepth * scale - 6}
+                        width={36}
+                        height={12}
+                        fill="#f59e0b"
+                        cornerRadius={6}
+                        draggable
+                        dragBoundFunc={(pos) => ({
+                          x: PAD + (doc.roomWidth * scale) / 2 - 18,
+                          y: pos.y,
+                        })}
+                        onDragEnd={(e) => {
+                          const newY = e.target.y() + 6;
+                          const newDepth = Math.max(
+                            150,
+                            Math.round((newY - PAD) / scale / 10) * 10,
+                          );
+                          setDoc({ ...doc, roomDepth: newDepth });
+                          e.target.position({
+                            x: PAD + (doc.roomWidth * scale) / 2 - 18,
+                            y: PAD + newDepth * scale - 6,
+                          });
+                        }}
                       />
                       {/* مقبض الحائط الأيمن — لتغيير العرض */}
-                      <Rect x={PAD + doc.roomWidth * scale - 6} y={PAD + (doc.roomDepth * scale) / 2 - 18} width={12} height={36} fill="#f59e0b" cornerRadius={6} draggable
-                        dragBoundFunc={(pos) => ({ x: pos.x, y: PAD + (doc.roomDepth * scale) / 2 - 18 })}
-                        onDragEnd={(e) => { const newX = e.target.x() + 6; const newWidth = Math.max(150, Math.round((newX - PAD) / scale / 10) * 10); setDoc({ ...doc, roomWidth: newWidth }); e.target.position({ x: PAD + newWidth * scale - 6, y: PAD + (doc.roomDepth * scale) / 2 - 18 }); }}
+                      <Rect
+                        x={PAD + doc.roomWidth * scale - 6}
+                        y={PAD + (doc.roomDepth * scale) / 2 - 18}
+                        width={12}
+                        height={36}
+                        fill="#f59e0b"
+                        cornerRadius={6}
+                        draggable
+                        dragBoundFunc={(pos) => ({
+                          x: pos.x,
+                          y: PAD + (doc.roomDepth * scale) / 2 - 18,
+                        })}
+                        onDragEnd={(e) => {
+                          const newX = e.target.x() + 6;
+                          const newWidth = Math.max(
+                            150,
+                            Math.round((newX - PAD) / scale / 10) * 10,
+                          );
+                          setDoc({ ...doc, roomWidth: newWidth });
+                          e.target.position({
+                            x: PAD + newWidth * scale - 6,
+                            y: PAD + (doc.roomDepth * scale) / 2 - 18,
+                          });
+                        }}
                       />
                     </>
                   )}
@@ -1128,102 +1764,260 @@ function DesignEditor() {
                         draggable
                         onClick={() => setSelectedId(b.id)}
                         onTap={() => setSelectedId(b.id)}
-                         onDragEnd={(e) => {
-                           const moved = snapBlockToWall({ ...b, x: (e.target.x() - PAD) / scale, y: (e.target.y() - PAD) / scale });
-                           setDoc({ ...doc, blocks: doc.blocks.map((item) => (item.id === b.id ? moved : item)) });
-                         }}
+                        onDragEnd={(e) => {
+                          const moved = snapBlockToWall({
+                            ...b,
+                            x: (e.target.x() - PAD) / scale,
+                            y: (e.target.y() - PAD) / scale,
+                          });
+                          setDoc({
+                            ...doc,
+                            blocks: doc.blocks.map((item) => (item.id === b.id ? moved : item)),
+                          });
+                        }}
                       >
-                        <Rect width={W} height={H} fill={fill} stroke={selectedId === b.id ? "#f59e0b" : "#000"} strokeWidth={selectedId === b.id ? 3 : 1} cornerRadius={3} />
+                        <Rect
+                          width={W}
+                          height={H}
+                          fill={fill}
+                          stroke={selectedId === b.id ? "#f59e0b" : "#000"}
+                          strokeWidth={selectedId === b.id ? 3 : 1}
+                          cornerRadius={3}
+                        />
                         {/* خطوط تقسيم الضلف عمودياً */}
-                        {doors > 1 && Array.from({ length: doors - 1 }).map((_, i) => (
-                          <Line key={`vd${i}`} points={[((i + 1) * W) / doors, drawers > 0 ? H * 0.3 : 0, ((i + 1) * W) / doors, H]} stroke="#000" strokeWidth={0.8} opacity={0.6} />
-                        ))}
+                        {doors > 1 &&
+                          Array.from({ length: doors - 1 }).map((_, i) => (
+                            <Line
+                              key={`vd${i}`}
+                              points={[
+                                ((i + 1) * W) / doors,
+                                drawers > 0 ? H * 0.3 : 0,
+                                ((i + 1) * W) / doors,
+                                H,
+                              ]}
+                              stroke="#000"
+                              strokeWidth={0.8}
+                              opacity={0.6}
+                            />
+                          ))}
                         {/* خط فاصل بين الأدراج والضلف */}
-                        {drawers > 0 && doors > 0 && <Line points={[0, H * 0.3, W, H * 0.3]} stroke="#000" strokeWidth={1} opacity={0.7} />}
+                        {drawers > 0 && doors > 0 && (
+                          <Line
+                            points={[0, H * 0.3, W, H * 0.3]}
+                            stroke="#000"
+                            strokeWidth={1}
+                            opacity={0.7}
+                          />
+                        )}
                         {/* خطوط تقسيم الأدراج أفقياً */}
-                        {drawers > 1 && Array.from({ length: drawers - 1 }).map((_, i) => {
-                          const drawerArea = doors > 0 ? H * 0.3 : H;
-                          return <Line key={`hd${i}`} points={[0, ((i + 1) * drawerArea) / drawers, W, ((i + 1) * drawerArea) / drawers]} stroke="#000" strokeWidth={0.6} opacity={0.5} />;
-                        })}
+                        {drawers > 1 &&
+                          Array.from({ length: drawers - 1 }).map((_, i) => {
+                            const drawerArea = doors > 0 ? H * 0.3 : H;
+                            return (
+                              <Line
+                                key={`hd${i}`}
+                                points={[
+                                  0,
+                                  ((i + 1) * drawerArea) / drawers,
+                                  W,
+                                  ((i + 1) * drawerArea) / drawers,
+                                ]}
+                                stroke="#000"
+                                strokeWidth={0.6}
+                                opacity={0.5}
+                              />
+                            );
+                          })}
                         {/* مؤشر الزجاج */}
                         {b.glass && doors > 0 && (
-                          <Rect x={W * 0.15} y={drawers > 0 ? H * 0.45 : H * 0.2} width={W * 0.7} height={drawers > 0 ? H * 0.4 : H * 0.6} fill="#a8c5d8" opacity={0.4} cornerRadius={2} />
+                          <Rect
+                            x={W * 0.15}
+                            y={drawers > 0 ? H * 0.45 : H * 0.2}
+                            width={W * 0.7}
+                            height={drawers > 0 ? H * 0.4 : H * 0.6}
+                            fill="#a8c5d8"
+                            opacity={0.4}
+                            cornerRadius={2}
+                          />
                         )}
                         {/* علامة الركنية */}
-                        {b.corner && <Line points={[0, 0, W * 0.3, 0, 0, H * 0.3]} stroke="#f59e0b" strokeWidth={2} closed fill="#f59e0b" opacity={0.3} />}
-                        <KText text={b.name} fontSize={9} fontStyle="bold" fill="#000" padding={2} width={W} align="center" y={Math.max(2, H / 2 - 6)} />
-                        <KText text={`${Math.round(b.width)}×${Math.round(b.depth)}`} fontSize={8} fill="#1a1a1a" padding={2} width={W} align="center" y={H - 11} />
+                        {b.corner && (
+                          <Line
+                            points={[0, 0, W * 0.3, 0, 0, H * 0.3]}
+                            stroke="#f59e0b"
+                            strokeWidth={2}
+                            closed
+                            fill="#f59e0b"
+                            opacity={0.3}
+                          />
+                        )}
+                        <KText
+                          text={b.name}
+                          fontSize={9}
+                          fontStyle="bold"
+                          fill="#000"
+                          padding={2}
+                          width={W}
+                          align="center"
+                          y={Math.max(2, H / 2 - 6)}
+                        />
+                        <KText
+                          text={`${Math.round(b.width)}×${Math.round(b.depth)}`}
+                          fontSize={8}
+                          fill="#1a1a1a"
+                          padding={2}
+                          width={W}
+                          align="center"
+                          y={H - 11}
+                        />
                       </Group>
                     );
                   })}
                 </Layer>
               </Stage>
             </div>
-        {/* شريط أدوات عائم للوحدة المحددة — أسفل اللوحة حتى لا يحجب التصميم */}
+            {/* شريط أدوات عائم للوحدة المحددة — أسفل اللوحة حتى لا يحجب التصميم */}
             {selected && (
               <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-card/95 backdrop-blur border border-border/60 rounded-xl shadow-glow p-1.5 z-10 max-w-[calc(100%-1rem)] overflow-x-auto">
-                <span className="text-xs font-bold px-2 truncate max-w-[120px]">{selected.name}</span>
-                <Button size="sm" variant="outline" className="h-8 px-2 gap-1" onClick={() => rotateBlock(selected.id, -15)} title="تدوير -15°">
-                  <RotateCw className="size-3.5 -scale-x-100" /> <span className="text-[10px]">15°</span>
+                <span className="text-xs font-bold px-2 truncate max-w-[120px]">
+                  {selected.name}
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 px-2 gap-1"
+                  onClick={() => rotateBlock(selected.id, -15)}
+                  title="تدوير -15°"
+                >
+                  <RotateCw className="size-3.5 -scale-x-100" />{" "}
+                  <span className="text-[10px]">15°</span>
                 </Button>
-                <Button size="sm" variant="outline" className="h-8 px-2 gap-1" onClick={() => rotateBlock(selected.id, 90)} title="تدوير +90°">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 px-2 gap-1"
+                  onClick={() => rotateBlock(selected.id, 90)}
+                  title="تدوير +90°"
+                >
                   <RotateCw className="size-3.5" /> <span className="text-[10px]">90°</span>
                 </Button>
-                <Button size="sm" variant="outline" className="h-8 px-2 gap-1" onClick={() => openEditDialog(selected)}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 px-2 gap-1"
+                  onClick={() => openEditDialog(selected)}
+                >
                   <Pencil className="size-3.5" /> <span className="text-[10px]">تعديل</span>
                 </Button>
-                <Button size="sm" variant="outline" className="h-8 px-2 gap-1 text-destructive hover:bg-destructive/10" onClick={() => removeBlock(selected.id)}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 px-2 gap-1 text-destructive hover:bg-destructive/10"
+                  onClick={() => removeBlock(selected.id)}
+                >
                   <Trash2 className="size-3.5" /> <span className="text-[10px]">حذف</span>
                 </Button>
-                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setSelectedId(null)}>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8"
+                  onClick={() => setSelectedId(null)}
+                >
                   <X className="size-3.5" />
                 </Button>
               </div>
             )}
           </TabsContent>
-          <TabsContent value="3d" className="flex-1 m-0 bg-background min-h-[420px] h-full relative overflow-hidden" data-design-3d>
+          <TabsContent
+            value="3d"
+            className="flex-1 m-0 bg-background min-h-[420px] h-full relative overflow-hidden"
+            data-design-3d
+          >
             {toolbar3dVisible ? (
               <div className="absolute top-2 left-2 right-2 z-10 flex flex-wrap items-center gap-1.5 rounded-xl border border-border/60 bg-card/90 p-1.5 shadow-card backdrop-blur">
-                {([
-                  ["perspective", "منظور"],
-                  ["top", "علوي"],
-                  ["front", "أمامي"],
-                  ["right", "يمين"],
-                  ["left", "يسار"],
-                ] as const).map(([value, label]) => (
-                  <Button key={value} size="sm" variant={view3d === value ? "default" : "outline"} className="h-8 px-2 text-xs" onClick={() => setView3d(value)}>{label}</Button>
+                {(
+                  [
+                    ["perspective", "منظور"],
+                    ["top", "علوي"],
+                    ["front", "أمامي"],
+                    ["right", "يمين"],
+                    ["left", "يسار"],
+                  ] as const
+                ).map(([value, label]) => (
+                  <Button
+                    key={value}
+                    size="sm"
+                    variant={view3d === value ? "default" : "outline"}
+                    className="h-8 px-2 text-xs"
+                    onClick={() => setView3d(value)}
+                  >
+                    {label}
+                  </Button>
                 ))}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button size="sm" variant="outline" className="ms-auto h-8 px-2 text-xs gap-1">
-                      <Camera className="size-3.5" /> الإسكرينات <ChevronDown className="size-3.5" />
+                      <Camera className="size-3.5" /> الإسكرينات{" "}
+                      <ChevronDown className="size-3.5" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="min-w-40">
-                    {([
-                      ["perspective", "منظور"],
-                      ["top", "علوي"],
-                      ["front", "أمامي"],
-                      ["right", "يمين"],
-                      ["left", "يسار"],
-                    ] as const).map(([value, label]) => (
-                      <DropdownMenuItem key={`shot-${value}`} onClick={() => download3DView(value, label)}>سكرين {label}</DropdownMenuItem>
+                    {(
+                      [
+                        ["perspective", "منظور"],
+                        ["top", "علوي"],
+                        ["front", "أمامي"],
+                        ["right", "يمين"],
+                        ["left", "يسار"],
+                      ] as const
+                    ).map(([value, label]) => (
+                      <DropdownMenuItem
+                        key={`shot-${value}`}
+                        onClick={() => download3DView(value, label)}
+                      >
+                        سكرين {label}
+                      </DropdownMenuItem>
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <Button size="sm" disabled={aiRendering} onClick={() => setRenderOpen(true)} className="h-8 px-2 text-xs gap-1 bg-gradient-primary shadow-glow">
-                  {aiRendering ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
+                <Button
+                  size="sm"
+                  disabled={aiRendering}
+                  onClick={() => setRenderOpen(true)}
+                  className="h-8 px-2 text-xs gap-1 bg-gradient-primary shadow-glow"
+                >
+                  {aiRendering ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <Sparkles className="size-3.5" />
+                  )}
                   صورة واقعية AI{aiCredits !== null ? ` (${aiCredits})` : ""}
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => { setGalleryOpen(true); loadGallery(); }} className="h-8 px-2 text-xs gap-1" title="معرض الصور المولّدة">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setGalleryOpen(true);
+                    loadGallery();
+                  }}
+                  className="h-8 px-2 text-xs gap-1"
+                  title="معرض الصور المولّدة"
+                >
                   <Images className="size-3.5" />
                 </Button>
                 <SmartLinkGate
                   onUnlock={async () => {
                     if (!user) return;
-                    const { data, error } = await supabase.rpc("grant_rewarded_ad_credit", { _user_id: user.id });
+                    const { data, error } = await supabase.rpc("grant_rewarded_ad_credit", {
+                      _user_id: user.id,
+                    });
                     if (error) return toast.error("تعذر منح الكريديت");
-                    const res = data as { ok: boolean; reason?: string; credits?: number; granted?: number } | null;
+                    const res = data as {
+                      ok: boolean;
+                      reason?: string;
+                      credits?: number;
+                      granted?: number;
+                    } | null;
                     if (!res?.ok) {
                       if (res?.reason === "daily_limit") toast.error("وصلت الحد اليومي");
                       else if (res?.reason === "disabled") toast.error("الإعلانات معطلة");
@@ -1237,15 +2031,33 @@ function DesignEditor() {
                   unlockedLabel="استلم الكريديت"
                   className="h-8 px-2 text-xs"
                 />
-                <Button size="sm" variant="outline" onClick={() => setAdModalOpen(true)} className="h-8 px-2 text-xs gap-1" title="احصل على كريديت مجاني بمشاهدة إعلان">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setAdModalOpen(true)}
+                  className="h-8 px-2 text-xs gap-1"
+                  title="احصل على كريديت مجاني بمشاهدة إعلان"
+                >
                   <Gift className="size-3.5 text-gold" />
                 </Button>
-                <Button size="icon" variant="outline" onClick={() => setToolbar3dVisible(false)} className="h-8 w-8" title="إخفاء الشريط لرؤية أوضح">
+                <Button
+                  size="icon"
+                  variant="outline"
+                  onClick={() => setToolbar3dVisible(false)}
+                  className="h-8 w-8"
+                  title="إخفاء الشريط لرؤية أوضح"
+                >
                   <EyeOff className="size-3.5" />
                 </Button>
               </div>
             ) : (
-              <Button size="icon" variant="default" onClick={() => setToolbar3dVisible(true)} className="absolute top-2 left-2 z-10 h-9 w-9 bg-card/90 backdrop-blur border border-border/60 shadow-card" title="إظهار الشريط">
+              <Button
+                size="icon"
+                variant="default"
+                onClick={() => setToolbar3dVisible(true)}
+                className="absolute top-2 left-2 z-10 h-9 w-9 bg-card/90 backdrop-blur border border-border/60 shadow-card"
+                title="إظهار الشريط"
+              >
                 <Eye className="size-4" />
               </Button>
             )}
@@ -1253,18 +2065,43 @@ function DesignEditor() {
             {/* لوحة الوحدة المحددة في الـ 3D */}
             {selected && (
               <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 bg-card/95 backdrop-blur border border-border/60 rounded-xl shadow-glow p-1.5 max-w-[calc(100%-1rem)]">
-                <span className="text-[11px] font-bold px-2 truncate max-w-[140px]">{selected.name}</span>
-                <span className="text-[10px] text-muted-foreground px-1 hidden sm:inline">اسحب الوحدة لتحريكها</span>
-                <Button size="sm" variant="outline" className="h-8 px-2 gap-1" onClick={() => rotateBlock(selected.id, 90)} title="تدوير 90°">
+                <span className="text-[11px] font-bold px-2 truncate max-w-[140px]">
+                  {selected.name}
+                </span>
+                <span className="text-[10px] text-muted-foreground px-1 hidden sm:inline">
+                  اسحب الوحدة لتحريكها
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 px-2 gap-1"
+                  onClick={() => rotateBlock(selected.id, 90)}
+                  title="تدوير 90°"
+                >
                   <RotateCw className="size-3.5" />
                 </Button>
-                <Button size="sm" variant="outline" className="h-8 px-2 gap-1" onClick={() => openEditDialog(selected)}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 px-2 gap-1"
+                  onClick={() => openEditDialog(selected)}
+                >
                   <Pencil className="size-3.5" />
                 </Button>
-                <Button size="sm" variant="outline" className="h-8 px-2 text-destructive hover:bg-destructive/10" onClick={() => removeBlock(selected.id)}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 px-2 text-destructive hover:bg-destructive/10"
+                  onClick={() => removeBlock(selected.id)}
+                >
                   <Trash2 className="size-3.5" />
                 </Button>
-                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setSelectedId(null)}>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8"
+                  onClick={() => setSelectedId(null)}
+                >
                   <X className="size-3.5" />
                 </Button>
               </div>
@@ -1275,12 +2112,28 @@ function DesignEditor() {
               className="block h-full w-full"
               style={{ width: "100%", height: "100%" }}
               shadows="soft"
-              camera={{ position: [doc.roomWidth, doc.roomDepth * 1.2, doc.roomDepth * 1.4], fov: 45 }}
+              camera={{
+                position: [doc.roomWidth, doc.roomDepth * 1.2, doc.roomDepth * 1.4],
+                fov: 45,
+              }}
               dpr={[1, 2]}
-              gl={{ antialias: true, powerPreference: "default", preserveDrawingBuffer: true, alpha: false, toneMappingExposure: 1.05 }}
-              onPointerMissed={() => { if (!dragRef.current) setSelectedId(null); }}
+              gl={{
+                antialias: true,
+                powerPreference: "default",
+                preserveDrawingBuffer: true,
+                alpha: false,
+                toneMappingExposure: 1.05,
+              }}
+              onPointerMissed={() => {
+                if (!dragRef.current) setSelectedId(null);
+              }}
             >
-              <SceneCamera view={view3d} roomWidth={doc.roomWidth} roomDepth={doc.roomDepth} resetKey={cameraResetKey} />
+              <SceneCamera
+                view={view3d}
+                roomWidth={doc.roomWidth}
+                roomDepth={doc.roomDepth}
+                resetKey={cameraResetKey}
+              />
               <color attach="background" args={["#f3eee6"]} />
               <SoftShadows size={28} samples={12} focus={0.6} />
               {/* بيئة عاكسة لـ PBR materials — تعطي انعكاسات واقعية على الستانلس/الرخام/الزجاج */}
@@ -1298,13 +2151,34 @@ function DesignEditor() {
                 shadow-camera-bottom={-doc.roomDepth}
                 shadow-bias={-0.0005}
               />
-              <directionalLight position={[-doc.roomWidth * 0.4, 380, -doc.roomDepth * 0.4]} intensity={0.25} />
+              <directionalLight
+                position={[-doc.roomWidth * 0.4, 380, -doc.roomDepth * 0.4]}
+                intensity={0.25}
+              />
               {/* Contact Shadows تحت الوحدات — يلطف اتصال الأرضية ويضيف عمق */}
-              <ContactShadows position={[doc.roomWidth / 2, 0.2, doc.roomDepth / 2]} scale={Math.max(doc.roomWidth, doc.roomDepth) * 1.5} opacity={0.55} blur={2.4} far={120} resolution={1024} color="#1a1410" />
+              <ContactShadows
+                position={[doc.roomWidth / 2, 0.2, doc.roomDepth / 2]}
+                scale={Math.max(doc.roomWidth, doc.roomDepth) * 1.5}
+                opacity={0.55}
+                blur={2.4}
+                far={120}
+                resolution={1024}
+                color="#1a1410"
+              />
               {/* الأرضية */}
-              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[doc.roomWidth / 2, -0.2, doc.roomDepth / 2]} receiveShadow>
+              <mesh
+                rotation={[-Math.PI / 2, 0, 0]}
+                position={[doc.roomWidth / 2, -0.2, doc.roomDepth / 2]}
+                receiveShadow
+              >
                 <planeGeometry args={[doc.roomWidth, doc.roomDepth]} />
-                <TexturedMaterial textureId={doc.floorTextureId} surfaceWidthCm={doc.roomWidth} surfaceHeightCm={doc.roomDepth} fallbackColor={doc.floorColor || "#d9cec0"} roughness={0.92} />
+                <TexturedMaterial
+                  textureId={doc.floorTextureId}
+                  surfaceWidthCm={doc.roomWidth}
+                  surfaceHeightCm={doc.roomDepth}
+                  fallbackColor={doc.floorColor || "#d9cec0"}
+                  roughness={0.92}
+                />
               </mesh>
               {/* الحائط الخلفي — Plane مواجه للداخل */}
               <mesh position={[doc.roomWidth / 2, 140, -3]} receiveShadow>
@@ -1313,29 +2187,69 @@ function DesignEditor() {
               </mesh>
               <mesh position={[doc.roomWidth / 2, 140, 0.25]} receiveShadow>
                 <planeGeometry args={[doc.roomWidth + 2, 280]} />
-                <TexturedMaterial textureId={doc.wallTextureId} surfaceWidthCm={doc.roomWidth} surfaceHeightCm={280} fallbackColor={doc.wallColor || "#efe7da"} roughness={0.95} side={THREE.DoubleSide} />
+                <TexturedMaterial
+                  textureId={doc.wallTextureId}
+                  surfaceWidthCm={doc.roomWidth}
+                  surfaceHeightCm={280}
+                  fallbackColor={doc.wallColor || "#efe7da"}
+                  roughness={0.95}
+                  side={THREE.DoubleSide}
+                />
               </mesh>
               {/* الحائط الأيسر — Plane مواجه للداخل */}
               <mesh position={[-3, 140, doc.roomDepth / 2]} receiveShadow>
                 <boxGeometry args={[6, 280, doc.roomDepth + 8]} />
                 <meshStandardMaterial color={doc.wallColor || "#efe7da"} roughness={0.98} />
               </mesh>
-              <mesh position={[0.25, 140, doc.roomDepth / 2]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
+              <mesh
+                position={[0.25, 140, doc.roomDepth / 2]}
+                rotation={[0, Math.PI / 2, 0]}
+                receiveShadow
+              >
                 <planeGeometry args={[doc.roomDepth + 2, 280]} />
-                <TexturedMaterial textureId={doc.wallTextureId} surfaceWidthCm={doc.roomDepth} surfaceHeightCm={280} fallbackColor={doc.wallColor || "#efe7da"} roughness={0.95} side={THREE.DoubleSide} />
+                <TexturedMaterial
+                  textureId={doc.wallTextureId}
+                  surfaceWidthCm={doc.roomDepth}
+                  surfaceHeightCm={280}
+                  fallbackColor={doc.wallColor || "#efe7da"}
+                  roughness={0.95}
+                  side={THREE.DoubleSide}
+                />
               </mesh>
               {/* الحائط الأيمن شفاف قليلاً حتى يوضح حدود الغرفة بدون حجب الوحدات */}
               <mesh position={[doc.roomWidth + 3, 140, doc.roomDepth / 2]} receiveShadow>
                 <boxGeometry args={[6, 280, doc.roomDepth + 8]} />
-                <meshStandardMaterial color={doc.wallColor || "#efe7da"} roughness={0.98} transparent opacity={0.28} />
+                <meshStandardMaterial
+                  color={doc.wallColor || "#efe7da"}
+                  roughness={0.98}
+                  transparent
+                  opacity={0.28}
+                />
               </mesh>
-              <mesh position={[doc.roomWidth - 0.25, 140, doc.roomDepth / 2]} rotation={[0, -Math.PI / 2, 0]} receiveShadow>
+              <mesh
+                position={[doc.roomWidth - 0.25, 140, doc.roomDepth / 2]}
+                rotation={[0, -Math.PI / 2, 0]}
+                receiveShadow
+              >
                 <planeGeometry args={[doc.roomDepth + 2, 280]} />
-                <TexturedMaterial textureId={doc.wallTextureId} surfaceWidthCm={doc.roomDepth} surfaceHeightCm={280} fallbackColor={doc.wallColor || "#efe7da"} roughness={0.95} side={THREE.DoubleSide} opacity={0.45} />
+                <TexturedMaterial
+                  textureId={doc.wallTextureId}
+                  surfaceWidthCm={doc.roomDepth}
+                  surfaceHeightCm={280}
+                  fallbackColor={doc.wallColor || "#efe7da"}
+                  roughness={0.95}
+                  side={THREE.DoubleSide}
+                  opacity={0.45}
+                />
               </mesh>
               <mesh position={[doc.roomWidth / 2, 70, doc.roomDepth + 2]} receiveShadow>
                 <boxGeometry args={[doc.roomWidth + 8, 140, 4]} />
-                <meshStandardMaterial color={doc.wallColor || "#efe7da"} roughness={0.98} transparent opacity={0.16} />
+                <meshStandardMaterial
+                  color={doc.wallColor || "#efe7da"}
+                  roughness={0.98}
+                  transparent
+                  opacity={0.16}
+                />
               </mesh>
               {/* إطار علوي خفيف يحدد ارتفاع الجدران */}
               <mesh position={[doc.roomWidth / 2, 282, 0]}>
@@ -1356,7 +2270,13 @@ function DesignEditor() {
                 <meshStandardMaterial color="#1a1410" roughness={0.9} />
               </mesh>
               {doc.blocks.map((b) => {
-                const wallMounted = b.placement === "wall" || b.type.startsWith("wall_") || b.type === "appl_hood" || b.type === "appl_hood_chimney" || b.type === "appl_microwave_built" || b.type === "special_window";
+                const wallMounted =
+                  b.placement === "wall" ||
+                  b.type.startsWith("wall_") ||
+                  b.type === "appl_hood" ||
+                  b.type === "appl_hood_chimney" ||
+                  b.type === "appl_microwave_built" ||
+                  b.type === "special_window";
                 const vy = wallMounted ? 145 : 0;
                 const isSel = selectedId === b.id;
                 const onDown = (e: ThreeEvent<PointerEvent>) => {
@@ -1408,8 +2328,14 @@ function DesignEditor() {
                     if (d.moved) {
                       setDoc((current) => {
                         const currentBlock = current.blocks.find((item) => item.id === b.id) ?? b;
-                        const moved = snapBlockToWall({ ...currentBlock, x: d.currentX, y: d.currentY }, current.blocks);
-                        return { ...current, blocks: current.blocks.map((item) => (item.id === b.id ? moved : item)) };
+                        const moved = snapBlockToWall(
+                          { ...currentBlock, x: d.currentX, y: d.currentY },
+                          current.blocks,
+                        );
+                        return {
+                          ...current,
+                          blocks: current.blocks.map((item) => (item.id === b.id ? moved : item)),
+                        };
                       });
                     }
                     dragRef.current = null;
@@ -1419,19 +2345,43 @@ function DesignEditor() {
                 };
                 const maxR = Math.max(b.width, b.depth) / 2;
                 return (
-                  <group key={b.id} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
-                    <Cabinet3D block={b} defaultColor={isPaintableBlock(b) ? (doc.globalColor || b.color) : b.color} marbleColor={doc.marbleColor} marbleTextureId={doc.marbleTextureId} />
+                  <group
+                    key={b.id}
+                    onPointerDown={onDown}
+                    onPointerMove={onMove}
+                    onPointerUp={onUp}
+                    onPointerCancel={onUp}
+                  >
+                    <Cabinet3D
+                      block={b}
+                      defaultColor={isPaintableBlock(b) ? doc.globalColor || b.color : b.color}
+                      marbleColor={doc.marbleColor}
+                      marbleTextureId={doc.marbleTextureId}
+                    />
                     {isSel && (
                       <>
                         {/* حلقة مضيئة على الأرضية لإبراز الوحدة المحددة */}
-                        <mesh position={[b.x + b.width / 2, 0.4, b.y + b.depth / 2]} rotation={[-Math.PI / 2, 0, 0]}>
+                        <mesh
+                          position={[b.x + b.width / 2, 0.4, b.y + b.depth / 2]}
+                          rotation={[-Math.PI / 2, 0, 0]}
+                        >
                           <ringGeometry args={[maxR + 4, maxR + 12, 48]} />
                           <meshBasicMaterial color="#ffb020" transparent opacity={0.6} />
                         </mesh>
                         {/* ظل تحديد فقط — بدون wireframe حتى لا تتحول الوحدة إلى خطوط */}
-                        <mesh position={[b.x + b.width / 2, vy + b.height + 3, b.y + b.depth / 2]} rotation={[-Math.PI / 2, 0, 0]}>
-                          <planeGeometry args={[Math.max(24, b.width * 0.75), Math.max(18, b.depth * 0.75)]} />
-                          <meshBasicMaterial color="#ffb020" transparent opacity={0.22} side={THREE.DoubleSide} />
+                        <mesh
+                          position={[b.x + b.width / 2, vy + b.height + 3, b.y + b.depth / 2]}
+                          rotation={[-Math.PI / 2, 0, 0]}
+                        >
+                          <planeGeometry
+                            args={[Math.max(24, b.width * 0.75), Math.max(18, b.depth * 0.75)]}
+                          />
+                          <meshBasicMaterial
+                            color="#ffb020"
+                            transparent
+                            opacity={0.22}
+                            side={THREE.DoubleSide}
+                          />
                         </mesh>
                       </>
                     )}
@@ -1454,23 +2404,37 @@ function DesignEditor() {
 
             {/* أزرار التحكم بالكاميرا — زووم + إعادة ضبط */}
             <div className="absolute bottom-3 right-3 z-10 flex flex-col gap-1.5 rounded-xl border border-border/60 bg-card/90 p-1.5 shadow-card backdrop-blur">
-              <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => zoomCamera(0.8)} title="تقريب">
+              <Button
+                size="icon"
+                variant="outline"
+                className="h-8 w-8"
+                onClick={() => zoomCamera(0.8)}
+                title="تقريب"
+              >
                 <Plus className="size-4" />
               </Button>
-              <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => zoomCamera(1.25)} title="تبعيد">
+              <Button
+                size="icon"
+                variant="outline"
+                className="h-8 w-8"
+                onClick={() => zoomCamera(1.25)}
+                title="تبعيد"
+              >
                 <span className="text-base leading-none font-bold">−</span>
               </Button>
-              <Button size="icon" variant="outline" className="h-8 w-8" onClick={resetCamera} title="إعادة ضبط الكاميرا">
+              <Button
+                size="icon"
+                variant="outline"
+                className="h-8 w-8"
+                onClick={resetCamera}
+                title="إعادة ضبط الكاميرا"
+              >
                 <RotateCw className="size-4" />
               </Button>
             </div>
-
           </TabsContent>
-
-
         </Tabs>
       </div>
-
 
       {/* Desktop: properties */}
       <aside className="hidden md:block w-72 border-r border-border/60 bg-card/50 p-4 overflow-auto">
@@ -1482,7 +2446,9 @@ function DesignEditor() {
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {pendingBlock && <BlockIcon type={pendingBlock.type} className="size-8 text-primary" />}
+              {pendingBlock && (
+                <BlockIcon type={pendingBlock.type} className="size-8 text-primary" />
+              )}
               {pendingBlock?.name}
             </DialogTitle>
           </DialogHeader>
@@ -1491,15 +2457,28 @@ function DesignEditor() {
             <div className="grid grid-cols-3 gap-2">
               <div>
                 <Label className="text-xs">العرض ({unit})</Label>
-                <Input type="number" value={pendingDims.width} onChange={(e) => setPendingDims({ ...pendingDims, width: e.target.value })} autoFocus />
+                <Input
+                  type="number"
+                  value={pendingDims.width}
+                  onChange={(e) => setPendingDims({ ...pendingDims, width: e.target.value })}
+                  autoFocus
+                />
               </div>
               <div>
                 <Label className="text-xs">العمق ({unit})</Label>
-                <Input type="number" value={pendingDims.depth} onChange={(e) => setPendingDims({ ...pendingDims, depth: e.target.value })} />
+                <Input
+                  type="number"
+                  value={pendingDims.depth}
+                  onChange={(e) => setPendingDims({ ...pendingDims, depth: e.target.value })}
+                />
               </div>
               <div>
                 <Label className="text-xs">الارتفاع ({unit})</Label>
-                <Input type="number" value={pendingDims.height} onChange={(e) => setPendingDims({ ...pendingDims, height: e.target.value })} />
+                <Input
+                  type="number"
+                  value={pendingDims.height}
+                  onChange={(e) => setPendingDims({ ...pendingDims, height: e.target.value })}
+                />
               </div>
             </div>
             <div>
@@ -1513,8 +2492,12 @@ function DesignEditor() {
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-2">
-            <Button variant="outline" onClick={() => setPendingBlock(null)}>إلغاء</Button>
-            <Button onClick={confirmAddBlock} className="bg-gradient-primary"><Plus className="size-4" /> إضافة</Button>
+            <Button variant="outline" onClick={() => setPendingBlock(null)}>
+              إلغاء
+            </Button>
+            <Button onClick={confirmAddBlock} className="bg-gradient-primary">
+              <Plus className="size-4" /> إضافة
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1540,7 +2523,6 @@ function DesignEditor() {
         hasExisting={doc.blocks.length > 0}
       />
 
-
       {/* تعديل وحدة موجودة */}
       <Dialog open={!!editingId} onOpenChange={(o) => !o && setEditingId(null)}>
         <DialogContent className="max-w-sm">
@@ -1551,25 +2533,46 @@ function DesignEditor() {
             <div className="grid grid-cols-3 gap-2">
               <div>
                 <Label className="text-xs">العرض ({unit})</Label>
-                <Input type="number" value={editDims.width} onChange={(e) => setEditDims({ ...editDims, width: e.target.value })} autoFocus />
+                <Input
+                  type="number"
+                  value={editDims.width}
+                  onChange={(e) => setEditDims({ ...editDims, width: e.target.value })}
+                  autoFocus
+                />
               </div>
               <div>
                 <Label className="text-xs">العمق ({unit})</Label>
-                <Input type="number" value={editDims.depth} onChange={(e) => setEditDims({ ...editDims, depth: e.target.value })} />
+                <Input
+                  type="number"
+                  value={editDims.depth}
+                  onChange={(e) => setEditDims({ ...editDims, depth: e.target.value })}
+                />
               </div>
               <div>
                 <Label className="text-xs">الارتفاع ({unit})</Label>
-                <Input type="number" value={editDims.height} onChange={(e) => setEditDims({ ...editDims, height: e.target.value })} />
+                <Input
+                  type="number"
+                  value={editDims.height}
+                  onChange={(e) => setEditDims({ ...editDims, height: e.target.value })}
+                />
               </div>
             </div>
             <div>
               <Label className="text-xs">تفاصيل إضافية</Label>
-              <Textarea value={editDims.notes} onChange={(e) => setEditDims({ ...editDims, notes: e.target.value })} rows={2} />
+              <Textarea
+                value={editDims.notes}
+                onChange={(e) => setEditDims({ ...editDims, notes: e.target.value })}
+                rows={2}
+              />
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-2">
-            <Button variant="outline" onClick={() => setEditingId(null)}>إلغاء</Button>
-            <Button onClick={confirmEdit} className="bg-gradient-primary">حفظ التعديلات</Button>
+            <Button variant="outline" onClick={() => setEditingId(null)}>
+              إلغاء
+            </Button>
+            <Button onClick={confirmEdit} className="bg-gradient-primary">
+              حفظ التعديلات
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1578,7 +2581,9 @@ function DesignEditor() {
       <Dialog open={renderOpen} onOpenChange={setRenderOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Sparkles className="size-5 text-primary" /> صورة واقعية بالذكاء الاصطناعي</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="size-5 text-primary" /> صورة واقعية بالذكاء الاصطناعي
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -1597,7 +2602,12 @@ function DesignEditor() {
             </div>
             <div>
               <label className="flex items-center gap-2 cursor-pointer p-3 rounded-lg border border-border/60 hover:border-primary/40 transition">
-                <input type="checkbox" checked={renderMulti} onChange={(e) => setRenderMulti(e.target.checked)} className="size-4" />
+                <input
+                  type="checkbox"
+                  checked={renderMulti}
+                  onChange={(e) => setRenderMulti(e.target.checked)}
+                  className="size-4"
+                />
                 <Layers className="size-4 text-primary" />
                 <div className="flex-1">
                   <div className="text-sm font-bold">3 زوايا (منظور + أمامي + علوي)</div>
@@ -1605,11 +2615,17 @@ function DesignEditor() {
                 </div>
               </label>
             </div>
-            <p className="text-xs text-muted-foreground">سيتم استخدام {renderMulti ? 3 : 1} كريديت — رصيدك: {aiCredits ?? "—"}</p>
+            <p className="text-xs text-muted-foreground">
+              سيتم استخدام {renderMulti ? 3 : 1} كريديت — رصيدك: {aiCredits ?? "—"}
+            </p>
           </div>
           <DialogFooter className="gap-2 sm:gap-2">
-            <Button variant="outline" onClick={() => setRenderOpen(false)}>إلغاء</Button>
-            <Button onClick={generateRealisticRender} className="bg-gradient-primary"><Sparkles className="size-4" /> ابدأ التوليد</Button>
+            <Button variant="outline" onClick={() => setRenderOpen(false)}>
+              إلغاء
+            </Button>
+            <Button onClick={generateRealisticRender} className="bg-gradient-primary">
+              <Sparkles className="size-4" /> ابدأ التوليد
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1618,25 +2634,42 @@ function DesignEditor() {
       <Dialog open={!!aiResultUrls} onOpenChange={(o) => !o && setAiResultUrls(null)}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Sparkles className="size-5 text-primary" /> صور واقعية للتصميم</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="size-5 text-primary" /> صور واقعية للتصميم
+            </DialogTitle>
           </DialogHeader>
           {aiResultUrls && (
             <div className="space-y-3">
               <div className={`grid gap-3 ${aiResultUrls.length > 1 ? "sm:grid-cols-2" : ""}`}>
                 {aiResultUrls.map((url, i) => (
                   <div key={i} className="space-y-2">
-                    <img src={url} alt={`صورة واقعية ${i + 1}`} className="w-full rounded-xl border border-border/60" />
-                    <a href={url} download={`${name.trim() || "kitchen"}-${i + 1}.png`} className="block">
-                      <Button size="sm" variant="outline" className="w-full"><Download className="size-3.5" /> تحميل</Button>
+                    <img
+                      src={url}
+                      alt={`صورة واقعية ${i + 1}`}
+                      className="w-full rounded-xl border border-border/60"
+                    />
+                    <a
+                      href={url}
+                      download={`${name.trim() || "kitchen"}-${i + 1}.png`}
+                      className="block"
+                    >
+                      <Button size="sm" variant="outline" className="w-full">
+                        <Download className="size-3.5" /> تحميل
+                      </Button>
                     </a>
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground text-center">صور توضيحية مولّدة بالذكاء الاصطناعي — قد تختلف بعض التفاصيل عن التصميم الفعلي. محفوظة تلقائياً في معرضك.</p>
+              <p className="text-xs text-muted-foreground text-center">
+                صور توضيحية مولّدة بالذكاء الاصطناعي — قد تختلف بعض التفاصيل عن التصميم الفعلي.
+                محفوظة تلقائياً في معرضك.
+              </p>
             </div>
           )}
           <DialogFooter className="gap-2 sm:gap-2">
-            <Button variant="outline" onClick={() => setAiResultUrls(null)}>إغلاق</Button>
+            <Button variant="outline" onClick={() => setAiResultUrls(null)}>
+              إغلاق
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1645,21 +2678,46 @@ function DesignEditor() {
       <Dialog open={galleryOpen} onOpenChange={setGalleryOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Images className="size-5 text-primary" /> معرض الصور المولّدة</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Images className="size-5 text-primary" /> معرض الصور المولّدة
+            </DialogTitle>
           </DialogHeader>
           {gallery.length === 0 ? (
-            <div className="py-12 text-center text-muted-foreground text-sm">لا توجد صور بعد — ابدأ بتوليد أول صورة واقعية!</div>
+            <div className="py-12 text-center text-muted-foreground text-sm">
+              لا توجد صور بعد — ابدأ بتوليد أول صورة واقعية!
+            </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {gallery.map((r) => (
-                <div key={r.id} className="group relative rounded-xl border border-border/60 overflow-hidden">
-                  <img src={r.image_url} alt="render" className="w-full aspect-square object-cover" />
+                <div
+                  key={r.id}
+                  className="group relative rounded-xl border border-border/60 overflow-hidden"
+                >
+                  <img
+                    src={r.image_url}
+                    alt="render"
+                    className="w-full aspect-square object-cover"
+                  />
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2 opacity-0 group-hover:opacity-100 transition">
                     <div className="flex items-center justify-between gap-1">
-                      <span className="text-[10px] text-white/90">{STYLE_LABELS[(r.style as RenderStyle) || "modern"] ?? r.style} • {VIEW_LABELS[(r.view_angle as ViewAngle) || "perspective"] ?? r.view_angle}</span>
+                      <span className="text-[10px] text-white/90">
+                        {STYLE_LABELS[(r.style as RenderStyle) || "modern"] ?? r.style} •{" "}
+                        {VIEW_LABELS[(r.view_angle as ViewAngle) || "perspective"] ?? r.view_angle}
+                      </span>
                       <div className="flex gap-1">
-                        <a href={r.image_url} download target="_blank" rel="noreferrer"><Button size="icon" variant="ghost" className="h-6 w-6 text-white"><Download className="size-3" /></Button></a>
-                        <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive" onClick={() => deleteRender(r.id)}><Trash2 className="size-3" /></Button>
+                        <a href={r.image_url} download target="_blank" rel="noreferrer">
+                          <Button size="icon" variant="ghost" className="h-6 w-6 text-white">
+                            <Download className="size-3" />
+                          </Button>
+                        </a>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-6 w-6 text-destructive"
+                          onClick={() => deleteRender(r.id)}
+                        >
+                          <Trash2 className="size-3" />
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -1669,7 +2727,6 @@ function DesignEditor() {
           )}
         </DialogContent>
       </Dialog>
-
 
       <RewardedAdModal
         open={adModalOpen}

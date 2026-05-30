@@ -13,17 +13,41 @@ interface Props {
   opacity?: number;
 }
 
-function FallbackMaterial({ color, roughness, metalness, side, opacity }: { color: string; roughness: number; metalness: number; side?: THREE.Side; opacity: number }) {
-  return <meshStandardMaterial color={color} roughness={roughness} metalness={metalness} side={side} transparent={opacity < 1} opacity={opacity} />;
+function FallbackMaterial({
+  color,
+  roughness,
+  metalness,
+  side,
+  opacity,
+}: {
+  color: string;
+  roughness: number;
+  metalness: number;
+  side?: THREE.Side;
+  opacity: number;
+}) {
+  return (
+    <meshStandardMaterial
+      color={color}
+      roughness={roughness}
+      metalness={metalness}
+      side={side}
+      transparent={opacity < 1}
+      opacity={opacity}
+    />
+  );
 }
 
 const textureCache = new Map<string, Promise<THREE.Texture>>();
 
 const loadTexture = (url: string) => {
   if (!textureCache.has(url)) {
-    textureCache.set(url, new Promise((resolve, reject) => {
-      new THREE.TextureLoader().load(url, resolve, undefined, reject);
-    }));
+    textureCache.set(
+      url,
+      new Promise((resolve, reject) => {
+        new THREE.TextureLoader().load(url, resolve, undefined, reject);
+      }),
+    );
   }
   return textureCache.get(url)!;
 };
@@ -53,7 +77,9 @@ export function TexturedMaterial({
       .catch(() => {
         if (!cancelled) setBaseTexture(null);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [tex?.url]);
 
   const map = useMemo(() => {
@@ -63,13 +89,40 @@ export function TexturedMaterial({
     t.wrapT = THREE.RepeatWrapping;
     t.colorSpace = THREE.SRGBColorSpace;
     t.anisotropy = 8;
-    t.repeat.set(Math.max(1, surfaceWidthCm / tex.realSizeCm), Math.max(1, surfaceHeightCm / tex.realSizeCm));
+    t.repeat.set(
+      Math.max(1, surfaceWidthCm / tex.realSizeCm),
+      Math.max(1, surfaceHeightCm / tex.realSizeCm),
+    );
     t.needsUpdate = true;
     return t;
   }, [baseTexture, surfaceHeightCm, surfaceWidthCm, tex]);
 
-  useEffect(() => () => { map?.dispose(); }, [map]);
+  useEffect(
+    () => () => {
+      map?.dispose();
+    },
+    [map],
+  );
 
-  if (!map) return <FallbackMaterial color={fallbackColor} roughness={roughness} metalness={metalness} side={side} opacity={opacity} />;
-  return <meshStandardMaterial map={map} color="#ffffff" roughness={roughness} metalness={metalness} side={side} transparent={opacity < 1} opacity={opacity} />;
+  if (!map)
+    return (
+      <FallbackMaterial
+        color={fallbackColor}
+        roughness={roughness}
+        metalness={metalness}
+        side={side}
+        opacity={opacity}
+      />
+    );
+  return (
+    <meshStandardMaterial
+      map={map}
+      color="#ffffff"
+      roughness={roughness}
+      metalness={metalness}
+      side={side}
+      transparent={opacity < 1}
+      opacity={opacity}
+    />
+  );
 }

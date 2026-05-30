@@ -1307,19 +1307,35 @@ function DesignEditor() {
                 <TexturedMaterial textureId={doc.floorTextureId} surfaceWidthCm={doc.roomWidth} surfaceHeightCm={doc.roomDepth} fallbackColor={doc.floorColor || "#d9cec0"} roughness={0.92} />
               </mesh>
               {/* الحائط الخلفي — Plane مواجه للداخل */}
+              <mesh position={[doc.roomWidth / 2, 140, -3]} receiveShadow>
+                <boxGeometry args={[doc.roomWidth + 8, 280, 6]} />
+                <meshStandardMaterial color={doc.wallColor || "#efe7da"} roughness={0.98} />
+              </mesh>
               <mesh position={[doc.roomWidth / 2, 140, -0.5]} receiveShadow>
                 <planeGeometry args={[doc.roomWidth + 2, 280]} />
                 <TexturedMaterial textureId={doc.wallTextureId} surfaceWidthCm={doc.roomWidth} surfaceHeightCm={280} fallbackColor={doc.wallColor || "#efe7da"} roughness={0.95} side={THREE.DoubleSide} />
               </mesh>
               {/* الحائط الأيسر — Plane مواجه للداخل */}
+              <mesh position={[-3, 140, doc.roomDepth / 2]} receiveShadow>
+                <boxGeometry args={[6, 280, doc.roomDepth + 8]} />
+                <meshStandardMaterial color={doc.wallColor || "#efe7da"} roughness={0.98} />
+              </mesh>
               <mesh position={[-0.5, 140, doc.roomDepth / 2]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
                 <planeGeometry args={[doc.roomDepth + 2, 280]} />
                 <TexturedMaterial textureId={doc.wallTextureId} surfaceWidthCm={doc.roomDepth} surfaceHeightCm={280} fallbackColor={doc.wallColor || "#efe7da"} roughness={0.95} side={THREE.DoubleSide} />
               </mesh>
               {/* الحائط الأيمن شفاف قليلاً حتى يوضح حدود الغرفة بدون حجب الوحدات */}
+              <mesh position={[doc.roomWidth + 3, 140, doc.roomDepth / 2]} receiveShadow>
+                <boxGeometry args={[6, 280, doc.roomDepth + 8]} />
+                <meshStandardMaterial color={doc.wallColor || "#efe7da"} roughness={0.98} transparent opacity={0.28} />
+              </mesh>
               <mesh position={[doc.roomWidth + 0.5, 140, doc.roomDepth / 2]} rotation={[0, -Math.PI / 2, 0]} receiveShadow>
                 <planeGeometry args={[doc.roomDepth + 2, 280]} />
                 <TexturedMaterial textureId={doc.wallTextureId} surfaceWidthCm={doc.roomDepth} surfaceHeightCm={280} fallbackColor={doc.wallColor || "#efe7da"} roughness={0.95} side={THREE.DoubleSide} opacity={0.45} />
+              </mesh>
+              <mesh position={[doc.roomWidth / 2, 70, doc.roomDepth + 2]} receiveShadow>
+                <boxGeometry args={[doc.roomWidth + 8, 140, 4]} />
+                <meshStandardMaterial color={doc.wallColor || "#efe7da"} roughness={0.98} transparent opacity={0.16} />
               </mesh>
               {/* إطار علوي خفيف يحدد ارتفاع الجدران */}
               <mesh position={[doc.roomWidth / 2, 282, 0]}>

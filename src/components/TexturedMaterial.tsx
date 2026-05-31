@@ -51,6 +51,7 @@ const loadTexture = (url: string) => {
         new THREE.TextureLoader().load(url, resolve, undefined, reject);
       }),
     );
+    textureCache.get(url)!.catch(() => textureCache.delete(url));
   }
   return textureCache.get(url)!;
 };

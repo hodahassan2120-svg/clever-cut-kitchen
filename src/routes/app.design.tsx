@@ -129,8 +129,9 @@ function SceneCamera({
   roomDepth: number;
   resetKey: number;
 }) {
-  const { camera, invalidate } = useThree();
+  const { camera, gl, invalidate, size } = useThree();
   useEffect(() => {
+    if (size.width > 0 && size.height > 0) gl.setSize(size.width, size.height, false);
     const target: [number, number, number] = [roomWidth / 2, 80, roomDepth / 2];
     const maxDim = Math.max(roomWidth, roomDepth, 260);
     const positions: Record<typeof view, [number, number, number]> = {
@@ -144,7 +145,7 @@ function SceneCamera({
     camera.lookAt(...target);
     camera.updateProjectionMatrix();
     invalidate();
-  }, [camera, invalidate, roomDepth, roomWidth, view, resetKey]);
+  }, [camera, gl, invalidate, roomDepth, roomWidth, size.height, size.width, view, resetKey]);
   return null;
 }
 

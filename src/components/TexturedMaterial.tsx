@@ -11,6 +11,7 @@ interface Props {
   metalness?: number;
   side?: THREE.Side;
   opacity?: number;
+  textureStrength?: number;
 }
 
 function FallbackMaterial({
@@ -62,6 +63,7 @@ export function TexturedMaterial({
   metalness = 0.05,
   side,
   opacity = 1,
+  textureStrength = 1,
 }: Props) {
   const tex = getTexture(textureId);
   const [baseTexture, setBaseTexture] = useState<THREE.Texture | null>(null);
@@ -117,7 +119,7 @@ export function TexturedMaterial({
   return (
     <meshStandardMaterial
       map={map}
-      color="#ffffff"
+      color={new THREE.Color("#ffffff").lerp(new THREE.Color(fallbackColor), 1 - textureStrength)}
       roughness={roughness}
       metalness={metalness}
       side={side}

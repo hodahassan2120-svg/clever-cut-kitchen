@@ -2199,6 +2199,54 @@ function DesignEditor() {
                   side={THREE.DoubleSide}
                 />
               </mesh>
+              {/* نافذة كبيرة على الحائط الخلفي — تعطي إحساس بالعمق والإضاءة الطبيعية */}
+              {(() => {
+                const winW = Math.min(160, doc.roomWidth * 0.45);
+                const winH = 110;
+                const winY = 175;
+                const winCx = doc.roomWidth * 0.7;
+                const frameT = 5;
+                return (
+                  <group position={[winCx, winY, 0.6]}>
+                    {/* زجاج مع توهج خفيف لإظهار الضوء الخارجي */}
+                    <mesh>
+                      <planeGeometry args={[winW, winH]} />
+                      <meshStandardMaterial
+                        color="#cfe6f3"
+                        emissive="#f5ead0"
+                        emissiveIntensity={0.55}
+                        roughness={0.08}
+                        metalness={0.1}
+                        transparent
+                        opacity={0.85}
+                      />
+                    </mesh>
+                    {/* إطار خشبي/ألوميتال */}
+                    {[
+                      [0, winH / 2 + frameT / 2, winW + frameT * 2, frameT],
+                      [0, -winH / 2 - frameT / 2, winW + frameT * 2, frameT],
+                      [-winW / 2 - frameT / 2, 0, frameT, winH],
+                      [winW / 2 + frameT / 2, 0, frameT, winH],
+                      [0, 0, frameT * 0.6, winH], // قائم وسط
+                      [0, 0, winW, frameT * 0.6], // أفقي وسط
+                    ].map(([x, y, w, h], i) => (
+                      <mesh key={i} position={[x, y, 0.3]}>
+                        <boxGeometry args={[w, h, 2]} />
+                        <meshStandardMaterial color="#2a2017" roughness={0.55} metalness={0.15} />
+                      </mesh>
+                    ))}
+                    {/* بقعة ضوء دافئة تدخل من النافذة */}
+                    <pointLight
+                      position={[0, -20, 30]}
+                      intensity={0.9}
+                      distance={400}
+                      decay={2}
+                      color="#fff1d0"
+                      castShadow={false}
+                    />
+                  </group>
+                );
+              })()}
               {/* الحائط الأيسر — Plane مواجه للداخل */}
               <mesh position={[-3, 140, doc.roomDepth / 2]} receiveShadow>
                 <boxGeometry args={[6, 280, doc.roomDepth + 8]} />

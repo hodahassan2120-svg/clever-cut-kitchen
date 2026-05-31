@@ -1040,7 +1040,7 @@ function DesignEditor() {
         )}
       </div>
 
-        {/* اللون العام وكل الخامات — تظهر مباشرة مع زر تحديث يدوي للثري دي عند الحاجة */}
+      {/* اللون العام وكل الخامات — تظهر مباشرة مع زر تحديث يدوي للثري دي عند الحاجة */}
       <div className="space-y-2 mb-6 pb-4 border-b border-border/40">
         <div className="flex items-center justify-between gap-2">
           <h4 className="text-sm font-semibold flex items-center gap-1.5">
@@ -1093,7 +1093,8 @@ function DesignEditor() {
           ))}
         </div>
         <p className="text-[10px] text-muted-foreground">
-          اختر اللون أو الخامة وستظهر مباشرة في 3D، ويمكنك الضغط على “تحديث العرض” لإعادة تحميل المشهد يدوياً.
+          اختر اللون أو الخامة وستظهر مباشرة في 3D، ويمكنك الضغط على “تحديث العرض” لإعادة تحميل
+          المشهد يدوياً.
         </p>
 
         <h4 className="text-sm font-semibold flex items-center gap-1.5 pt-2">
@@ -1851,23 +1852,43 @@ function DesignEditor() {
                             // أفقي — على نفس النطاق الرأسي
                             const overlapY = !(o.y + o.depth < ny || o.y > ny + b.depth);
                             if (overlapY) {
-                              if (o.x + o.width <= nx) leftGap = Math.min(leftGap, nx - (o.x + o.width));
-                              if (o.x >= nx + b.width) rightGap = Math.min(rightGap, o.x - (nx + b.width));
+                              if (o.x + o.width <= nx)
+                                leftGap = Math.min(leftGap, nx - (o.x + o.width));
+                              if (o.x >= nx + b.width)
+                                rightGap = Math.min(rightGap, o.x - (nx + b.width));
                             }
                             const overlapX = !(o.x + o.width < nx || o.x > nx + b.width);
                             if (overlapX) {
-                              if (o.y + o.depth <= ny) topGap = Math.min(topGap, ny - (o.y + o.depth));
-                              if (o.y >= ny + b.depth) bottomGap = Math.min(bottomGap, o.y - (ny + b.depth));
+                              if (o.y + o.depth <= ny)
+                                topGap = Math.min(topGap, ny - (o.y + o.depth));
+                              if (o.y >= ny + b.depth)
+                                bottomGap = Math.min(bottomGap, o.y - (ny + b.depth));
                             }
                           });
                           if (leftGap > 0 && leftGap < 200)
-                            labels.push({ x: nx - leftGap / 2, y: ny + b.depth / 2, text: `${Math.round(leftGap)}` });
+                            labels.push({
+                              x: nx - leftGap / 2,
+                              y: ny + b.depth / 2,
+                              text: `${Math.round(leftGap)}`,
+                            });
                           if (rightGap > 0 && rightGap < 200)
-                            labels.push({ x: nx + b.width + rightGap / 2, y: ny + b.depth / 2, text: `${Math.round(rightGap)}` });
+                            labels.push({
+                              x: nx + b.width + rightGap / 2,
+                              y: ny + b.depth / 2,
+                              text: `${Math.round(rightGap)}`,
+                            });
                           if (topGap > 0 && topGap < 200)
-                            labels.push({ x: nx + b.width / 2, y: ny - topGap / 2, text: `${Math.round(topGap)}` });
+                            labels.push({
+                              x: nx + b.width / 2,
+                              y: ny - topGap / 2,
+                              text: `${Math.round(topGap)}`,
+                            });
                           if (bottomGap > 0 && bottomGap < 200)
-                            labels.push({ x: nx + b.width / 2, y: ny + b.depth + bottomGap / 2, text: `${Math.round(bottomGap)}` });
+                            labels.push({
+                              x: nx + b.width / 2,
+                              y: ny + b.depth + bottomGap / 2,
+                              text: `${Math.round(bottomGap)}`,
+                            });
                           setDragGuides({ vx: hitV, hy: hitH, labels });
                         }}
                         onDragEnd={(e) => {
@@ -1985,7 +2006,12 @@ function DesignEditor() {
                     dragGuides.vx.map((vx, i) => (
                       <Line
                         key={`gv${i}`}
-                        points={[PAD + vx * scale, PAD, PAD + vx * scale, PAD + doc.roomDepth * scale]}
+                        points={[
+                          PAD + vx * scale,
+                          PAD,
+                          PAD + vx * scale,
+                          PAD + doc.roomDepth * scale,
+                        ]}
                         stroke="#ff3b30"
                         strokeWidth={1}
                         dash={[4, 4]}
@@ -1996,7 +2022,12 @@ function DesignEditor() {
                     dragGuides.hy.map((hy, i) => (
                       <Line
                         key={`gh${i}`}
-                        points={[PAD, PAD + hy * scale, PAD + doc.roomWidth * scale, PAD + hy * scale]}
+                        points={[
+                          PAD,
+                          PAD + hy * scale,
+                          PAD + doc.roomWidth * scale,
+                          PAD + hy * scale,
+                        ]}
                         stroke="#ff3b30"
                         strokeWidth={1}
                         dash={[4, 4]}

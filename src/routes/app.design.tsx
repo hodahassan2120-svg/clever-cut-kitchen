@@ -706,6 +706,7 @@ function DesignEditor() {
       return;
     }
     setDoc((current) => ({ ...current, ...finishDraft }));
+    setFinishDraft((current) => ({ ...current, ...finishDraft }));
     setFinishDirty(false);
     setActiveTab("3d");
     setSceneRefreshKey((k) => k + 1);

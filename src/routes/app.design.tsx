@@ -129,14 +129,15 @@ function SceneCamera({
   roomDepth: number;
   resetKey: number;
 }) {
-  const { camera, invalidate } = useThree();
+  const { camera, gl, invalidate, size } = useThree();
   useEffect(() => {
+    if (size.width > 0 && size.height > 0) gl.setSize(size.width, size.height, false);
     const target: [number, number, number] = [roomWidth / 2, 80, roomDepth / 2];
     const maxDim = Math.max(roomWidth, roomDepth, 260);
     const positions: Record<typeof view, [number, number, number]> = {
       perspective: [roomWidth, roomDepth * 1.2, roomDepth * 1.4],
       top: [roomWidth / 2, maxDim * 1.8, roomDepth / 2 + 0.01],
-      front: [roomWidth / 2, 130, -maxDim * 1.4],
+      front: [roomWidth / 2, 130, roomDepth + maxDim * 1.35],
       right: [roomWidth + maxDim * 1.2, 130, roomDepth / 2],
       left: [-maxDim * 1.2, 130, roomDepth / 2],
     };
@@ -144,7 +145,7 @@ function SceneCamera({
     camera.lookAt(...target);
     camera.updateProjectionMatrix();
     invalidate();
-  }, [camera, invalidate, roomDepth, roomWidth, view, resetKey]);
+  }, [camera, gl, invalidate, roomDepth, roomWidth, size.height, size.width, view, resetKey]);
   return null;
 }
 
@@ -684,12 +685,29 @@ function DesignEditor() {
 
   const toUnit = (cm: number) => (unit === "m" ? (cm / 100).toFixed(2) : cm.toString());
   const fromUnit = (v: string) => (unit === "m" ? parseFloat(v) * 100 : parseFloat(v));
+  const isPreviewableFinishPatch = (patch: Partial<FinishDraft>) => {
+    if (typeof CSS === "undefined" || typeof CSS.supports !== "function") return true;
+    return [patch.globalColor, patch.floorColor, patch.wallColor, patch.marbleColor].every(
+      (value) => !value || CSS.supports("color", value),
+    );
+  };
   const updateFinishDraft = (patch: Partial<FinishDraft>) => {
     setFinishDraft((current) => ({ ...current, ...patch }));
-    setFinishDirty(true);
+    if (!isPreviewableFinishPatch(patch)) {
+      setFinishDirty(true);
+      return;
+    }
+    setDoc((current) => ({ ...current, ...patch }));
+    setFinishDirty(false);
+    if (activeTab === "3d") setSceneRefreshKey((k) => k + 1);
   };
   const applyFinishDraft = () => {
+    if (!isPreviewableFinishPatch(finishDraft)) {
+      toast.error("تأكد من كتابة كود لون صحيح قبل التطبيق");
+      return;
+    }
     setDoc((current) => ({ ...current, ...finishDraft }));
+    setFinishDraft((current) => ({ ...current, ...finishDraft }));
     setFinishDirty(false);
     setActiveTab("3d");
     setSceneRefreshKey((k) => k + 1);
@@ -1022,7 +1040,7 @@ function DesignEditor() {
         )}
       </div>
 
-      {/* اللون العام وكل الخامات — تطبق بعد زر التأكيد فقط لتجنب كسر مشهد 3D أثناء التبديل */}
+      {/* اللون العام وكل الخامات — تظهر مباشرة مع زر تحديث يدوي للثري دي عند الحاجة */}
       <div className="space-y-2 mb-6 pb-4 border-b border-border/40">
         <div className="flex items-center justify-between gap-2">
           <h4 className="text-sm font-semibold flex items-center gap-1.5">
@@ -1075,7 +1093,8 @@ function DesignEditor() {
           ))}
         </div>
         <p className="text-[10px] text-muted-foreground">
-          اختر اللون أو الخامة ثم اضغط “تطبيق التغييرات” لتحديث 3D بثبات.
+          اختر اللون أو الخامة وستظهر مباشرة في 3D، ويمكنك الضغط على “تحديث العرض” لإعادة تحميل
+          المشهد يدوياً.
         </p>
 
         <h4 className="text-sm font-semibold flex items-center gap-1.5 pt-2">
@@ -1202,10 +1221,9 @@ function DesignEditor() {
             <Button
               type="button"
               onClick={applyFinishDraft}
-              disabled={!finishDirty}
               className="flex-1 bg-gradient-primary shadow-glow"
             >
-              <Sparkles className="size-3.5" /> تطبيق التغييرات
+              <Sparkles className="size-3.5" /> تحديث العرض
             </Button>
             <Button
               type="button"
@@ -1834,23 +1852,43 @@ function DesignEditor() {
                             // أفقي — على نفس النطاق الرأسي
                             const overlapY = !(o.y + o.depth < ny || o.y > ny + b.depth);
                             if (overlapY) {
-                              if (o.x + o.width <= nx) leftGap = Math.min(leftGap, nx - (o.x + o.width));
-                              if (o.x >= nx + b.width) rightGap = Math.min(rightGap, o.x - (nx + b.width));
+                              if (o.x + o.width <= nx)
+                                leftGap = Math.min(leftGap, nx - (o.x + o.width));
+                              if (o.x >= nx + b.width)
+                                rightGap = Math.min(rightGap, o.x - (nx + b.width));
                             }
                             const overlapX = !(o.x + o.width < nx || o.x > nx + b.width);
                             if (overlapX) {
-                              if (o.y + o.depth <= ny) topGap = Math.min(topGap, ny - (o.y + o.depth));
-                              if (o.y >= ny + b.depth) bottomGap = Math.min(bottomGap, o.y - (ny + b.depth));
+                              if (o.y + o.depth <= ny)
+                                topGap = Math.min(topGap, ny - (o.y + o.depth));
+                              if (o.y >= ny + b.depth)
+                                bottomGap = Math.min(bottomGap, o.y - (ny + b.depth));
                             }
                           });
                           if (leftGap > 0 && leftGap < 200)
-                            labels.push({ x: nx - leftGap / 2, y: ny + b.depth / 2, text: `${Math.round(leftGap)}` });
+                            labels.push({
+                              x: nx - leftGap / 2,
+                              y: ny + b.depth / 2,
+                              text: `${Math.round(leftGap)}`,
+                            });
                           if (rightGap > 0 && rightGap < 200)
-                            labels.push({ x: nx + b.width + rightGap / 2, y: ny + b.depth / 2, text: `${Math.round(rightGap)}` });
+                            labels.push({
+                              x: nx + b.width + rightGap / 2,
+                              y: ny + b.depth / 2,
+                              text: `${Math.round(rightGap)}`,
+                            });
                           if (topGap > 0 && topGap < 200)
-                            labels.push({ x: nx + b.width / 2, y: ny - topGap / 2, text: `${Math.round(topGap)}` });
+                            labels.push({
+                              x: nx + b.width / 2,
+                              y: ny - topGap / 2,
+                              text: `${Math.round(topGap)}`,
+                            });
                           if (bottomGap > 0 && bottomGap < 200)
-                            labels.push({ x: nx + b.width / 2, y: ny + b.depth + bottomGap / 2, text: `${Math.round(bottomGap)}` });
+                            labels.push({
+                              x: nx + b.width / 2,
+                              y: ny + b.depth + bottomGap / 2,
+                              text: `${Math.round(bottomGap)}`,
+                            });
                           setDragGuides({ vx: hitV, hy: hitH, labels });
                         }}
                         onDragEnd={(e) => {
@@ -1968,7 +2006,12 @@ function DesignEditor() {
                     dragGuides.vx.map((vx, i) => (
                       <Line
                         key={`gv${i}`}
-                        points={[PAD + vx * scale, PAD, PAD + vx * scale, PAD + doc.roomDepth * scale]}
+                        points={[
+                          PAD + vx * scale,
+                          PAD,
+                          PAD + vx * scale,
+                          PAD + doc.roomDepth * scale,
+                        ]}
                         stroke="#ff3b30"
                         strokeWidth={1}
                         dash={[4, 4]}
@@ -1979,7 +2022,12 @@ function DesignEditor() {
                     dragGuides.hy.map((hy, i) => (
                       <Line
                         key={`gh${i}`}
-                        points={[PAD, PAD + hy * scale, PAD + doc.roomWidth * scale, PAD + hy * scale]}
+                        points={[
+                          PAD,
+                          PAD + hy * scale,
+                          PAD + doc.roomWidth * scale,
+                          PAD + hy * scale,
+                        ]}
                         stroke="#ff3b30"
                         strokeWidth={1}
                         dash={[4, 4]}
@@ -2239,7 +2287,6 @@ function DesignEditor() {
             )}
 
             <Canvas
-              key={`scene-${activeTab}-${sceneRefreshKey}`}
               className="block h-full w-full"
               style={{ width: "100%", height: "100%" }}
               shadows="soft"
@@ -2263,7 +2310,7 @@ function DesignEditor() {
                 view={view3d}
                 roomWidth={doc.roomWidth}
                 roomDepth={doc.roomDepth}
-                resetKey={cameraResetKey}
+                resetKey={cameraResetKey + sceneRefreshKey}
               />
               <color attach="background" args={["#f3eee6"]} />
               <SoftShadows size={28} samples={12} focus={0.6} />
@@ -2309,6 +2356,7 @@ function DesignEditor() {
                   surfaceHeightCm={doc.roomDepth}
                   fallbackColor={doc.floorColor || "#d9cec0"}
                   roughness={0.92}
+                  textureStrength={0.98}
                 />
               </mesh>
               {/* الحائط الخلفي — Plane مواجه للداخل */}
@@ -2325,6 +2373,7 @@ function DesignEditor() {
                   fallbackColor={doc.wallColor || "#efe7da"}
                   roughness={0.95}
                   side={THREE.DoubleSide}
+                  textureStrength={0.96}
                 />
               </mesh>
               {/* نافذة كبيرة على الحائط الخلفي — تعطي إحساس بالعمق والإضاءة الطبيعية */}
@@ -2393,6 +2442,7 @@ function DesignEditor() {
                   fallbackColor={doc.wallColor || "#efe7da"}
                   roughness={0.95}
                   side={THREE.DoubleSide}
+                  textureStrength={0.96}
                 />
               </mesh>
               {/* الحائط الأيمن شفاف قليلاً حتى يوضح حدود الغرفة بدون حجب الوحدات */}
@@ -2419,6 +2469,7 @@ function DesignEditor() {
                   roughness={0.95}
                   side={THREE.DoubleSide}
                   opacity={0.45}
+                  textureStrength={0.96}
                 />
               </mesh>
               <mesh position={[doc.roomWidth / 2, 70, doc.roomDepth + 2]} receiveShadow>

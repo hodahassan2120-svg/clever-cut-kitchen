@@ -11,6 +11,8 @@ interface Props {
   metalness?: number;
   side?: THREE.Side;
   opacity?: number;
+  textureStrength?: number;
+  rotateTexture?: number;
 }
 
 function FallbackMaterial({
@@ -34,6 +36,7 @@ function FallbackMaterial({
       side={side}
       transparent={opacity < 1}
       opacity={opacity}
+      depthWrite={opacity >= 1}
     />
   );
 }
@@ -48,6 +51,7 @@ const loadTexture = (url: string) => {
         new THREE.TextureLoader().load(url, resolve, undefined, reject);
       }),
     );
+    textureCache.get(url)!.catch(() => textureCache.delete(url));
   }
   return textureCache.get(url)!;
 };
@@ -62,6 +66,8 @@ export function TexturedMaterial({
   metalness = 0.05,
   side,
   opacity = 1,
+  textureStrength = 1,
+  rotateTexture = 0,
 }: Props) {
   const tex = getTexture(textureId);
   const [baseTexture, setBaseTexture] = useState<THREE.Texture | null>(null);
@@ -93,9 +99,13 @@ export function TexturedMaterial({
       Math.max(1, surfaceWidthCm / tex.realSizeCm),
       Math.max(1, surfaceHeightCm / tex.realSizeCm),
     );
+    if (rotateTexture) {
+      t.center.set(0.5, 0.5);
+      t.rotation = rotateTexture;
+    }
     t.needsUpdate = true;
     return t;
-  }, [baseTexture, surfaceHeightCm, surfaceWidthCm, tex]);
+  }, [baseTexture, rotateTexture, surfaceHeightCm, surfaceWidthCm, tex]);
 
   useEffect(
     () => () => {
@@ -117,12 +127,13 @@ export function TexturedMaterial({
   return (
     <meshStandardMaterial
       map={map}
-      color="#ffffff"
+      color={new THREE.Color("#ffffff").lerp(new THREE.Color(fallbackColor), 1 - textureStrength)}
       roughness={roughness}
       metalness={metalness}
       side={side}
       transparent={opacity < 1}
       opacity={opacity}
+      depthWrite={opacity >= 1}
     />
   );
 }

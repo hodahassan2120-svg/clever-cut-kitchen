@@ -196,6 +196,11 @@ function DesignEditor() {
   );
   const stageWrapRef = useRef<HTMLDivElement>(null);
   const [stageSize, setStageSize] = useState({ w: 360, h: 400 });
+  const [dragGuides, setDragGuides] = useState<{
+    vx: number[];
+    hy: number[];
+    labels: { x: number; y: number; text: string }[];
+  } | null>(null);
   const [finishDraft, setFinishDraft] = useState<FinishDraft>(() =>
     makeFinishDraft(DEFAULT_DESIGN),
   );
@@ -1767,7 +1772,89 @@ function DesignEditor() {
                         draggable
                         onClick={() => setSelectedId(b.id)}
                         onTap={() => setSelectedId(b.id)}
+                        onDragMove={(e) => {
+                          const TOL = 6; // سم
+                          const curX = (e.target.x() - PAD) / scale;
+                          const curY = (e.target.y() - PAD) / scale;
+                          const myEdgesX = [curX, curX + b.width / 2, curX + b.width];
+                          const myEdgesY = [curY, curY + b.depth / 2, curY + b.depth];
+                          const otherX: number[] = [0, doc.roomWidth];
+                          const otherY: number[] = [0, doc.roomDepth];
+                          doc.blocks.forEach((o) => {
+                            if (o.id === b.id) return;
+                            otherX.push(o.x, o.x + o.width / 2, o.x + o.width);
+                            otherY.push(o.y, o.y + o.depth / 2, o.y + o.depth);
+                          });
+                          let snapDx = 0,
+                            snapDy = 0,
+                            bestDx = TOL,
+                            bestDy = TOL;
+                          const hitV: number[] = [];
+                          const hitH: number[] = [];
+                          myEdgesX.forEach((me) => {
+                            otherX.forEach((ox) => {
+                              const d = ox - me;
+                              if (Math.abs(d) <= TOL) {
+                                if (Math.abs(d) < bestDx) {
+                                  bestDx = Math.abs(d);
+                                  snapDx = d;
+                                }
+                                if (!hitV.includes(ox)) hitV.push(ox);
+                              }
+                            });
+                          });
+                          myEdgesY.forEach((me) => {
+                            otherY.forEach((oy) => {
+                              const d = oy - me;
+                              if (Math.abs(d) <= TOL) {
+                                if (Math.abs(d) < bestDy) {
+                                  bestDy = Math.abs(d);
+                                  snapDy = d;
+                                }
+                                if (!hitH.includes(oy)) hitH.push(oy);
+                              }
+                            });
+                          });
+                          if (snapDx) {
+                            e.target.x(PAD + (curX + snapDx) * scale);
+                          }
+                          if (snapDy) {
+                            e.target.y(PAD + (curY + snapDy) * scale);
+                          }
+                          // قياسات للجار الأقرب
+                          const nx = curX + snapDx;
+                          const ny = curY + snapDy;
+                          const labels: { x: number; y: number; text: string }[] = [];
+                          let leftGap = nx;
+                          let rightGap = doc.roomWidth - (nx + b.width);
+                          let topGap = ny;
+                          let bottomGap = doc.roomDepth - (ny + b.depth);
+                          doc.blocks.forEach((o) => {
+                            if (o.id === b.id) return;
+                            // أفقي — على نفس النطاق الرأسي
+                            const overlapY = !(o.y + o.depth < ny || o.y > ny + b.depth);
+                            if (overlapY) {
+                              if (o.x + o.width <= nx) leftGap = Math.min(leftGap, nx - (o.x + o.width));
+                              if (o.x >= nx + b.width) rightGap = Math.min(rightGap, o.x - (nx + b.width));
+                            }
+                            const overlapX = !(o.x + o.width < nx || o.x > nx + b.width);
+                            if (overlapX) {
+                              if (o.y + o.depth <= ny) topGap = Math.min(topGap, ny - (o.y + o.depth));
+                              if (o.y >= ny + b.depth) bottomGap = Math.min(bottomGap, o.y - (ny + b.depth));
+                            }
+                          });
+                          if (leftGap > 0 && leftGap < 200)
+                            labels.push({ x: nx - leftGap / 2, y: ny + b.depth / 2, text: `${Math.round(leftGap)}` });
+                          if (rightGap > 0 && rightGap < 200)
+                            labels.push({ x: nx + b.width + rightGap / 2, y: ny + b.depth / 2, text: `${Math.round(rightGap)}` });
+                          if (topGap > 0 && topGap < 200)
+                            labels.push({ x: nx + b.width / 2, y: ny - topGap / 2, text: `${Math.round(topGap)}` });
+                          if (bottomGap > 0 && bottomGap < 200)
+                            labels.push({ x: nx + b.width / 2, y: ny + b.depth + bottomGap / 2, text: `${Math.round(bottomGap)}` });
+                          setDragGuides({ vx: hitV, hy: hitH, labels });
+                        }}
                         onDragEnd={(e) => {
+                          setDragGuides(null);
                           const moved = snapBlockToWall({
                             ...b,
                             x: (e.target.x() - PAD) / scale,

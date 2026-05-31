@@ -12,6 +12,7 @@ interface Props {
   side?: THREE.Side;
   opacity?: number;
   textureStrength?: number;
+  rotateTexture?: number;
 }
 
 function FallbackMaterial({
@@ -65,6 +66,7 @@ export function TexturedMaterial({
   side,
   opacity = 1,
   textureStrength = 1,
+  rotateTexture = 0,
 }: Props) {
   const tex = getTexture(textureId);
   const [baseTexture, setBaseTexture] = useState<THREE.Texture | null>(null);
@@ -96,9 +98,13 @@ export function TexturedMaterial({
       Math.max(1, surfaceWidthCm / tex.realSizeCm),
       Math.max(1, surfaceHeightCm / tex.realSizeCm),
     );
+    if (rotateTexture) {
+      t.center.set(0.5, 0.5);
+      t.rotation = rotateTexture;
+    }
     t.needsUpdate = true;
     return t;
-  }, [baseTexture, surfaceHeightCm, surfaceWidthCm, tex]);
+  }, [baseTexture, rotateTexture, surfaceHeightCm, surfaceWidthCm, tex]);
 
   useEffect(
     () => () => {

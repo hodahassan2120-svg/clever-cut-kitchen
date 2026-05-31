@@ -136,7 +136,7 @@ function SceneCamera({
     const positions: Record<typeof view, [number, number, number]> = {
       perspective: [roomWidth, roomDepth * 1.2, roomDepth * 1.4],
       top: [roomWidth / 2, maxDim * 1.8, roomDepth / 2 + 0.01],
-      front: [roomWidth / 2, 130, -maxDim * 1.4],
+      front: [roomWidth / 2, 130, roomDepth + maxDim * 1.35],
       right: [roomWidth + maxDim * 1.2, 130, roomDepth / 2],
       left: [-maxDim * 1.2, 130, roomDepth / 2],
     };
@@ -684,11 +684,27 @@ function DesignEditor() {
 
   const toUnit = (cm: number) => (unit === "m" ? (cm / 100).toFixed(2) : cm.toString());
   const fromUnit = (v: string) => (unit === "m" ? parseFloat(v) * 100 : parseFloat(v));
+  const isPreviewableFinishPatch = (patch: Partial<FinishDraft>) => {
+    if (typeof CSS === "undefined" || typeof CSS.supports !== "function") return true;
+    return [patch.globalColor, patch.floorColor, patch.wallColor, patch.marbleColor].every(
+      (value) => !value || CSS.supports("color", value),
+    );
+  };
   const updateFinishDraft = (patch: Partial<FinishDraft>) => {
     setFinishDraft((current) => ({ ...current, ...patch }));
-    setFinishDirty(true);
+    if (!isPreviewableFinishPatch(patch)) {
+      setFinishDirty(true);
+      return;
+    }
+    setDoc((current) => ({ ...current, ...patch }));
+    setFinishDirty(false);
+    if (activeTab === "3d") setSceneRefreshKey((k) => k + 1);
   };
   const applyFinishDraft = () => {
+    if (!isPreviewableFinishPatch(finishDraft)) {
+      toast.error("تأكد من كتابة كود لون صحيح قبل التطبيق");
+      return;
+    }
     setDoc((current) => ({ ...current, ...finishDraft }));
     setFinishDirty(false);
     setActiveTab("3d");
@@ -1022,7 +1038,7 @@ function DesignEditor() {
         )}
       </div>
 
-      {/* اللون العام وكل الخامات — تطبق بعد زر التأكيد فقط لتجنب كسر مشهد 3D أثناء التبديل */}
+        {/* اللون العام وكل الخامات — تظهر مباشرة مع زر تحديث يدوي للثري دي عند الحاجة */}
       <div className="space-y-2 mb-6 pb-4 border-b border-border/40">
         <div className="flex items-center justify-between gap-2">
           <h4 className="text-sm font-semibold flex items-center gap-1.5">
@@ -1075,7 +1091,7 @@ function DesignEditor() {
           ))}
         </div>
         <p className="text-[10px] text-muted-foreground">
-          اختر اللون أو الخامة ثم اضغط “تطبيق التغييرات” لتحديث 3D بثبات.
+          اختر اللون أو الخامة وستظهر مباشرة في 3D، ويمكنك الضغط على “تحديث العرض” لإعادة تحميل المشهد يدوياً.
         </p>
 
         <h4 className="text-sm font-semibold flex items-center gap-1.5 pt-2">
@@ -1202,10 +1218,9 @@ function DesignEditor() {
             <Button
               type="button"
               onClick={applyFinishDraft}
-              disabled={!finishDirty}
               className="flex-1 bg-gradient-primary shadow-glow"
             >
-              <Sparkles className="size-3.5" /> تطبيق التغييرات
+              <Sparkles className="size-3.5" /> تحديث العرض
             </Button>
             <Button
               type="button"

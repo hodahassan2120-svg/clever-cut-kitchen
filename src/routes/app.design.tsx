@@ -1963,6 +1963,47 @@ function DesignEditor() {
                       </Group>
                     );
                   })}
+                  {/* خطوط محاذاة ذكية أثناء السحب */}
+                  {dragGuides &&
+                    dragGuides.vx.map((vx, i) => (
+                      <Line
+                        key={`gv${i}`}
+                        points={[PAD + vx * scale, PAD, PAD + vx * scale, PAD + doc.roomDepth * scale]}
+                        stroke="#ff3b30"
+                        strokeWidth={1}
+                        dash={[4, 4]}
+                        listening={false}
+                      />
+                    ))}
+                  {dragGuides &&
+                    dragGuides.hy.map((hy, i) => (
+                      <Line
+                        key={`gh${i}`}
+                        points={[PAD, PAD + hy * scale, PAD + doc.roomWidth * scale, PAD + hy * scale]}
+                        stroke="#ff3b30"
+                        strokeWidth={1}
+                        dash={[4, 4]}
+                        listening={false}
+                      />
+                    ))}
+                  {dragGuides &&
+                    dragGuides.labels.map((l, i) => (
+                      <KText
+                        key={`gl${i}`}
+                        text={`${l.text} سم`}
+                        x={PAD + l.x * scale - 18}
+                        y={PAD + l.y * scale - 6}
+                        fontSize={10}
+                        fontStyle="bold"
+                        fill="#ffffff"
+                        padding={2}
+                        align="center"
+                        listening={false}
+                        shadowColor="#000"
+                        shadowBlur={3}
+                        shadowOpacity={0.9}
+                      />
+                    ))}
                 </Layer>
               </Stage>
             </div>

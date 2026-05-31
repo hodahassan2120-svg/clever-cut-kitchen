@@ -21,6 +21,14 @@ import quartzWhite from "@/assets/textures/quartz-white.jpg";
 import graniteBlack from "@/assets/textures/granite-black.jpg";
 import graniteBrown from "@/assets/textures/granite-brown.jpg";
 import graniteRed from "@/assets/textures/granite-red.jpg";
+import floorConcreteGrey from "@/assets/textures/floor-concrete-grey.jpg";
+import floorTerracotta from "@/assets/textures/floor-terracotta.jpg";
+import floorOakLight from "@/assets/textures/floor-oak-light.jpg";
+import floorBlackMatte from "@/assets/textures/floor-black-matte.jpg";
+import wallBrickRed from "@/assets/textures/wall-brick-red.jpg";
+import wallStoneBeige from "@/assets/textures/wall-stone-beige.jpg";
+import counterConcrete from "@/assets/textures/counter-concrete.jpg";
+import quartzBlack from "@/assets/textures/quartz-black.jpg";
 
 export interface TextureItem {
   id: string;
@@ -41,6 +49,10 @@ export const TEXTURES: TextureItem[] = [
   { id: "floor-hex-black",    name: "موزاييك أسود سداسي",     url: floorHexBlack,    category: "floor", kind: "mosaic",    realSizeCm: 30 },
   { id: "floor-wood",         name: "بورسلين خشب سنديان",    url: floorWood,        category: "floor", kind: "wood",      realSizeCm: 120 },
   { id: "floor-walnut",       name: "بورسلين خشب جوز",       url: floorWalnut,      category: "floor", kind: "wood",      realSizeCm: 100 },
+  { id: "floor-oak-light",    name: "خشب سنديان فاتح",        url: floorOakLight,    category: "floor", kind: "wood",      realSizeCm: 120 },
+  { id: "floor-concrete",     name: "أسمنت بولش رمادي",       url: floorConcreteGrey,category: "floor", kind: "porcelain", realSizeCm: 100 },
+  { id: "floor-black-matte",  name: "بورسلين أسود مات",       url: floorBlackMatte,  category: "floor", kind: "porcelain", realSizeCm: 80 },
+  { id: "floor-terracotta",   name: "تراكوتا برتقالي",        url: floorTerracotta,  category: "floor", kind: "ceramic",   realSizeCm: 40 },
   // حوائط
   { id: "wall-subway",        name: "سيراميك أبيض Subway",   url: wallSubway,       category: "wall",  kind: "ceramic",   realSizeCm: 60 },
   { id: "wall-herringbone",   name: "Subway هيرنغبون أبيض",   url: wallHerringbone,  category: "wall",  kind: "ceramic",   realSizeCm: 60 },
@@ -48,6 +60,8 @@ export const TEXTURES: TextureItem[] = [
   { id: "wall-subway-green",  name: "Subway أخضر زمردي",      url: wallSubwayGreen,  category: "wall",  kind: "ceramic",   realSizeCm: 60 },
   { id: "wall-mosaic",        name: "موزاييك أزرق مغربي",     url: wallMosaic,       category: "wall",  kind: "mosaic",    realSizeCm: 30 },
   { id: "wall-zellige",       name: "زليج تراكوتا برتقالي",   url: wallZellige,      category: "wall",  kind: "mosaic",    realSizeCm: 40 },
+  { id: "wall-brick-red",     name: "طوب أحمر مكشوف",         url: wallBrickRed,     category: "wall",  kind: "ceramic",   realSizeCm: 80 },
+  { id: "wall-stone-beige",   name: "حجر طبيعي بيج",          url: wallStoneBeige,   category: "wall",  kind: "porcelain", realSizeCm: 100 },
   // رخامات وجرانيت وكوارتز (للرخامة)
   { id: "marble-carrara",     name: "رخام كرارا أبيض",        url: marbleCarrara,    category: "counter", kind: "marble",  realSizeCm: 200 },
   { id: "marble-calacatta",   name: "رخام كالاكاتا فاخر",     url: marbleCalacatta,  category: "counter", kind: "marble",  realSizeCm: 200 },
@@ -55,6 +69,8 @@ export const TEXTURES: TextureItem[] = [
   { id: "marble-emperador",   name: "رخام إمبرادور بني",      url: marbleEmperador,  category: "counter", kind: "marble",  realSizeCm: 200 },
   { id: "marble-black",       name: "رخام أسود + ذهبي",       url: marbleBlack,      category: "counter", kind: "marble",  realSizeCm: 200 },
   { id: "quartz-white",       name: "كوارتز أبيض ناعم",       url: quartzWhite,      category: "counter", kind: "quartz",  realSizeCm: 180 },
+  { id: "quartz-black",       name: "كوارتز أسود فاخر",       url: quartzBlack,      category: "counter", kind: "quartz",  realSizeCm: 180 },
+  { id: "counter-concrete",   name: "أسمنت بولش رمادي",       url: counterConcrete,  category: "counter", kind: "quartz",  realSizeCm: 200 },
   { id: "granite-black",      name: "جرانيت أسود مرصع",       url: graniteBlack,     category: "counter", kind: "granite", realSizeCm: 150 },
   { id: "granite-brown",      name: "جرانيت بني",             url: graniteBrown,     category: "counter", kind: "granite", realSizeCm: 150 },
   { id: "granite-red",        name: "جرانيت أحمر",            url: graniteRed,       category: "counter", kind: "granite", realSizeCm: 150 },

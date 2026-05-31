@@ -196,6 +196,11 @@ function DesignEditor() {
   );
   const stageWrapRef = useRef<HTMLDivElement>(null);
   const [stageSize, setStageSize] = useState({ w: 360, h: 400 });
+  const [dragGuides, setDragGuides] = useState<{
+    vx: number[];
+    hy: number[];
+    labels: { x: number; y: number; text: string }[];
+  } | null>(null);
   const [finishDraft, setFinishDraft] = useState<FinishDraft>(() =>
     makeFinishDraft(DEFAULT_DESIGN),
   );
@@ -1767,7 +1772,89 @@ function DesignEditor() {
                         draggable
                         onClick={() => setSelectedId(b.id)}
                         onTap={() => setSelectedId(b.id)}
+                        onDragMove={(e) => {
+                          const TOL = 6; // سم
+                          const curX = (e.target.x() - PAD) / scale;
+                          const curY = (e.target.y() - PAD) / scale;
+                          const myEdgesX = [curX, curX + b.width / 2, curX + b.width];
+                          const myEdgesY = [curY, curY + b.depth / 2, curY + b.depth];
+                          const otherX: number[] = [0, doc.roomWidth];
+                          const otherY: number[] = [0, doc.roomDepth];
+                          doc.blocks.forEach((o) => {
+                            if (o.id === b.id) return;
+                            otherX.push(o.x, o.x + o.width / 2, o.x + o.width);
+                            otherY.push(o.y, o.y + o.depth / 2, o.y + o.depth);
+                          });
+                          let snapDx = 0,
+                            snapDy = 0,
+                            bestDx = TOL,
+                            bestDy = TOL;
+                          const hitV: number[] = [];
+                          const hitH: number[] = [];
+                          myEdgesX.forEach((me) => {
+                            otherX.forEach((ox) => {
+                              const d = ox - me;
+                              if (Math.abs(d) <= TOL) {
+                                if (Math.abs(d) < bestDx) {
+                                  bestDx = Math.abs(d);
+                                  snapDx = d;
+                                }
+                                if (!hitV.includes(ox)) hitV.push(ox);
+                              }
+                            });
+                          });
+                          myEdgesY.forEach((me) => {
+                            otherY.forEach((oy) => {
+                              const d = oy - me;
+                              if (Math.abs(d) <= TOL) {
+                                if (Math.abs(d) < bestDy) {
+                                  bestDy = Math.abs(d);
+                                  snapDy = d;
+                                }
+                                if (!hitH.includes(oy)) hitH.push(oy);
+                              }
+                            });
+                          });
+                          if (snapDx) {
+                            e.target.x(PAD + (curX + snapDx) * scale);
+                          }
+                          if (snapDy) {
+                            e.target.y(PAD + (curY + snapDy) * scale);
+                          }
+                          // قياسات للجار الأقرب
+                          const nx = curX + snapDx;
+                          const ny = curY + snapDy;
+                          const labels: { x: number; y: number; text: string }[] = [];
+                          let leftGap = nx;
+                          let rightGap = doc.roomWidth - (nx + b.width);
+                          let topGap = ny;
+                          let bottomGap = doc.roomDepth - (ny + b.depth);
+                          doc.blocks.forEach((o) => {
+                            if (o.id === b.id) return;
+                            // أفقي — على نفس النطاق الرأسي
+                            const overlapY = !(o.y + o.depth < ny || o.y > ny + b.depth);
+                            if (overlapY) {
+                              if (o.x + o.width <= nx) leftGap = Math.min(leftGap, nx - (o.x + o.width));
+                              if (o.x >= nx + b.width) rightGap = Math.min(rightGap, o.x - (nx + b.width));
+                            }
+                            const overlapX = !(o.x + o.width < nx || o.x > nx + b.width);
+                            if (overlapX) {
+                              if (o.y + o.depth <= ny) topGap = Math.min(topGap, ny - (o.y + o.depth));
+                              if (o.y >= ny + b.depth) bottomGap = Math.min(bottomGap, o.y - (ny + b.depth));
+                            }
+                          });
+                          if (leftGap > 0 && leftGap < 200)
+                            labels.push({ x: nx - leftGap / 2, y: ny + b.depth / 2, text: `${Math.round(leftGap)}` });
+                          if (rightGap > 0 && rightGap < 200)
+                            labels.push({ x: nx + b.width + rightGap / 2, y: ny + b.depth / 2, text: `${Math.round(rightGap)}` });
+                          if (topGap > 0 && topGap < 200)
+                            labels.push({ x: nx + b.width / 2, y: ny - topGap / 2, text: `${Math.round(topGap)}` });
+                          if (bottomGap > 0 && bottomGap < 200)
+                            labels.push({ x: nx + b.width / 2, y: ny + b.depth + bottomGap / 2, text: `${Math.round(bottomGap)}` });
+                          setDragGuides({ vx: hitV, hy: hitH, labels });
+                        }}
                         onDragEnd={(e) => {
+                          setDragGuides(null);
                           const moved = snapBlockToWall({
                             ...b,
                             x: (e.target.x() - PAD) / scale,
@@ -1876,6 +1963,47 @@ function DesignEditor() {
                       </Group>
                     );
                   })}
+                  {/* خطوط محاذاة ذكية أثناء السحب */}
+                  {dragGuides &&
+                    dragGuides.vx.map((vx, i) => (
+                      <Line
+                        key={`gv${i}`}
+                        points={[PAD + vx * scale, PAD, PAD + vx * scale, PAD + doc.roomDepth * scale]}
+                        stroke="#ff3b30"
+                        strokeWidth={1}
+                        dash={[4, 4]}
+                        listening={false}
+                      />
+                    ))}
+                  {dragGuides &&
+                    dragGuides.hy.map((hy, i) => (
+                      <Line
+                        key={`gh${i}`}
+                        points={[PAD, PAD + hy * scale, PAD + doc.roomWidth * scale, PAD + hy * scale]}
+                        stroke="#ff3b30"
+                        strokeWidth={1}
+                        dash={[4, 4]}
+                        listening={false}
+                      />
+                    ))}
+                  {dragGuides &&
+                    dragGuides.labels.map((l, i) => (
+                      <KText
+                        key={`gl${i}`}
+                        text={`${l.text} سم`}
+                        x={PAD + l.x * scale - 18}
+                        y={PAD + l.y * scale - 6}
+                        fontSize={10}
+                        fontStyle="bold"
+                        fill="#ffffff"
+                        padding={2}
+                        align="center"
+                        listening={false}
+                        shadowColor="#000"
+                        shadowBlur={3}
+                        shadowOpacity={0.9}
+                      />
+                    ))}
                 </Layer>
               </Stage>
             </div>
@@ -2199,6 +2327,54 @@ function DesignEditor() {
                   side={THREE.DoubleSide}
                 />
               </mesh>
+              {/* نافذة كبيرة على الحائط الخلفي — تعطي إحساس بالعمق والإضاءة الطبيعية */}
+              {(() => {
+                const winW = Math.min(160, doc.roomWidth * 0.45);
+                const winH = 110;
+                const winY = 175;
+                const winCx = doc.roomWidth * 0.7;
+                const frameT = 5;
+                return (
+                  <group position={[winCx, winY, 0.6]}>
+                    {/* زجاج مع توهج خفيف لإظهار الضوء الخارجي */}
+                    <mesh>
+                      <planeGeometry args={[winW, winH]} />
+                      <meshStandardMaterial
+                        color="#cfe6f3"
+                        emissive="#f5ead0"
+                        emissiveIntensity={0.55}
+                        roughness={0.08}
+                        metalness={0.1}
+                        transparent
+                        opacity={0.85}
+                      />
+                    </mesh>
+                    {/* إطار خشبي/ألوميتال */}
+                    {[
+                      [0, winH / 2 + frameT / 2, winW + frameT * 2, frameT],
+                      [0, -winH / 2 - frameT / 2, winW + frameT * 2, frameT],
+                      [-winW / 2 - frameT / 2, 0, frameT, winH],
+                      [winW / 2 + frameT / 2, 0, frameT, winH],
+                      [0, 0, frameT * 0.6, winH], // قائم وسط
+                      [0, 0, winW, frameT * 0.6], // أفقي وسط
+                    ].map(([x, y, w, h], i) => (
+                      <mesh key={i} position={[x, y, 0.3]}>
+                        <boxGeometry args={[w, h, 2]} />
+                        <meshStandardMaterial color="#2a2017" roughness={0.55} metalness={0.15} />
+                      </mesh>
+                    ))}
+                    {/* بقعة ضوء دافئة تدخل من النافذة */}
+                    <pointLight
+                      position={[0, -20, 30]}
+                      intensity={0.9}
+                      distance={400}
+                      decay={2}
+                      color="#fff1d0"
+                      castShadow={false}
+                    />
+                  </group>
+                );
+              })()}
               {/* الحائط الأيسر — Plane مواجه للداخل */}
               <mesh position={[-3, 140, doc.roomDepth / 2]} receiveShadow>
                 <boxGeometry args={[6, 280, doc.roomDepth + 8]} />

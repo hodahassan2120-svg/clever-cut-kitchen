@@ -2254,7 +2254,6 @@ function DesignEditor() {
             )}
 
             <Canvas
-              key={`scene-${activeTab}-${sceneRefreshKey}`}
               className="block h-full w-full"
               style={{ width: "100%", height: "100%" }}
               shadows="soft"
@@ -2278,7 +2277,7 @@ function DesignEditor() {
                 view={view3d}
                 roomWidth={doc.roomWidth}
                 roomDepth={doc.roomDepth}
-                resetKey={cameraResetKey}
+                resetKey={cameraResetKey + sceneRefreshKey}
               />
               <color attach="background" args={["#f3eee6"]} />
               <SoftShadows size={28} samples={12} focus={0.6} />
@@ -2324,6 +2323,7 @@ function DesignEditor() {
                   surfaceHeightCm={doc.roomDepth}
                   fallbackColor={doc.floorColor || "#d9cec0"}
                   roughness={0.92}
+                  textureStrength={0.98}
                 />
               </mesh>
               {/* الحائط الخلفي — Plane مواجه للداخل */}
@@ -2340,6 +2340,7 @@ function DesignEditor() {
                   fallbackColor={doc.wallColor || "#efe7da"}
                   roughness={0.95}
                   side={THREE.DoubleSide}
+                  textureStrength={0.96}
                 />
               </mesh>
               {/* نافذة كبيرة على الحائط الخلفي — تعطي إحساس بالعمق والإضاءة الطبيعية */}
@@ -2408,6 +2409,7 @@ function DesignEditor() {
                   fallbackColor={doc.wallColor || "#efe7da"}
                   roughness={0.95}
                   side={THREE.DoubleSide}
+                  textureStrength={0.96}
                 />
               </mesh>
               {/* الحائط الأيمن شفاف قليلاً حتى يوضح حدود الغرفة بدون حجب الوحدات */}
@@ -2434,6 +2436,7 @@ function DesignEditor() {
                   roughness={0.95}
                   side={THREE.DoubleSide}
                   opacity={0.45}
+                  textureStrength={0.96}
                 />
               </mesh>
               <mesh position={[doc.roomWidth / 2, 70, doc.roomDepth + 2]} receiveShadow>

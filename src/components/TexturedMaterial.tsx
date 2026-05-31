@@ -35,6 +35,7 @@ function FallbackMaterial({
       side={side}
       transparent={opacity < 1}
       opacity={opacity}
+      depthWrite={opacity >= 1}
     />
   );
 }
@@ -125,6 +126,7 @@ export function TexturedMaterial({
       side={side}
       transparent={opacity < 1}
       opacity={opacity}
+      depthWrite={opacity >= 1}
     />
   );
 }

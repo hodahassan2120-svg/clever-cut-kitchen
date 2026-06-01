@@ -2157,7 +2157,7 @@ function DesignEditor() {
           <TabsContent
             value="3d"
             forceMount
-            className="flex-1 m-0 bg-background min-h-[420px] h-full relative overflow-hidden"
+            className="flex-1 m-0 bg-background min-h-[420px] h-full relative overflow-hidden data-[state=inactive]:hidden"
             data-design-3d
           >
             {toolbar3dVisible ? (

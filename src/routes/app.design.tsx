@@ -149,6 +149,37 @@ function SceneCamera({
   return null;
 }
 
+function SceneCanvasSizer({ refreshKey }: { refreshKey: number }) {
+  const { camera, gl, invalidate } = useThree();
+  useEffect(() => {
+    const parent = gl.domElement.parentElement;
+    if (!parent) return;
+    const resize = () => {
+      const rect = parent.getBoundingClientRect();
+      if (rect.width < 2 || rect.height < 2) return;
+      gl.setSize(rect.width, rect.height, false);
+      if ((camera as THREE.PerspectiveCamera).isPerspectiveCamera) {
+        (camera as THREE.PerspectiveCamera).aspect = rect.width / rect.height;
+      }
+      camera.updateProjectionMatrix();
+      invalidate();
+    };
+    resize();
+    const raf = requestAnimationFrame(resize);
+    const timers = [80, 240, 500].map((delay) => window.setTimeout(resize, delay));
+    const ro = new ResizeObserver(resize);
+    ro.observe(parent);
+    window.addEventListener("resize", resize);
+    return () => {
+      cancelAnimationFrame(raf);
+      timers.forEach(window.clearTimeout);
+      ro.disconnect();
+      window.removeEventListener("resize", resize);
+    };
+  }, [camera, gl, invalidate, refreshKey]);
+  return null;
+}
+
 function DesignEditor() {
   const { user } = useAuth();
   const { id } = Route.useSearch();
@@ -319,6 +350,12 @@ function DesignEditor() {
     setView3d("perspective");
     setCameraResetKey((k) => k + 1);
   };
+
+  useEffect(() => {
+    if (activeTab !== "3d") return;
+    const raf = requestAnimationFrame(() => setSceneRefreshKey((k) => k + 1));
+    return () => cancelAnimationFrame(raf);
+  }, [activeTab]);
 
   useEffect(() => {
     if (!user) return;
@@ -692,12 +729,19 @@ function DesignEditor() {
     );
   };
   const updateFinishDraft = (patch: Partial<FinishDraft>) => {
-    setFinishDraft((current) => ({ ...current, ...patch }));
+    const normalize = (value?: string | null) => (value && value.trim() ? value : undefined);
+    const normalizedPatch: Partial<FinishDraft> = {
+      ...patch,
+      ...("floorTextureId" in patch ? { floorTextureId: normalize(patch.floorTextureId) } : {}),
+      ...("wallTextureId" in patch ? { wallTextureId: normalize(patch.wallTextureId) } : {}),
+      ...("marbleTextureId" in patch ? { marbleTextureId: normalize(patch.marbleTextureId) } : {}),
+    };
+    setFinishDraft((current) => ({ ...current, ...normalizedPatch }));
     if (!isPreviewableFinishPatch(patch)) {
       setFinishDirty(true);
       return;
     }
-    setDoc((current) => ({ ...current, ...patch }));
+    setDoc((current) => ({ ...current, ...normalizedPatch }));
     setFinishDirty(false);
     if (activeTab === "3d") setSceneRefreshKey((k) => k + 1);
   };
@@ -1197,7 +1241,10 @@ function DesignEditor() {
                       <button
                         key={t.id}
                         type="button"
-                        onClick={() => setId(active ? undefined : t.id)}
+                        onClick={() => {
+                          setId(active ? undefined : t.id);
+                          setActiveTab("3d");
+                        }}
                         title={t.name}
                         className={`relative aspect-square rounded-md overflow-hidden border-2 transition ${active ? "border-primary ring-2 ring-primary/30" : "border-border/40 hover:border-primary/40"}`}
                       >
@@ -2109,7 +2156,8 @@ function DesignEditor() {
           </TabsContent>
           <TabsContent
             value="3d"
-            className="flex-1 m-0 bg-background min-h-[420px] h-full relative overflow-hidden"
+            forceMount
+            className="flex-1 m-0 bg-background min-h-[420px] h-full relative overflow-hidden data-[state=inactive]:hidden"
             data-design-3d
           >
             {toolbar3dVisible ? (
@@ -2290,9 +2338,13 @@ function DesignEditor() {
               className="block h-full w-full"
               style={{ width: "100%", height: "100%" }}
               shadows="soft"
+              frameloop="always"
+              resize={{ scroll: false, debounce: { scroll: 50, resize: 0 } }}
               camera={{
                 position: [doc.roomWidth, doc.roomDepth * 1.2, doc.roomDepth * 1.4],
                 fov: 45,
+                near: 1,
+                far: 5000,
               }}
               dpr={[1, 2]}
               gl={{
@@ -2306,6 +2358,7 @@ function DesignEditor() {
                 if (!dragRef.current) setSelectedId(null);
               }}
             >
+              <SceneCanvasSizer refreshKey={sceneRefreshKey + cameraResetKey} />
               <SceneCamera
                 view={view3d}
                 roomWidth={doc.roomWidth}

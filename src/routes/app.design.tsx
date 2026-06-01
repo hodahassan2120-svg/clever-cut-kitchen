@@ -723,12 +723,19 @@ function DesignEditor() {
     );
   };
   const updateFinishDraft = (patch: Partial<FinishDraft>) => {
-    setFinishDraft((current) => ({ ...current, ...patch }));
+    const normalize = (value?: string | null) => (value && value.trim() ? value : undefined);
+    const normalizedPatch: Partial<FinishDraft> = {
+      ...patch,
+      floorTextureId: "floorTextureId" in patch ? normalize(patch.floorTextureId) : undefined,
+      wallTextureId: "wallTextureId" in patch ? normalize(patch.wallTextureId) : undefined,
+      marbleTextureId: "marbleTextureId" in patch ? normalize(patch.marbleTextureId) : undefined,
+    };
+    setFinishDraft((current) => ({ ...current, ...normalizedPatch }));
     if (!isPreviewableFinishPatch(patch)) {
       setFinishDirty(true);
       return;
     }
-    setDoc((current) => ({ ...current, ...patch }));
+    setDoc((current) => ({ ...current, ...normalizedPatch }));
     setFinishDirty(false);
     if (activeTab === "3d") setSceneRefreshKey((k) => k + 1);
   };

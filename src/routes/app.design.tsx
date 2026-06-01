@@ -149,6 +149,37 @@ function SceneCamera({
   return null;
 }
 
+function SceneCanvasSizer({ refreshKey }: { refreshKey: number }) {
+  const { camera, gl, invalidate } = useThree();
+  useEffect(() => {
+    const parent = gl.domElement.parentElement;
+    if (!parent) return;
+    const resize = () => {
+      const rect = parent.getBoundingClientRect();
+      if (rect.width < 2 || rect.height < 2) return;
+      gl.setSize(rect.width, rect.height, false);
+      if ((camera as THREE.PerspectiveCamera).isPerspectiveCamera) {
+        (camera as THREE.PerspectiveCamera).aspect = rect.width / rect.height;
+      }
+      camera.updateProjectionMatrix();
+      invalidate();
+    };
+    resize();
+    const raf = requestAnimationFrame(resize);
+    const timers = [80, 240, 500].map((delay) => window.setTimeout(resize, delay));
+    const ro = new ResizeObserver(resize);
+    ro.observe(parent);
+    window.addEventListener("resize", resize);
+    return () => {
+      cancelAnimationFrame(raf);
+      timers.forEach(window.clearTimeout);
+      ro.disconnect();
+      window.removeEventListener("resize", resize);
+    };
+  }, [camera, gl, invalidate, refreshKey]);
+  return null;
+}
+
 function DesignEditor() {
   const { user } = useAuth();
   const { id } = Route.useSearch();

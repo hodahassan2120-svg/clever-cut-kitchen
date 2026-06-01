@@ -726,9 +726,9 @@ function DesignEditor() {
     const normalize = (value?: string | null) => (value && value.trim() ? value : undefined);
     const normalizedPatch: Partial<FinishDraft> = {
       ...patch,
-      floorTextureId: "floorTextureId" in patch ? normalize(patch.floorTextureId) : undefined,
-      wallTextureId: "wallTextureId" in patch ? normalize(patch.wallTextureId) : undefined,
-      marbleTextureId: "marbleTextureId" in patch ? normalize(patch.marbleTextureId) : undefined,
+      ...("floorTextureId" in patch ? { floorTextureId: normalize(patch.floorTextureId) } : {}),
+      ...("wallTextureId" in patch ? { wallTextureId: normalize(patch.wallTextureId) } : {}),
+      ...("marbleTextureId" in patch ? { marbleTextureId: normalize(patch.marbleTextureId) } : {}),
     };
     setFinishDraft((current) => ({ ...current, ...normalizedPatch }));
     if (!isPreviewableFinishPatch(patch)) {

@@ -352,6 +352,12 @@ function DesignEditor() {
   };
 
   useEffect(() => {
+    if (activeTab !== "3d") return;
+    const raf = requestAnimationFrame(() => setSceneRefreshKey((k) => k + 1));
+    return () => cancelAnimationFrame(raf);
+  }, [activeTab]);
+
+  useEffect(() => {
     if (!user) return;
     supabase
       .from("subscriptions")

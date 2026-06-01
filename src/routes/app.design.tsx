@@ -1235,7 +1235,10 @@ function DesignEditor() {
                       <button
                         key={t.id}
                         type="button"
-                        onClick={() => setId(active ? undefined : t.id)}
+                        onClick={() => {
+                          setId(active ? undefined : t.id);
+                          setActiveTab("3d");
+                        }}
                         title={t.name}
                         className={`relative aspect-square rounded-md overflow-hidden border-2 transition ${active ? "border-primary ring-2 ring-primary/30" : "border-border/40 hover:border-primary/40"}`}
                       >

@@ -2328,9 +2328,13 @@ function DesignEditor() {
               className="block h-full w-full"
               style={{ width: "100%", height: "100%" }}
               shadows="soft"
+              frameloop="always"
+              resize={{ scroll: false, debounce: { scroll: 50, resize: 0 } }}
               camera={{
                 position: [doc.roomWidth, doc.roomDepth * 1.2, doc.roomDepth * 1.4],
                 fov: 45,
+                near: 1,
+                far: 5000,
               }}
               dpr={[1, 2]}
               gl={{
@@ -2344,6 +2348,7 @@ function DesignEditor() {
                 if (!dragRef.current) setSelectedId(null);
               }}
             >
+              <SceneCanvasSizer refreshKey={sceneRefreshKey + cameraResetKey} />
               <SceneCamera
                 view={view3d}
                 roomWidth={doc.roomWidth}

@@ -152,23 +152,28 @@ function SceneCamera({
 function SceneCanvasSizer({ refreshKey }: { refreshKey: number }) {
   const { camera, gl, invalidate } = useThree();
   useEffect(() => {
-    const parent = gl.domElement.parentElement;
+    const parent =
+      gl.domElement.closest<HTMLElement>("[data-design-3d]") ?? gl.domElement.parentElement;
     if (!parent) return;
     const resize = () => {
       const rect = parent.getBoundingClientRect();
-      if (rect.width < 2 || rect.height < 2) return;
-      gl.setSize(rect.width, rect.height, false);
+      const width = Math.max(2, rect.width || parent.clientWidth || window.innerWidth);
+      const height = Math.max(2, rect.height || parent.clientHeight || 420);
+      gl.domElement.style.width = "100%";
+      gl.domElement.style.height = "100%";
+      gl.setSize(width, height, false);
       if ((camera as THREE.PerspectiveCamera).isPerspectiveCamera) {
-        (camera as THREE.PerspectiveCamera).aspect = rect.width / rect.height;
+        (camera as THREE.PerspectiveCamera).aspect = width / height;
       }
       camera.updateProjectionMatrix();
       invalidate();
     };
     resize();
     const raf = requestAnimationFrame(resize);
-    const timers = [80, 240, 500].map((delay) => window.setTimeout(resize, delay));
+    const timers = [50, 150, 320, 700, 1200].map((delay) => window.setTimeout(resize, delay));
     const ro = new ResizeObserver(resize);
     ro.observe(parent);
+    if (parent.parentElement) ro.observe(parent.parentElement);
     window.addEventListener("resize", resize);
     return () => {
       cancelAnimationFrame(raf);
@@ -1670,7 +1675,7 @@ function DesignEditor() {
             setActiveTab(value as "2d" | "3d");
             if (value === "3d") setSceneRefreshKey((k) => k + 1);
           }}
-          className="flex-1 flex flex-col overflow-hidden min-h-0"
+          className="relative flex-1 flex flex-col overflow-hidden min-h-0"
         >
           <TabsList className="mx-2 mt-2 self-start shrink-0">
             <TabsTrigger value="2d">2D</TabsTrigger>
@@ -2157,7 +2162,7 @@ function DesignEditor() {
           <TabsContent
             value="3d"
             forceMount
-            className="flex-1 m-0 bg-background min-h-[420px] h-full relative overflow-hidden data-[state=inactive]:hidden"
+            className="flex-1 m-0 bg-background min-h-[420px] h-full relative overflow-hidden data-[state=active]:relative data-[state=active]:z-10 data-[state=inactive]:absolute data-[state=inactive]:inset-0 data-[state=inactive]:z-0 data-[state=inactive]:opacity-0 data-[state=inactive]:pointer-events-none"
             data-design-3d
           >
             {toolbar3dVisible ? (
@@ -2449,6 +2454,7 @@ function DesignEditor() {
                         metalness={0.1}
                         transparent
                         opacity={0.85}
+                        depthWrite={false}
                       />
                     </mesh>
                     {/* إطار خشبي/ألوميتال */}
@@ -2506,6 +2512,7 @@ function DesignEditor() {
                   roughness={0.98}
                   transparent
                   opacity={0.28}
+                  depthWrite={false}
                 />
               </mesh>
               <mesh
@@ -2532,6 +2539,7 @@ function DesignEditor() {
                   roughness={0.98}
                   transparent
                   opacity={0.16}
+                  depthWrite={false}
                 />
               </mesh>
               {/* إطار علوي خفيف يحدد ارتفاع الجدران */}

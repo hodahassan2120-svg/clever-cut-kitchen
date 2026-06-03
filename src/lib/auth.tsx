@@ -30,7 +30,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadUserMeta = async (uid: string) => {
     const [{ data: roleData }, { data: subData }] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", uid),
-      supabase.from("subscriptions").select("trial_ends_at,is_active,activated_until").eq("user_id", uid).maybeSingle(),
+      supabase
+        .from("subscriptions")
+        .select("trial_ends_at,is_active,activated_until")
+        .eq("user_id", uid)
+        .maybeSingle(),
     ]);
     setIsAdmin(!!roleData?.some((r) => r.role === "admin"));
     setSubscription(subData ?? null);
@@ -54,7 +58,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const fallback = window.setTimeout(() => setLoading(false), 4000);
-    const { data: { subscription: sub } } = supabase.auth.onAuthStateChange((_e, s) => {
+    const {
+      data: { subscription: sub },
+    } = supabase.auth.onAuthStateChange((_e, s) => {
       window.clearTimeout(fallback);
       setSession(s);
       setUser(s?.user ?? null);
@@ -82,7 +88,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, isAdmin, subscription, loading, refresh, signOut }}>
+    <AuthContext.Provider
+      value={{ user, session, isAdmin, subscription, loading, refresh, signOut }}
+    >
       {children}
     </AuthContext.Provider>
   );

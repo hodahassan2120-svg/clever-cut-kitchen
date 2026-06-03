@@ -82,6 +82,11 @@ export function TexturedMaterial({
     if (!tex?.url) return;
     loadTexture(tex.url)
       .then((loaded) => {
+        loaded.wrapS = THREE.RepeatWrapping;
+        loaded.wrapT = THREE.RepeatWrapping;
+        loaded.colorSpace = THREE.SRGBColorSpace;
+        loaded.anisotropy = 8;
+        loaded.needsUpdate = true;
         if (!cancelled) setBaseTexture(loaded);
       })
       .catch(() => {
@@ -139,6 +144,7 @@ export function TexturedMaterial({
       transparent={opacity < 1}
       opacity={opacity}
       depthWrite={depthWrite ?? opacity >= 1}
+      toneMapped={false}
     />
   );
 }

@@ -11,6 +11,7 @@ interface Props {
   metalness?: number;
   side?: THREE.Side;
   opacity?: number;
+  depthWrite?: boolean;
   textureStrength?: number;
   rotateTexture?: number;
 }
@@ -21,12 +22,14 @@ function FallbackMaterial({
   metalness,
   side,
   opacity,
+  depthWrite,
 }: {
   color: string;
   roughness: number;
   metalness: number;
   side?: THREE.Side;
   opacity: number;
+  depthWrite?: boolean;
 }) {
   return (
     <meshStandardMaterial
@@ -36,7 +39,7 @@ function FallbackMaterial({
       side={side}
       transparent={opacity < 1}
       opacity={opacity}
-      depthWrite={opacity >= 1}
+      depthWrite={depthWrite ?? opacity >= 1}
     />
   );
 }
@@ -66,6 +69,7 @@ export function TexturedMaterial({
   metalness = 0.05,
   side,
   opacity = 1,
+  depthWrite,
   textureStrength = 1,
   rotateTexture = 0,
 }: Props) {
@@ -122,6 +126,7 @@ export function TexturedMaterial({
         metalness={metalness}
         side={side}
         opacity={opacity}
+        depthWrite={depthWrite}
       />
     );
   return (
@@ -133,7 +138,7 @@ export function TexturedMaterial({
       side={side}
       transparent={opacity < 1}
       opacity={opacity}
-      depthWrite={opacity >= 1}
+      depthWrite={depthWrite ?? opacity >= 1}
     />
   );
 }

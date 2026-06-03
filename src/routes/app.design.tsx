@@ -1697,7 +1697,7 @@ function DesignEditor() {
           </TabsList>
           <TabsContent
             value="2d"
-            className="flex-1 overflow-hidden bg-muted/20 m-0 min-h-0 relative"
+            className="m-0 flex-1 overflow-hidden bg-muted/20 min-h-[420px] h-full relative data-[state=inactive]:hidden"
           >
             <div ref={stageWrapRef} className="w-full h-full">
               <Stage
@@ -2176,7 +2176,7 @@ function DesignEditor() {
           <TabsContent
             value="3d"
             forceMount
-            className="flex-1 m-0 bg-background min-h-[420px] h-full relative overflow-hidden data-[state=active]:relative data-[state=active]:z-10 data-[state=inactive]:absolute data-[state=inactive]:inset-0 data-[state=inactive]:z-0 data-[state=inactive]:opacity-0 data-[state=inactive]:pointer-events-none"
+            className="m-0 flex-1 bg-background min-h-[420px] h-full relative overflow-hidden data-[state=inactive]:hidden"
             data-design-3d
           >
             {toolbar3dVisible ? (

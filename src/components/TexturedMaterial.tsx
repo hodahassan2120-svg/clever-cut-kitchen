@@ -17,6 +17,7 @@ interface Props {
 }
 
 function FallbackMaterial({
+  textureKey,
   color,
   roughness,
   metalness,
@@ -24,6 +25,7 @@ function FallbackMaterial({
   opacity,
   depthWrite,
 }: {
+  textureKey: string;
   color: string;
   roughness: number;
   metalness: number;
@@ -33,6 +35,7 @@ function FallbackMaterial({
 }) {
   return (
     <meshStandardMaterial
+      key={textureKey}
       color={color}
       roughness={roughness}
       metalness={metalness}
@@ -82,6 +85,11 @@ export function TexturedMaterial({
     if (!tex?.url) return;
     loadTexture(tex.url)
       .then((loaded) => {
+        loaded.wrapS = THREE.RepeatWrapping;
+        loaded.wrapT = THREE.RepeatWrapping;
+        loaded.colorSpace = THREE.SRGBColorSpace;
+        loaded.anisotropy = 8;
+        loaded.needsUpdate = true;
         if (!cancelled) setBaseTexture(loaded);
       })
       .catch(() => {
@@ -121,6 +129,7 @@ export function TexturedMaterial({
   if (!map)
     return (
       <FallbackMaterial
+        textureKey={`fallback-${textureId || "solid"}`}
         color={fallbackColor}
         roughness={roughness}
         metalness={metalness}
@@ -131,6 +140,7 @@ export function TexturedMaterial({
     );
   return (
     <meshStandardMaterial
+      key={`texture-${textureId || "active"}`}
       map={map}
       color={new THREE.Color("#ffffff").lerp(new THREE.Color(fallbackColor), 1 - textureStrength)}
       roughness={roughness}
@@ -139,6 +149,7 @@ export function TexturedMaterial({
       transparent={opacity < 1}
       opacity={opacity}
       depthWrite={depthWrite ?? opacity >= 1}
+      toneMapped={false}
     />
   );
 }

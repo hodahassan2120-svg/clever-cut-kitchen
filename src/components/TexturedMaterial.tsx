@@ -17,6 +17,7 @@ interface Props {
 }
 
 function FallbackMaterial({
+  textureKey,
   color,
   roughness,
   metalness,
@@ -24,6 +25,7 @@ function FallbackMaterial({
   opacity,
   depthWrite,
 }: {
+  textureKey: string;
   color: string;
   roughness: number;
   metalness: number;
@@ -33,6 +35,7 @@ function FallbackMaterial({
 }) {
   return (
     <meshStandardMaterial
+      key={textureKey}
       color={color}
       roughness={roughness}
       metalness={metalness}
@@ -126,6 +129,7 @@ export function TexturedMaterial({
   if (!map)
     return (
       <FallbackMaterial
+        textureKey={`fallback-${textureId || "solid"}`}
         color={fallbackColor}
         roughness={roughness}
         metalness={metalness}
@@ -136,6 +140,7 @@ export function TexturedMaterial({
     );
   return (
     <meshStandardMaterial
+      key={`texture-${textureId || tex.id}`}
       map={map}
       color={new THREE.Color("#ffffff").lerp(new THREE.Color(fallbackColor), 1 - textureStrength)}
       roughness={roughness}

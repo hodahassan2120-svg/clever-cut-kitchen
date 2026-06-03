@@ -2398,6 +2398,7 @@ function DesignEditor() {
                 if (!dragRef.current) setSelectedId(null);
               }}
             >
+              <SceneStabilityGuard />
               <SceneCanvasSizer refreshKey={sceneRefreshKey + cameraResetKey} />
               <SceneCamera
                 view={view3d}

@@ -783,7 +783,14 @@ function DesignEditor() {
     }
     setDoc((current) => ({ ...current, ...normalizedPatch }));
     setFinishDirty(false);
-    if (activeTab === "3d") setSceneRefreshKey((k) => k + 1);
+    if (
+      "floorTextureId" in normalizedPatch ||
+      "wallTextureId" in normalizedPatch ||
+      "marbleTextureId" in normalizedPatch ||
+      activeTab === "3d"
+    ) {
+      setSceneRefreshKey((k) => k + 1);
+    }
   };
   const applyFinishDraft = () => {
     if (!isPreviewableFinishPatch(finishDraft)) {

@@ -2204,7 +2204,7 @@ function DesignEditor() {
           <TabsContent
             value="3d"
             forceMount
-            className="m-0 flex-1 bg-background min-h-[420px] h-full relative overflow-hidden data-[state=inactive]:hidden"
+            className="m-0 flex-1 bg-background min-h-[520px] h-full relative overflow-hidden data-[state=active]:relative data-[state=active]:z-10 data-[state=inactive]:absolute data-[state=inactive]:inset-0 data-[state=inactive]:z-0 data-[state=inactive]:opacity-0 data-[state=inactive]:pointer-events-none"
             data-design-3d
           >
             {toolbar3dVisible ? (
@@ -2382,8 +2382,8 @@ function DesignEditor() {
             )}
 
             <Canvas
-              className="block h-full w-full"
-              style={{ width: "100%", height: "100%" }}
+              className="block h-full min-h-[520px] w-full"
+              style={{ width: "100%", height: "100%", minHeight: 520 }}
               shadows="soft"
               frameloop="always"
               resize={{ scroll: false, debounce: { scroll: 50, resize: 0 } }}

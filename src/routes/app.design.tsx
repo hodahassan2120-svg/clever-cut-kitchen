@@ -155,10 +155,17 @@ function SceneCanvasSizer({ refreshKey }: { refreshKey: number }) {
     const parent =
       gl.domElement.closest<HTMLElement>("[data-design-3d]") ?? gl.domElement.parentElement;
     if (!parent) return;
+    let rafId: number | null = null;
     const resize = () => {
+      const visible = parent.dataset.state !== "inactive";
+      if (!visible) return;
       const rect = parent.getBoundingClientRect();
-      const width = Math.max(2, rect.width || parent.clientWidth || window.innerWidth);
-      const height = Math.max(2, rect.height || parent.clientHeight || 420);
+      const fallback = parent.parentElement?.getBoundingClientRect();
+      const width = Math.max(
+        320,
+        rect.width || parent.clientWidth || fallback?.width || window.innerWidth,
+      );
+      const height = Math.max(420, rect.height || parent.clientHeight || fallback?.height || 420);
       gl.domElement.style.width = "100%";
       gl.domElement.style.height = "100%";
       gl.setSize(width, height, false);
@@ -168,18 +175,25 @@ function SceneCanvasSizer({ refreshKey }: { refreshKey: number }) {
       camera.updateProjectionMatrix();
       invalidate();
     };
+    const queueResize = () => {
+      if (rafId != null) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        resize();
+      });
+    };
     resize();
-    const raf = requestAnimationFrame(resize);
-    const timers = [50, 150, 320, 700, 1200].map((delay) => window.setTimeout(resize, delay));
+    queueResize();
+    const timers = [50, 150, 320, 700, 1200].map((delay) => window.setTimeout(queueResize, delay));
     const ro = new ResizeObserver(resize);
     ro.observe(parent);
     if (parent.parentElement) ro.observe(parent.parentElement);
-    window.addEventListener("resize", resize);
+    window.addEventListener("resize", queueResize);
     return () => {
-      cancelAnimationFrame(raf);
+      if (rafId != null) cancelAnimationFrame(rafId);
       timers.forEach(window.clearTimeout);
       ro.disconnect();
-      window.removeEventListener("resize", resize);
+      window.removeEventListener("resize", queueResize);
     };
   }, [camera, gl, invalidate, refreshKey]);
   return null;

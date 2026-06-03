@@ -2446,6 +2446,7 @@ function DesignEditor() {
                   roughness={0.95}
                   side={THREE.DoubleSide}
                   textureStrength={0.96}
+                  depthWrite={false}
                 />
               </mesh>
               {/* نافذة كبيرة على الحائط الخلفي — تعطي إحساس بالعمق والإضاءة الطبيعية */}
@@ -2516,6 +2517,7 @@ function DesignEditor() {
                   roughness={0.95}
                   side={THREE.DoubleSide}
                   textureStrength={0.96}
+                  depthWrite={false}
                 />
               </mesh>
               {/* الحائط الأيمن شفاف قليلاً حتى يوضح حدود الغرفة بدون حجب الوحدات */}
@@ -2544,6 +2546,7 @@ function DesignEditor() {
                   side={THREE.DoubleSide}
                   opacity={0.45}
                   textureStrength={0.96}
+                  depthWrite={false}
                 />
               </mesh>
               <mesh position={[doc.roomWidth / 2, 70, doc.roomDepth + 2]} receiveShadow>

@@ -53,7 +53,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    const fallback = window.setTimeout(() => setLoading(false), 4000);
     const { data: { subscription: sub } } = supabase.auth.onAuthStateChange((_e, s) => {
+      window.clearTimeout(fallback);
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) {
@@ -65,7 +67,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
     refresh();
-    return () => sub.unsubscribe();
+    return () => {
+      window.clearTimeout(fallback);
+      sub.unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {

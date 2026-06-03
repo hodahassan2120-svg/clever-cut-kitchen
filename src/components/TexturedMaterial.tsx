@@ -140,7 +140,7 @@ export function TexturedMaterial({
     );
   return (
     <meshStandardMaterial
-      key={`texture-${textureId || tex.id}`}
+      key={`texture-${textureId || "active"}`}
       map={map}
       color={new THREE.Color("#ffffff").lerp(new THREE.Color(fallbackColor), 1 - textureStrength)}
       roughness={roughness}

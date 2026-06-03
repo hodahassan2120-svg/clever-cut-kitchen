@@ -199,6 +199,27 @@ function SceneCanvasSizer({ refreshKey }: { refreshKey: number }) {
   return null;
 }
 
+function SceneStabilityGuard() {
+  const { gl, invalidate } = useThree();
+  useEffect(() => {
+    const canvas = gl.domElement;
+    const restoreSize = () => {
+      const parent = canvas.closest<HTMLElement>("[data-design-3d]") ?? canvas.parentElement;
+      const rect = parent?.getBoundingClientRect();
+      gl.setSize(Math.max(320, rect?.width || 320), Math.max(420, rect?.height || 420), false);
+      invalidate();
+    };
+    const onLost = (event: Event) => event.preventDefault();
+    canvas.addEventListener("webglcontextlost", onLost, false);
+    canvas.addEventListener("webglcontextrestored", restoreSize, false);
+    return () => {
+      canvas.removeEventListener("webglcontextlost", onLost, false);
+      canvas.removeEventListener("webglcontextrestored", restoreSize, false);
+    };
+  }, [gl, invalidate]);
+  return null;
+}
+
 function DesignEditor() {
   const { user } = useAuth();
   const { id } = Route.useSearch();

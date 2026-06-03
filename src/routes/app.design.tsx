@@ -155,10 +155,17 @@ function SceneCanvasSizer({ refreshKey }: { refreshKey: number }) {
     const parent =
       gl.domElement.closest<HTMLElement>("[data-design-3d]") ?? gl.domElement.parentElement;
     if (!parent) return;
+    let rafId: number | null = null;
     const resize = () => {
+      const visible = parent.dataset.state !== "inactive";
+      if (!visible) return;
       const rect = parent.getBoundingClientRect();
-      const width = Math.max(2, rect.width || parent.clientWidth || window.innerWidth);
-      const height = Math.max(2, rect.height || parent.clientHeight || 420);
+      const fallback = parent.parentElement?.getBoundingClientRect();
+      const width = Math.max(
+        320,
+        rect.width || parent.clientWidth || fallback?.width || window.innerWidth,
+      );
+      const height = Math.max(420, rect.height || parent.clientHeight || fallback?.height || 420);
       gl.domElement.style.width = "100%";
       gl.domElement.style.height = "100%";
       gl.setSize(width, height, false);
@@ -168,20 +175,48 @@ function SceneCanvasSizer({ refreshKey }: { refreshKey: number }) {
       camera.updateProjectionMatrix();
       invalidate();
     };
+    const queueResize = () => {
+      if (rafId != null) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        resize();
+      });
+    };
     resize();
-    const raf = requestAnimationFrame(resize);
-    const timers = [50, 150, 320, 700, 1200].map((delay) => window.setTimeout(resize, delay));
+    queueResize();
+    const timers = [50, 150, 320, 700, 1200].map((delay) => window.setTimeout(queueResize, delay));
     const ro = new ResizeObserver(resize);
     ro.observe(parent);
     if (parent.parentElement) ro.observe(parent.parentElement);
-    window.addEventListener("resize", resize);
+    window.addEventListener("resize", queueResize);
     return () => {
-      cancelAnimationFrame(raf);
+      if (rafId != null) cancelAnimationFrame(rafId);
       timers.forEach(window.clearTimeout);
       ro.disconnect();
-      window.removeEventListener("resize", resize);
+      window.removeEventListener("resize", queueResize);
     };
   }, [camera, gl, invalidate, refreshKey]);
+  return null;
+}
+
+function SceneStabilityGuard() {
+  const { gl, invalidate } = useThree();
+  useEffect(() => {
+    const canvas = gl.domElement;
+    const restoreSize = () => {
+      const parent = canvas.closest<HTMLElement>("[data-design-3d]") ?? canvas.parentElement;
+      const rect = parent?.getBoundingClientRect();
+      gl.setSize(Math.max(320, rect?.width || 320), Math.max(420, rect?.height || 420), false);
+      invalidate();
+    };
+    const onLost = (event: Event) => event.preventDefault();
+    canvas.addEventListener("webglcontextlost", onLost, false);
+    canvas.addEventListener("webglcontextrestored", restoreSize, false);
+    return () => {
+      canvas.removeEventListener("webglcontextlost", onLost, false);
+      canvas.removeEventListener("webglcontextrestored", restoreSize, false);
+    };
+  }, [gl, invalidate]);
   return null;
 }
 
@@ -1683,7 +1718,7 @@ function DesignEditor() {
           </TabsList>
           <TabsContent
             value="2d"
-            className="flex-1 overflow-hidden bg-muted/20 m-0 min-h-0 relative"
+            className="m-0 flex-1 overflow-hidden bg-muted/20 min-h-[420px] h-full relative data-[state=inactive]:hidden"
           >
             <div ref={stageWrapRef} className="w-full h-full">
               <Stage
@@ -2162,7 +2197,7 @@ function DesignEditor() {
           <TabsContent
             value="3d"
             forceMount
-            className="flex-1 m-0 bg-background min-h-[420px] h-full relative overflow-hidden data-[state=active]:relative data-[state=active]:z-10 data-[state=inactive]:absolute data-[state=inactive]:inset-0 data-[state=inactive]:z-0 data-[state=inactive]:opacity-0 data-[state=inactive]:pointer-events-none"
+            className="m-0 flex-1 bg-background min-h-[420px] h-full relative overflow-hidden data-[state=inactive]:hidden"
             data-design-3d
           >
             {toolbar3dVisible ? (
@@ -2363,6 +2398,7 @@ function DesignEditor() {
                 if (!dragRef.current) setSelectedId(null);
               }}
             >
+              <SceneStabilityGuard />
               <SceneCanvasSizer refreshKey={sceneRefreshKey + cameraResetKey} />
               <SceneCamera
                 view={view3d}
@@ -2432,6 +2468,7 @@ function DesignEditor() {
                   roughness={0.95}
                   side={THREE.DoubleSide}
                   textureStrength={0.96}
+                  depthWrite={false}
                 />
               </mesh>
               {/* نافذة كبيرة على الحائط الخلفي — تعطي إحساس بالعمق والإضاءة الطبيعية */}
@@ -2502,6 +2539,7 @@ function DesignEditor() {
                   roughness={0.95}
                   side={THREE.DoubleSide}
                   textureStrength={0.96}
+                  depthWrite={false}
                 />
               </mesh>
               {/* الحائط الأيمن شفاف قليلاً حتى يوضح حدود الغرفة بدون حجب الوحدات */}
@@ -2530,6 +2568,7 @@ function DesignEditor() {
                   side={THREE.DoubleSide}
                   opacity={0.45}
                   textureStrength={0.96}
+                  depthWrite={false}
                 />
               </mesh>
               <mesh position={[doc.roomWidth / 2, 70, doc.roomDepth + 2]} receiveShadow>

@@ -2771,6 +2771,7 @@ function DesignEditor() {
               </Button>
             </div>
           </TabsContent>
+          </div>
         </Tabs>
       </div>
 

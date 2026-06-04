@@ -1719,10 +1719,11 @@ function DesignEditor() {
           }}
           className="relative flex-1 flex flex-col overflow-hidden min-h-0"
         >
-          <TabsList className="mx-2 mt-2 self-start shrink-0">
+          <TabsList className="mx-2 mt-2 self-start shrink-0 relative z-20">
             <TabsTrigger value="2d">2D</TabsTrigger>
             <TabsTrigger value="3d">3D</TabsTrigger>
           </TabsList>
+          <div className="relative flex-1 flex flex-col overflow-hidden min-h-0">
           <TabsContent
             value="2d"
             className="m-0 flex-1 overflow-hidden bg-muted/20 min-h-[420px] h-full relative data-[state=inactive]:hidden"

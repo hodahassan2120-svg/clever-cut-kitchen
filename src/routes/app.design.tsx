@@ -132,10 +132,10 @@ function SceneCamera({
   const { camera, gl, invalidate, size } = useThree();
   useEffect(() => {
     if (size.width > 0 && size.height > 0) gl.setSize(size.width, size.height, false);
-    const target: [number, number, number] = [roomWidth / 2, 80, roomDepth / 2];
+    const target: [number, number, number] = [roomWidth / 2, 72, roomDepth / 2];
     const maxDim = Math.max(roomWidth, roomDepth, 260);
     const positions: Record<typeof view, [number, number, number]> = {
-      perspective: [roomWidth, roomDepth * 1.2, roomDepth * 1.4],
+      perspective: [roomWidth * 0.62, maxDim * 1.18, roomDepth + maxDim * 0.82],
       top: [roomWidth / 2, maxDim * 1.8, roomDepth / 2 + 0.01],
       front: [roomWidth / 2, 130, roomDepth + maxDim * 1.35],
       right: [roomWidth + maxDim * 1.2, 130, roomDepth / 2],
@@ -2204,8 +2204,7 @@ function DesignEditor() {
           </TabsContent>
           <TabsContent
             value="3d"
-            forceMount
-            className="m-0 flex-1 bg-background min-h-[520px] h-full relative overflow-hidden data-[state=active]:relative data-[state=active]:z-10 data-[state=inactive]:absolute data-[state=inactive]:inset-0 data-[state=inactive]:z-0 data-[state=inactive]:opacity-0 data-[state=inactive]:pointer-events-none"
+            className="m-0 flex-1 bg-background min-h-[520px] h-full relative overflow-hidden data-[state=inactive]:hidden"
             data-design-3d
           >
             {toolbar3dVisible ? (
@@ -2557,7 +2556,7 @@ function DesignEditor() {
                   color={doc.wallColor || "#efe7da"}
                   roughness={0.98}
                   transparent
-                  opacity={0.28}
+                  opacity={0.12}
                   depthWrite={false}
                 />
               </mesh>
@@ -2574,7 +2573,7 @@ function DesignEditor() {
                   fallbackColor={doc.wallColor || "#efe7da"}
                   roughness={0.95}
                   side={THREE.DoubleSide}
-                  opacity={0.45}
+                  opacity={0.16}
                   textureStrength={0.96}
                   depthWrite={false}
                 />
@@ -2585,7 +2584,7 @@ function DesignEditor() {
                   color={doc.wallColor || "#efe7da"}
                   roughness={0.98}
                   transparent
-                  opacity={0.16}
+                  opacity={0.06}
                   depthWrite={false}
                 />
               </mesh>

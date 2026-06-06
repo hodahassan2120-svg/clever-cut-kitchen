@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth, isSubscriptionActive } from "@/lib/auth";
 import { Cuboid, Scissors, Ruler, Archive, Save, LogOut, Shield, Sparkles, Home, Clock, CheckCircle2, XCircle } from "lucide-react";
@@ -30,10 +30,20 @@ export const Route = createFileRoute("/app")({ component: AppLayout });
 function AppLayout() {
   const { user, loading, subscription, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/login" });
   }, [loading, user, navigate]);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.body.classList.toggle(
+      "hide-adsterra-social",
+      location.pathname === "/app/design",
+    );
+    return () => document.body.classList.remove("hide-adsterra-social");
+  }, [location.pathname]);
 
   if (loading || !user) {
     return <div className="min-h-screen flex items-center justify-center text-muted-foreground">جارٍ التحميل...</div>;
@@ -41,6 +51,7 @@ function AppLayout() {
 
   const active = isSubscriptionActive(subscription);
   const daysLeft = subscription ? Math.max(0, Math.ceil((new Date(subscription.activated_until ?? subscription.trial_ends_at).getTime() - Date.now()) / 86400000)) : 0;
+  const isDesignEditor = location.pathname === "/app/design";
 
   if (!active && !isAdmin) {
     return <TrialExpired onSignOut={signOut} userId={user.id} />;
@@ -110,14 +121,16 @@ function AppLayout() {
       <main className="flex-1 overflow-auto pb-16 md:pb-0">
         <Outlet />
         {/* إعلانات سفلية ذاتية فقط — لا AdSense داخل الصفحات المحمية */}
-        <div className="mt-6 px-4 pb-4 md:pb-6 space-y-3 flex flex-col items-center">
-          <CustomBanner className="w-full" />
-          <AdsterraBanner className="md:hidden" />
-        </div>
+        {!isDesignEditor && (
+          <div className="mt-6 px-4 pb-4 md:pb-6 space-y-3 flex flex-col items-center">
+            <CustomBanner className="w-full" />
+            <AdsterraBanner className="md:hidden" />
+          </div>
+        )}
       </main>
-      <SplashAd />
-      <InterstitialAd />
-      <AdsterraSocialBar />
+      {!isDesignEditor && <SplashAd />}
+      {!isDesignEditor && <InterstitialAd />}
+      {!isDesignEditor && <AdsterraSocialBar />}
 
 
       {/* Mobile bottom nav */}

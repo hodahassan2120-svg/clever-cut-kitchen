@@ -1728,11 +1728,15 @@ function DesignEditor() {
             value="2d"
             className="m-0 flex-1 overflow-hidden bg-muted/20 min-h-[420px] h-full relative data-[state=inactive]:hidden"
           >
-            <div ref={stageWrapRef} className="w-full h-full">
+            <div ref={stageWrapRef} className="w-full h-full touch-none overscroll-contain">
               <Stage
                 width={stageSize.w}
                 height={stageSize.h}
+                style={{ touchAction: "none" }}
                 onMouseDown={(e) => {
+                  if (e.target === e.target.getStage()) setSelectedId(null);
+                }}
+                onTouchStart={(e) => {
                   if (e.target === e.target.getStage()) setSelectedId(null);
                 }}
               >
@@ -1883,6 +1887,15 @@ function DesignEditor() {
                         y={PAD + b.y * scale}
                         rotation={b.rotation}
                         draggable
+                        dragBoundFunc={(pos) => {
+                          const next = clampBlock({
+                            ...b,
+                            x: (pos.x - PAD) / scale,
+                            y: (pos.y - PAD) / scale,
+                          });
+                          return { x: PAD + next.x * scale, y: PAD + next.y * scale };
+                        }}
+                        onDragStart={() => setSelectedId(b.id)}
                         onClick={() => setSelectedId(b.id)}
                         onTap={() => setSelectedId(b.id)}
                         onDragMove={(e) => {
@@ -2204,8 +2217,7 @@ function DesignEditor() {
           </TabsContent>
           <TabsContent
             value="3d"
-            forceMount
-            className="m-0 flex-1 bg-background min-h-[520px] h-full relative overflow-hidden data-[state=active]:relative data-[state=active]:z-10 data-[state=inactive]:absolute data-[state=inactive]:inset-0 data-[state=inactive]:z-0 data-[state=inactive]:opacity-0 data-[state=inactive]:pointer-events-none"
+            className="m-0 flex-1 bg-background min-h-[520px] h-full relative overflow-hidden data-[state=inactive]:hidden"
             data-design-3d
           >
             {toolbar3dVisible ? (

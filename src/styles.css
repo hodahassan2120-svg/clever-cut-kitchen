@@ -127,6 +127,13 @@
   }
 }
 
+.konvajs-content,
+.konvajs-content canvas,
+[data-design-3d] canvas {
+  touch-action: none;
+  overscroll-behavior: contain;
+}
+
 /* Hide Adsterra Social Bar injected DOM (for paid users or during AI rendering) */
 body.hide-adsterra-social [id^="social-bar"],
 body.hide-adsterra-social [class*="social-bar"],

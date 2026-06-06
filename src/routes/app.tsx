@@ -40,7 +40,7 @@ function AppLayout() {
     if (typeof document === "undefined") return;
     document.body.classList.toggle(
       "hide-adsterra-social",
-      location.pathname.startsWith("/app/design"),
+      location.pathname === "/app/design",
     );
     return () => document.body.classList.remove("hide-adsterra-social");
   }, [location.pathname]);
@@ -51,7 +51,7 @@ function AppLayout() {
 
   const active = isSubscriptionActive(subscription);
   const daysLeft = subscription ? Math.max(0, Math.ceil((new Date(subscription.activated_until ?? subscription.trial_ends_at).getTime() - Date.now()) / 86400000)) : 0;
-  const isDesignEditor = location.pathname.startsWith("/app/design");
+  const isDesignEditor = location.pathname === "/app/design";
 
   if (!active && !isAdmin) {
     return <TrialExpired onSignOut={signOut} userId={user.id} />;

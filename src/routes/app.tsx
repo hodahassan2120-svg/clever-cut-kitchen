@@ -36,6 +36,15 @@ function AppLayout() {
     if (!loading && !user) navigate({ to: "/login" });
   }, [loading, user, navigate]);
 
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.body.classList.toggle(
+      "hide-adsterra-social",
+      location.pathname.startsWith("/app/design"),
+    );
+    return () => document.body.classList.remove("hide-adsterra-social");
+  }, [location.pathname]);
+
   if (loading || !user) {
     return <div className="min-h-screen flex items-center justify-center text-muted-foreground">جارٍ التحميل...</div>;
   }

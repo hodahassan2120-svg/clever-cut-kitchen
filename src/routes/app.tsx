@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth, isSubscriptionActive } from "@/lib/auth";
 import { Cuboid, Scissors, Ruler, Archive, Save, LogOut, Shield, Sparkles, Home, Clock, CheckCircle2, XCircle } from "lucide-react";
@@ -30,6 +30,7 @@ export const Route = createFileRoute("/app")({ component: AppLayout });
 function AppLayout() {
   const { user, loading, subscription, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/login" });
@@ -41,6 +42,7 @@ function AppLayout() {
 
   const active = isSubscriptionActive(subscription);
   const daysLeft = subscription ? Math.max(0, Math.ceil((new Date(subscription.activated_until ?? subscription.trial_ends_at).getTime() - Date.now()) / 86400000)) : 0;
+  const isDesignEditor = location.pathname.startsWith("/app/design");
 
   if (!active && !isAdmin) {
     return <TrialExpired onSignOut={signOut} userId={user.id} />;
@@ -115,9 +117,9 @@ function AppLayout() {
           <AdsterraBanner className="md:hidden" />
         </div>
       </main>
-      <SplashAd />
-      <InterstitialAd />
-      <AdsterraSocialBar />
+      {!isDesignEditor && <SplashAd />}
+      {!isDesignEditor && <InterstitialAd />}
+      {!isDesignEditor && <AdsterraSocialBar />}
 
 
       {/* Mobile bottom nav */}
